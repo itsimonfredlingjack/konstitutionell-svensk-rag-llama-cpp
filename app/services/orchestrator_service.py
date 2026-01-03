@@ -195,21 +195,23 @@ class OrchestratorService(BaseService):
     async def health_check(self) -> bool:
         """
         Check if orchestrator and all child services are healthy.
-        
+
         Returns:
             True if all services healthy, False otherwise
         """
-        health_checks = await asyncio.gather(
+        tasks = [
             self.llm_service.health_check(),
             self.query_processor.health_check(),
             self.guardrail.health_check(),
             self.retrieval.health_check(),
-            *(self.reranker.health_check() if self.reranker else asyncio.sleep(0)),
-            return_exceptions=True,
-        )
-        
+        ]
+        if self.reranker:
+            tasks.append(self.reranker.health_check())
+
+        health_checks = await asyncio.gather(*tasks, return_exceptions=True)
+
         all_healthy = all(h for h in health_checks if h)
-        
+
         logger.info(f"Orchestrator health check: {'OK' if all_healthy else 'DEGRADED'}")
         return all_healthy
     
@@ -749,7 +751,7 @@ Om frågan handlar om svensk lag eller myndighetsförvaltning, kan du hänvisa t
     def get_status(self) -> dict:
         """
         Get orchestrator status with child service status.
-        
+
         Returns:
             Dictionary with orchestrator and child service health
         """
@@ -759,7 +761,7 @@ Om frågan handlar om svensk lag eller myndighetsförvaltning, kan du hänvisa t
             "query_processor": "initialized" if self.query_processor.is_initialized else "uninitialized",
             "guardrail": "initialized" if self.guardrail.is_initialized else "uninitialized",
             "retrieval": "initialized" if self.retrieval.is_initialized else "uninitialized",
-            "reranker": "initialized" if self.reranker and self.reranker.is_loaded else "uninitialized",
+            "reranker": "initialized" if self.reranker and self.reranker.is_initialized else "not_available",
         }
 
 
@@ -768,12 +770,12 @@ from functools import lru_cache
 
 @lru_cache()
 def get_orchestrator_service(
-    config: Optional[ConfigService] = None,
-    llm_service: Optional[LLMService] = None,
-    query_processor: Optional[QueryProcessorService] = None,
-    guardrail: Optional[GuardrailService] = None,
-    retrieval: Optional[RetrievalService] = None,
-    reranker: Optional[RerankingService] = None,
+    config=None,
+    llm_service=None,
+    query_processor=None,
+    guardrail=None,
+    retrieval=None,
+    reranker=None,
 ) -> OrchestratorService:
     """
     Get singleton OrchestratorService instance.

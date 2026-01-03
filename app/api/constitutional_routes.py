@@ -3,7 +3,8 @@ Constitutional AI Dashboard API Routes v2
 Refactored with Service Layer Architecture
 """
 
-from fastapi import APIRouter, HTTPException, Query, Header
+import asyncio
+from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
@@ -281,4 +282,28 @@ async def agent_query_stream(
             "X-Accel-Buffering": "no",  # Disable nginx buffering
         }
     )
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# WEBSOCKET ENDPOINTS
+# ═════════════════════════════════════════════════════════════════════════
+
+# Import at module level (added to avoid FastAPI dependency issues)
+from fastapi import WebSocket
+
+async def harvest_websocket(websocket: WebSocket):
+    """
+    WebSocket endpoint for live harvest progress updates.
+    Constitutional AI document harvesting status.
+    """
+    await websocket.accept()
+    try:
+        while True:
+            # Send keepalive heartbeat
+            await websocket.send_json({"type": "heartbeat", "status": "connected"})
+            await asyncio.sleep(30)
+    except Exception as e:
+        await websocket.close()
+    finally:
+        pass
 
