@@ -1,0 +1,25 @@
+# Simons AI Backend - Dependencies
+# For RTX 4070 local LLM system
+
+# Web framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# HTTP client for Ollama
+httpx>=0.26.0
+
+# Data validation
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# WebSocket support (included in uvicorn[standard])
+websockets>=12.0
+
+# Async utilities
+anyio>=4.2.0
+
+# Development
+python-dotenv>=1.0.0
+
+# System monitoring
+psutil>=5.9.0

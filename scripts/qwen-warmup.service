@@ -1,0 +1,13 @@
+[Unit]
+Description=QWEN Model Warmup - Preloads model into GPU VRAM
+After=ollama.service
+Wants=ollama.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/ai-server/local-llm-backend/scripts/warmup-qwen.sh
+RemainAfterExit=yes
+User=ai-server
+
+[Install]
+WantedBy=multi-user.target

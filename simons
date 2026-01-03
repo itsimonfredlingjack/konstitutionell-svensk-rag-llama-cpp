@@ -1,0 +1,4 @@
+#!/bin/bash
+# SIMONS AI CLI Launcher
+cd /home/ai-server/01_PROJECTS/01_AI-VIBE-WORLD
+exec .venv/bin/python -m cli.main "$@"

@@ -1,0 +1,25 @@
+[Unit]
+Description=Simons AI Frontend - AI Vibe World
+Documentation=https://github.com/simons-ai
+After=network.target simons-ai-backend.service
+Wants=simons-ai-backend.service
+
+[Service]
+Type=simple
+User=ai-server
+# RÄTT KATALOG:
+WorkingDirectory=/home/ai-server/01_PROJECTS/01_AI-VIBE-WORLD/frontend
+# DEV MODE (Live Reload):
+ExecStart=/usr/bin/npx vite --host 0.0.0.0 --port 5173
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+Environment=NODE_ENV=development
+
+# Graceful shutdown
+TimeoutStopSec=15
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
