@@ -1,0 +1,45 @@
+# --- System & IDE ---
+.DS_Store
+.vscode/
+.idea/
+__pycache__/
+*.py[cod]
+
+# --- Environments (ALDRIG KÄNDA!) ---
+venv/
+venv/
+env/
+node_modules/
+
+# --- Secrets (LIVSVIKTIGT!) ---
+.env
+.env.local
+config_local.py
+
+# --- Database & Storage ---
+*.db
+*.sqlite3
+chroma_db/
+chromadb/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- SCRAPED DATA & JUNK (Anpassa dessa namn!) ---
+scraped_data/
+downloads/
+temp/
+raw_data/
+*.pdf
+*.csv
+*.json
+
+# --- Temp Dump Organisering ---
+_TEMP_DUMP/
+
+# --- Specifika (behåll dessa!) ---
+!app/data/combined_training.jsonl
+!app/data/docs_qa_training.jsonl
+!app/data/eval_after_*.json
+
