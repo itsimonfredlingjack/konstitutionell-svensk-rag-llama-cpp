@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     # Server
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = 8900  # Updated from 8000 to match systemd service (RAG fix)
 
     # Ollama (local)
     ollama_base_url: str = "http://localhost:11434"
