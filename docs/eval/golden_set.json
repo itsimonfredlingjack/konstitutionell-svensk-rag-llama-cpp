@@ -1,0 +1,204 @@
+{
+  "version": "1.0-P0",
+  "created": "2025-12-21",
+  "description": "Golden set for Constitutional-AI RAG evaluation. 20 questions covering SFS primary sources, government practice, edge cases, and smalltalk.",
+  "questions": [
+    {
+      "id": "sfs_01",
+      "query": "Vad säger Regeringsformen om yttrandefrihet?",
+      "intent": "SFS_PRIMARY",
+      "expected_sfs": "1974:152",
+      "expected_ref": "RF 2 kap. 1 §",
+      "ground_truth": "Var och en är gentemot det allmänna tillförsäkrad yttrandefrihet: frihet att i tal, skrift eller bild eller på annat sätt meddela upplysningar samt uttrycka tankar, åsikter och känslor.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "sfs_02",
+      "query": "Vilka grundläggande fri- och rättigheter skyddas i RF 2 kap?",
+      "intent": "SFS_PRIMARY",
+      "expected_sfs": "1974:152",
+      "expected_ref": "RF 2 kap.",
+      "ground_truth": "Yttrandefrihet, informationsfrihet, mötesfrihet, demonstrationsfrihet, föreningsfrihet, religionsfrihet, rörelsefrihet, skydd mot kroppsligt ingrepp, skydd mot husrannsakan, skydd mot frihetsberövande.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "sfs_03",
+      "query": "Vad innebär tryckfriheten enligt TF?",
+      "intent": "SFS_PRIMARY",
+      "expected_sfs": "1949:105",
+      "expected_ref": "TF 1 kap. 1 §",
+      "ground_truth": "Varje svensk medborgare är gentemot det allmänna tillförsäkrad rätt att i tryckt skrift yttra sina tankar och åsikter, att offentliggöra allmänna handlingar samt att meddela uppgifter och underrättelser i vad ämne som helst.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "sfs_04",
+      "query": "Vad säger YGL om rätten att sända radio och tv?",
+      "intent": "SFS_PRIMARY",
+      "expected_sfs": "1991:1469",
+      "expected_ref": "YGL 1 kap. 1 §",
+      "ground_truth": "Varje svensk medborgare är gentemot det allmänna tillförsäkrad rätt att i ljudradio, tv och vissa liknande överföringar, offentliga uppspelningar ur en databas samt filmer, videogram, ljudupptagningar och andra tekniska upptagningar offentligen yttra tankar, åsikter och känslor samt i övrigt lämna uppgifter i vad ämne som helst.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "sfs_05",
+      "query": "När gäller sekretess enligt OSL?",
+      "intent": "SFS_PRIMARY",
+      "expected_sfs": "2009:400",
+      "expected_ref": "OSL 2 kap.",
+      "ground_truth": "Sekretess gäller för uppgift som anges i 6-40 kap. om det inte är uppenbart att uppgiften kan röjas utan att den enskilde eller det allmänna intresse som sekretessen ska skydda lider skada.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "sfs_06",
+      "query": "Vad säger förvaltningslagen om myndigheters serviceskyldighet?",
+      "intent": "SFS_PRIMARY",
+      "expected_sfs": "2017:900",
+      "expected_ref": "FL 6 §",
+      "ground_truth": "En myndighet ska lämna upplysningar, vägledning, råd och annan sådan hjälp till enskilda i frågor som rör myndighetens verksamhetsområde. Hjälpen ska lämnas i den utsträckning som är lämplig med hänsyn till frågans art, den enskildes behov av hjälp och myndighetens verksamhet.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "sfs_07",
+      "query": "Hur lång tid har en myndighet på sig att handlägga ett ärende?",
+      "intent": "SFS_PRIMARY",
+      "expected_sfs": "2017:900",
+      "expected_ref": "FL 9 §",
+      "ground_truth": "Ärenden ska handläggas så enkelt, snabbt och kostnadseffektivt som möjligt utan att rättssäkerheten eftersätts. Det finns ingen absolut tidsgräns, men skyndsamhetsprincipen gäller.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "sfs_08",
+      "query": "Vad säger Brottsbalken om stöld?",
+      "intent": "SFS_PRIMARY",
+      "expected_sfs": "1962:700",
+      "expected_ref": "BrB 8 kap. 1 §",
+      "ground_truth": "Den som tager vad annan tillhör, i syfte att tillägna sig det, dömes för stöld till fängelse i högst två år.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "praxis_01",
+      "query": "Hur fungerar offentlighetsprincipen?",
+      "intent": "PRAXIS",
+      "expected_sources": ["TF 2 kap.", "OSL"],
+      "ground_truth": "Offentlighetsprincipen innebär att allmänna handlingar är offentliga och att var och en har rätt att ta del av dem, om inte sekretess gäller. Principen regleras i TF 2 kap. och OSL.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "praxis_02",
+      "query": "Hur begär jag ut allmänna handlingar?",
+      "intent": "PRAXIS",
+      "expected_sources": ["TF 2 kap. 17 §"],
+      "ground_truth": "Du behöver inte motivera varför du vill ha handlingen. Begäran kan göras muntligt eller skriftligt. Myndigheten ska lämna ut handlingen genast eller så snart som möjligt.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "praxis_03",
+      "query": "Hur överklagar jag ett myndighetsbeslut?",
+      "intent": "PRAXIS",
+      "expected_sources": ["FL 40-47 §§", "FPL"],
+      "ground_truth": "Beslut överklagas genom förvaltningsbesvär till förvaltningsrätten inom 3 veckor från det att du fick del av beslutet. Överklagandet ska vara skriftligt och innehålla vilken ändring du begär.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "praxis_04",
+      "query": "Vad är skillnaden mellan förvaltningsbesvär och laglighetsprövning?",
+      "intent": "PRAXIS",
+      "expected_sources": ["FL", "KL 13 kap."],
+      "ground_truth": "Förvaltningsbesvär prövar om beslutet är riktigt i sak. Laglighetsprövning (endast för kommunala beslut) prövar endast om beslutet tillkommit i laga ordning, inte om det är rätt i sak.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "praxis_05",
+      "query": "Hur fungerar diarieföring hos myndigheter?",
+      "intent": "PRAXIS",
+      "expected_sources": ["OSL", "arkivlagen"],
+      "ground_truth": "Myndigheter ska föra diariet över inkomna och upprättade handlingar. Diariet är en allmän handling och ska innehålla uppgifter om handlingens innehåll, datum och diarienummer.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "praxis_06",
+      "query": "Vad innebär kommunikationsskyldigheten?",
+      "intent": "PRAXIS",
+      "expected_sources": ["FL 25 §"],
+      "ground_truth": "En myndighet ska ge part tillfälle att yttra sig över uppgifter som har tillförts ärendet genom någon annan än parten själv, om uppgifterna är till partens nackdel och parten inte kan antas ha känt till dem tidigare.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "edge_01",
+      "query": "Vad säger RF 2:1?",
+      "intent": "EDGE_ABBREVIATION",
+      "expected_sfs": "1974:152",
+      "expected_ref": "RF 2 kap. 1 §",
+      "note": "Ska tolka 'RF 2:1' som 'RF 2 kap. 1 §'",
+      "ground_truth": "Var och en är gentemot det allmänna tillförsäkrad yttrandefrihet.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "edge_02",
+      "query": "Vad står i OSL 21:7?",
+      "intent": "EDGE_ABBREVIATION",
+      "expected_sfs": "2009:400",
+      "expected_ref": "OSL 21 kap. 7 §",
+      "note": "Ska tolka 'OSL 21:7' korrekt",
+      "ground_truth": "Sekretess gäller för uppgift om en enskilds personliga eller ekonomiska förhållanden, om det kan antas att den enskilde eller någon närstående till denne lider men om uppgiften röjs.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "edge_03",
+      "query": "Menar du förvaltningslagen eller förvaltningsprocesslagen?",
+      "intent": "EDGE_CLARIFICATION",
+      "expected_response": "clarification_request",
+      "note": "Ska be om förtydligande eller nämna båda alternativen",
+      "ground_truth": "Systemet ska nämna båda: FL (2017:900) reglerar myndigheters handläggning, FPL (1971:291) reglerar domstolsprocessen vid överklagande.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "edge_04",
+      "query": "Vad säger reggeringsformen om ytrandefrihet?",
+      "intent": "EDGE_TYPO",
+      "expected_sfs": "1974:152",
+      "expected_ref": "RF 2 kap. 1 §",
+      "note": "Ska hantera felstavning 'reggeringsformen' → 'Regeringsformen'",
+      "ground_truth": "Var och en är gentemot det allmänna tillförsäkrad yttrandefrihet.",
+      "evidence_level": "green",
+      "should_search": true
+    },
+    {
+      "id": "small_01",
+      "query": "Hej, hur mår du?",
+      "intent": "SMALLTALK",
+      "expected_response": "polite_redirect",
+      "note": "Ska svara artigt utan RAG-sökning",
+      "ground_truth": "Jag är en AI-assistent som hjälper dig med frågor om svenska lagar och myndighetsbeslut. Hur kan jag hjälpa dig idag?",
+      "evidence_level": "none",
+      "should_search": false
+    },
+    {
+      "id": "small_02",
+      "query": "Vad är klockan?",
+      "intent": "SMALLTALK",
+      "expected_response": "polite_redirect",
+      "note": "Ska använda get_datetime tool, inte RAG",
+      "ground_truth": "Jag kan inte visa klockan, men jag kan hjälpa dig med juridiska frågor om svenska lagar och myndigheter.",
+      "evidence_level": "none",
+      "should_search": false
+    }
+  ]
+}

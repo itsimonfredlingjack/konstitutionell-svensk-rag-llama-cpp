@@ -1,0 +1,42 @@
+{
+  "source": "livsmedelsverket",
+  "timestamp": "2025-12-07T20:28:58.114269",
+  "duration_seconds": 33.553335,
+  "statistics": {
+    "total_pages_visited": 76,
+    "total_docs_found": 157,
+    "total_docs_stored": 157,
+    "errors": 6,
+    "doc_types": {
+      "LIVSFS": 123,
+      "lagstiftning": 34
+    }
+  },
+  "flag_warning": false,
+  "errors": [
+    {
+      "url": "https://app-eu.readspeaker.com/cgi-bin/rsent?customerid=14350&lang=sv_se&voice=Maja&readclass=rs_focused&url=https://www.livsmedelsverket.se/om-oss/lagstiftning1/",
+      "error": "'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+    },
+    {
+      "url": "https://app-eu.readspeaker.com/cgi-bin/rsent?customerid=14350&lang=sv_se&voice=Maja&readclass=rs_focused&url=https://www.livsmedelsverket.se/foretagande-regler-kontroll/sa-kontrolleras-ditt-foretag/",
+      "error": "'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+    },
+    {
+      "url": "https://app-eu.readspeaker.com/cgi-bin/rsent?customerid=14350&lang=sv_se&voice=Maja&readclass=rs_focused&url=https://www.livsmedelsverket.se/foretagande-regler-kontroll/vagledning-till-lagstiftningen/",
+      "error": "'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+    },
+    {
+      "url": "https://www.livsmedelsverket.se/48eb18/globalassets/om-oss/lagstiftning/overgripande-lagstiftning/forteckning-2025_web_t.pdf",
+      "error": "'utf-8' codec can't decode byte 0xe2 in position 10: invalid continuation byte"
+    },
+    {
+      "url": "mailto:?subject=Lagstiftning&body=https://www.livsmedelsverket.se/om-oss/lagstiftning1/",
+      "error": "mailto:?subject=Lagstiftning&body=https://www.livsmedelsverket.se/om-oss/lagstiftning1/"
+    },
+    {
+      "url": "https://twitter.com/share?text=Lagstiftning&url=https://www.livsmedelsverket.se/om-oss/lagstiftning1/",
+      "error": "400, message='Got more than 8190 bytes (8778) when reading Header value is too long.', url='https://twitter.com/share?text=Lagstiftning&url=https://www.livsmedelsverket.se/om-oss/lagstiftning1/'"
+    }
+  ]
+}

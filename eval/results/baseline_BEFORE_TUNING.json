@@ -1,0 +1,306 @@
+{
+  "timestamp": "2025-12-21T21:53:13.085328",
+  "version": "1.0-P0",
+  "total_questions": 10,
+  "passed": 0,
+  "failed": 10,
+  "pass_rate": 0.0,
+  "avg_faithfulness": 0.0,
+  "avg_context_precision": 0.0,
+  "avg_context_recall": 0.0,
+  "avg_answer_relevancy": 0.0,
+  "by_intent": {
+    "SFS_PRIMARY": {
+      "total": 8,
+      "passed": 0,
+      "failed": 8
+    },
+    "PRAXIS": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2
+    }
+  },
+  "results": [
+    {
+      "id": "sfs_01",
+      "query": "Vad säger Regeringsformen om yttrandefrihet?",
+      "intent": "SFS_PRIMARY",
+      "answer": "Var och en är gentemot det allmänna tillförsäkrad yttrandefrihet: frihet att i tal, skrift eller bild eller på annat sätt meddela upplysningar samt uttrycka tankar, åsikter och känslor.",
+      "contexts": [
+        "RF 2 kap. Grundläggande fri- och rättigheter 1 §\n1 § Var och en är gentemot det allmänna tillförsäkrad\r\n\r\n1. yttrandefrihet: frihet att i tal, skrift eller bild eller \r\npå annat sätt meddela upplysnin...",
+        "RF 2 kap. Grundläggande fri- och rättigheter 23 §\n23 § Yttrandefriheten och informationsfriheten får begränsas \r\nmed hänsyn till rikets säkerhet, folkförsörjningen, allmän \r\nordning och säkerhet, ensk...",
+        "RF 2 kap. Grundläggande fri- och rättigheter 2 §\n2 § Ingen får av det allmänna tvingas att ge till känna sin \r\nåskådning i politiskt, religiöst, kulturellt eller annat \r\nsådant hänseende. Inte heller ...",
+        "Motion till riksdagen 1997/98:K301 av Barbro Westerholm (fp) Det fria ordet Yttrandefriheten är en grundläggande del av de mänskliga rättigheterna som måste värnas varhelst hot mot den uppstår. Idag k...",
+        "RF 2 kap. Grundläggande fri- och rättigheter 21 §\n21 § Begränsningar enligt 20 § får göras endast för att \r\ntillgodose ändamål som är godtagbara i ett demokratiskt \r\nsamhälle. Begränsningen får aldrig..."
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": true,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 390
+      },
+      "passed": false,
+      "error": null
+    },
+    {
+      "id": "sfs_02",
+      "query": "Vilka grundläggande fri- och rättigheter skyddas i RF 2 kap?",
+      "intent": "SFS_PRIMARY",
+      "answer": "Yttrandefrihet, informationsfrihet, mötesfrihet, demonstrationsfrihet, föreningsfrihet, religionsfrihet, rörelsefrihet, skydd mot kroppsligt ingrepp, skydd mot husrannsakan, skydd mot frihetsberövande.",
+      "contexts": [
+        "RF 2 kap. Grundläggande fri- och rättigheter 20 §\n20 § Följande fri- och rättigheter får, i den utsträckning som \r\nmedges i 21-24 §§, begränsas genom lag:\r\n\r\n1. yttrandefriheten, informationsfriheten,...",
+        "RF 2 kap. Grundläggande fri- och rättigheter 1 §\n1 § Var och en är gentemot det allmänna tillförsäkrad\r\n\r\n1. yttrandefrihet: frihet att i tal, skrift eller bild eller \r\npå annat sätt meddela upplysnin...",
+        "RF 2 kap. Grundläggande fri- och rättigheter 5 §\n5 §§, mot kroppsvisitation, husrannsakan och liknande intrång, \r\nmot intrång i förtroliga försändelser och meddelanden samt i \r\növrigt mot intrång som ...",
+        "RF 2 kap. Grundläggande fri- och rättigheter 21 §\n21 § Begränsningar enligt 20 § får göras endast för att \r\ntillgodose ändamål som är godtagbara i ett demokratiskt \r\nsamhälle. Begränsningen får aldrig...",
+        "RF 2 kap. Grundläggande fri- och rättigheter 6 §\n6 § Var och en är gentemot det allmänna skyddad mot påtvingat \r\nkroppsligt ingrepp även i andra fall än som avses i 4 och"
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": true,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 125
+      },
+      "passed": false,
+      "error": null
+    },
+    {
+      "id": "sfs_03",
+      "query": "Vad innebär tryckfriheten enligt TF?",
+      "intent": "SFS_PRIMARY",
+      "answer": "Varje svensk medborgare är gentemot det allmänna tillförsäkrad rätt att i tryckt skrift yttra sina tankar och åsikter, att offentliggöra allmänna handlingar samt att meddela uppgifter och underrättelser i vad ämne som helst.",
+      "contexts": [
+        "TF 1 kap. Tryckfriheten 1 §\n1 § Tryckfriheten syftar till att säkerställa ett fritt \r\nmeningsutbyte, en fri och allsidig upplysning och ett fritt \r\nkonstnärligt skapande.\r\n\r\nTryckfriheten innebär en f...",
+        "TF 7 kap. Tryckfrihetsbrott, meddelarbrott och anskaffarbrott 1 §\n1 § Med beaktande av tryckfrihetens syfte att säkerställa ett \r\nfritt meningsutbyte, en fri och allsidig upplysning och ett \r\nfritt ko...",
+        "TF 1 kap. Tryckfriheten 10 §\n10 § Den som ska döma över missbruk av tryckfriheten eller på \r\nannat sätt vaka över att denna grundlag efterlevs bör alltid \r\nha i åtanke att tryckfriheten är en grundval...",
+        "TF 1 kap. Tryckfriheten 7 §\n7 § Det står var och en fritt att meddela uppgifter i vilket \r\nämne som helst i syfte att de ska göras offentliga i en tryckt \r\nskrift (meddelarfrihet). Denna frihet avser ...",
+        "TF 7 kap. Tryckfrihetsbrott, meddelarbrott och anskaffarbrott 11 §\n11 § Som tryckfrihetsbrott anses brott mot medborgerlig frihet \r\nsom innebär att någon utövar olaga hot med uppsåt att påverka \r\nden ..."
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": true,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 174
+      },
+      "passed": false,
+      "error": null
+    },
+    {
+      "id": "sfs_04",
+      "query": "Vad säger YGL om rätten att sända radio och tv?",
+      "intent": "SFS_PRIMARY",
+      "answer": "Varje svensk medborgare är gentemot det allmänna tillförsäkrad rätt att i ljudradio, tv och vissa liknande överföringar, offentliga uppspelningar ur en databas samt filmer, videogram, ljudupptagningar och andra tekniska upptagningar offentligen yttra tankar, åsikter och känslor samt i övrigt lämna uppgifter i vad ämne som helst.",
+      "contexts": [
+        "YGL 3 kap. Rätten att sända, framställa och sprida 3 §\n3 § Rätten att sända program på annat sätt än genom tråd får \r\nregleras genom lag som innehåller föreskrifter om tillstånd \r\noch villkor för att ...",
+        "YGL 3 kap. Rätten att sända, framställa och sprida 5 §\n5 § I fråga om sådana begränsningar i rätten att sända program \r\nsom avses i 2-4 §§ gäller vad som föreskrivs om begränsningar \r\nav grundläggande...",
+        "YGL 1 kap. Yttrandefriheten enligt denna grundlag 2 §\n2 § I denna grundlag avses med\r\n\r\nprogram: innehållet i ljudradio, tv eller andra sådana \r\növerföringar av ljud, bild eller text som sker med hjäl...",
+        "YGL 3 kap. Rätten att sända, framställa och sprida 7 §\n7 § Frågor om rätten att sända program ska kunna prövas av \r\ndomstol eller av en nämnd vars sammansättning är bestämd i lag \r\noch vars ordförande...",
+        "YGL 3 kap. Rätten att sända, framställa och sprida 1 §\n1 § Varje fysisk och juridisk person har rätt att sända \r\nprogram genom tråd. Lag (2018:1802)."
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": true,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 99
+      },
+      "passed": false,
+      "error": null
+    },
+    {
+      "id": "sfs_05",
+      "query": "När gäller sekretess enligt OSL?",
+      "intent": "SFS_PRIMARY",
+      "answer": "Sekretess gäller för uppgift som anges i 6-40 kap. om det inte är uppenbart att uppgiften kan röjas utan att den enskilde eller det allmänna intresse som sekretessen ska skydda lider skada.",
+      "contexts": [
+        "OSL 10 kap. Sekretessbrytande bestämmelser och bestämmelser om 1 §\n1 § Att sekretess till skydd för en enskild inte hindrar att\r\nen uppgift lämnas till en annan enskild eller till en\r\nmyndighet, om de...",
+        "OSL 7 kap. Grundläggande bestämmelser 1 §\n1 § Gäller förbud enligt denna lag mot att röja en uppgift,\r\nfår uppgiften inte heller i övrigt utnyttjas utanför den\r\nverksamhet för vilken den är sekretessr...",
+        "OSL 33 kap. 2 eller 4 a §, 36 kap. 3 § eller 40 kap. 2 eller 5 § 24 §\n24 § Sekretess som följer av andra sekretessbestämmelser än \r\ndem som anges i 19-23 §§, 25 kap. 2 § första stycket och",
+        "OSL 18 kap. Sekretess till skydd främst för intresset av att 11 §\n11 § Sekretess gäller, utöver vad som följer av 1-3 och 8-",
+        "OSL 40 kap. 2 och 5 §§. Lag (2025:934). 21 §\n21 § Sekretessen enligt 25 kap. 1 §, 2 § andra stycket och 3-"
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": true,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 134
+      },
+      "passed": false,
+      "error": null
+    },
+    {
+      "id": "sfs_06",
+      "query": "Vad säger förvaltningslagen om myndigheters serviceskyldighet?",
+      "intent": "SFS_PRIMARY",
+      "answer": "En myndighet ska lämna upplysningar, vägledning, råd och annan sådan hjälp till enskilda i frågor som rör myndighetens verksamhetsområde. Hjälpen ska lämnas i den utsträckning som är lämplig med hänsyn till frågans art, den enskildes behov av hjälp och myndighetens verksamhet.",
+      "contexts": [
+        "RF 12 kap. Förvaltningen 7 §\n7 § Grundläggande bestämmelser om statligt anställdas \r\nrättsställning i andra hänseenden än de som berörs i denna \r\nregeringsform meddelas i lag. Lag (2010:1408).\r\n\r\nDisp...",
+        "RF 12 kap. Förvaltningen 4 §\n4 § Förvaltningsuppgifter kan överlämnas åt kommuner.\r\n\r\nFörvaltningsuppgifter kan även överlämnas åt andra juridiska \r\npersoner och enskilda individer. Innefattar uppgift...",
+        "RF 12 kap. Förvaltningen 1 §\n1 § Under regeringen lyder Justitiekanslern och andra statliga \r\nförvaltningsmyndigheter som inte enligt denna regeringsform \r\neller annan lag är myndigheter under riksdag...",
+        "Observera att dokumentet är inskannat och fel kan förekomma. Regeringens proposition 1985/86:80 om ny förvaltningslag Prop. 1985/86:80 Regeringen föreslår riksdagen atl anta de förslag som har tagits ...",
+        "Observera att dokumentet är inskannat och fel kan förekomma. Motion till riksdagen 1985/86:293 Anders Björck m. fl. (m) Ny förvaltningslag (prop. 1985/86:80) Den enskildes rättssäkerhet i förvaltnings..."
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": true,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 133
+      },
+      "passed": false,
+      "error": null
+    },
+    {
+      "id": "sfs_07",
+      "query": "Hur lång tid har en myndighet på sig att handlägga ett ärende?",
+      "intent": "SFS_PRIMARY",
+      "answer": "Ärenden ska handläggas så enkelt, snabbt och kostnadseffektivt som möjligt utan att rättssäkerheten eftersätts. Det finns ingen absolut tidsgräns, men skyndsamhetsprincipen gäller.",
+      "contexts": [
+        "FL  12 §\n12 § Om ett ärende som har inletts av en enskild part inte \r\nhar avgjorts i första instans senast inom sex månader, får \r\nparten skriftligen begära att myndigheten ska avgöra ärendet. \r\nMyndi...",
+        "2018:218 6 kap. Tillsynsmyndighetens handläggning och beslut 8 §\n8 § Om tillsynsmyndigheten inte inom tre månader från den dag \r\ndå ett klagomål kom in till myndigheten har tagit ställning \r\ntill om t...",
+        "FL  44 §\n44 § Ett överklagande av ett beslut ska ha kommit in till \r\nbeslutsmyndigheten inom tre veckor från den dag då den som \r\növerklagar fick del av beslutet genom den myndigheten. Om den \r\nsom öv...",
+        "RB 59 kap. Om klagan över domvilla m.m. 2 §\n2 § Den som vill klaga över domvilla skall göra detta\r\nskriftligen. Skrivelsen skall ges in till hovrätten, om domen\r\nmeddelats av tingsrätt, och i annat fa...",
+        "RB 26 kap. Om kvarstad 5 §\n5 § Då rätten förordnar om kvarstad, skall, om ej åtal redan väckts,\r\nrätten utsätta den tid, inom vilken åtal skall väckas. Denna får ej\r\nbestämmas längre än som är oundgän..."
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": true,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 120
+      },
+      "passed": false,
+      "error": null
+    },
+    {
+      "id": "sfs_08",
+      "query": "Vad säger Brottsbalken om stöld?",
+      "intent": "SFS_PRIMARY",
+      "answer": "Den som tager vad annan tillhör, i syfte att tillägna sig det, dömes för stöld till fängelse i högst två år.",
+      "contexts": [
+        "1962:700 8 kap. Om stöld, rån och andra tillgreppsbrott 1 §\n1 § Den som olovligen tager vad annan tillhör med uppsåt att tillägna\r\nsig det, dömes, om tillgreppet innebär skada, för stöld till fängelse...",
+        "1962:700 8 kap. Om stöld, rån och andra tillgreppsbrott 2 §\n2 § Är brott som avses i 1 § med hänsyn till det tillgripnas \r\nvärde och övriga omständigheter vid brottet att anse som \r\nringa, döms för ri...",
+        "1962:700 8 kap. Om stöld, rån och andra tillgreppsbrott 9 §\n9 § Den som vidtar någon sådan åtgärd som avses i 8 § för att \r\nsjälv ta sig rätt döms för självtäkt till böter eller \r\nfängelse i högst sex...",
+        "1962:700 8 kap. Om stöld, rån och andra tillgreppsbrott 5 §\n5 § Den som med våld på person eller med hot som innebär eller \r\nför den hotade framstår som trängande fara,\r\n\r\n1. begår stöld, \r\n\r\n2. tving...",
+        "1962:700 8 kap. Om stöld, rån och andra tillgreppsbrott 8 §\n8 § Den som, i annat fall än som anges i detta kapitel, \r\nolovligen tar och brukar eller på annat sätt tillgriper \r\nnågot, döms för egenmäkt..."
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": true,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 95
+      },
+      "passed": false,
+      "error": null
+    },
+    {
+      "id": "praxis_01",
+      "query": "Hur fungerar offentlighetsprincipen?",
+      "intent": "PRAXIS",
+      "answer": "Offentlighetsprincipen innebär att allmänna handlingar är offentliga och att var och en har rätt att ta del av dem, om inte sekretess gäller. Principen regleras i TF 2 kap. och OSL.",
+      "contexts": [
+        "Motion till riksdagen 2010/11:K337 av Clas-Göran Carlsson m.fl. (S) Utökad meddelarfrihet s78044 F&ouml;rslag till riksdagsbeslut Riksdagen tillk&auml;nnager f&ouml;r regeringen som sin mening vad som...",
+        "Observera att dokumentet är inskannat och fel kan förekomma. 2 Motion 1979/80:99 av Lars Werner m. fl. med anledning av propositionen 1979/80:2 med förslag till sekretesslag m. m. 1 Det nya förslaget ...",
+        "Observera att dokumentet är inskannat och fel kan förekomma. Motion 1975/76:2379 av herr Winberg m. fl. med anledning av propositionen 1975/76:160 om nya grundlagsbestämmelser angående allmänna handli...",
+        "den 25 juni Svar p&aring; fr&aring;ga 2002/03:1123 om insyn i offentligt finansierad verksamhet Justitieminister Thomas Bodstr&ouml;m Henrik S J&auml;rrel har fr&aring;gat mig vilka &aring;tg&auml;rde...",
+        "Motion till riksdagen 1997/98:K407 av Förste vice talman Anders Björck m.fl. (m) Missbruk av offentlighetsprincipen 1 Sammanfattning I motionen uppmärksammas två fall i vilka den svenska offentlighets..."
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": false,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 86
+      },
+      "passed": false,
+      "error": null
+    },
+    {
+      "id": "praxis_02",
+      "query": "Hur begär jag ut allmänna handlingar?",
+      "intent": "PRAXIS",
+      "answer": "Du behöver inte motivera varför du vill ha handlingen. Begäran kan göras muntligt eller skriftligt. Myndigheten ska lämna ut handlingen genast eller så snart som möjligt.",
+      "contexts": [
+        "OSL 4 kap. Allmänna åtgärder för att underlätta sökande efter 1 §\n1 § En myndighet ska ta hänsyn till rätten att ta del av\r\nallmänna handlingar när den organiserar hanteringen av sådana\r\nhandlingar oc...",
+        "TF 2 kap. Allmänna handlingars offentlighet 16 §\n16 § Den som önskar ta del av en allmän handling har även rätt \r\natt mot en fastställd avgift få en avskrift eller kopia av \r\nhandlingen till den del h...",
+        "TF 2 kap. Allmänna handlingars offentlighet 15 §\n15 § Den som begär ut en allmän handling som får lämnas ut ska \r\ngenast eller så snart det är möjligt och utan avgift få ta del \r\nav handlingen på stäl...",
+        "OSL 4 kap. Allmänna åtgärder för att underlätta sökande efter 2 §\n2 § Varje myndighet ska upprätta en beskrivning som ger\r\ninformation om\r\n\r\n1. myndighetens organisation och verksamhet i syfte att\r\nun...",
+        "OSL 6 kap. Utlämnande av allmänna handlingar och uppgifter, 4 §\n4 § En myndighet ska på begäran av en enskild lämna uppgift\r\nur en allmän handling som förvaras hos myndigheten, om inte\r\nuppgiften är s..."
+      ],
+      "metrics": {
+        "sources_count": 10,
+        "primary_source": true,
+        "evidence_level": "red",
+        "warden_status": "SKIPPED",
+        "claim_strips": 0,
+        "degrade_count": 0,
+        "faithfulness": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0,
+        "latency_ms": 100
+      },
+      "passed": false,
+      "error": null
+    }
+  ]
+}

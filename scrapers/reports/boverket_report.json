@@ -1,0 +1,42 @@
+{
+  "total_documents": 10,
+  "successful": 5,
+  "failed": 5,
+  "skipped_duplicates": 0,
+  "categories": {
+    "Rapporter": 1,
+    "Övrigt": 4
+  },
+  "start_time": "2025-12-07T19:42:20.296637",
+  "errors": [
+    {
+      "url": "https://rinfo.boverket.se/BFS2022-4/pdf/BFS2022-4.pdf",
+      "error": "404 Client Error: Not Found for url: https://rinfo.boverket.se/BFS2022-4/pdf/BFS2022-4.pdf",
+      "stage": "download"
+    },
+    {
+      "url": "https://rinfo.boverket.se/BFS2023-1/pdf/BFS2023-1.pdf",
+      "error": "404 Client Error: Not Found for url: https://rinfo.boverket.se/BFS2023-1/pdf/BFS2023-1.pdf",
+      "stage": "download"
+    },
+    {
+      "url": "https://rinfo.boverket.se/BFS2023-2/pdf/BFS2023-2.pdf",
+      "error": "404 Client Error: Not Found for url: https://rinfo.boverket.se/BFS2023-2/pdf/BFS2023-2.pdf",
+      "stage": "download"
+    },
+    {
+      "url": "https://rinfo.boverket.se/BFS2023-3/pdf/BFS2023-3.pdf",
+      "error": "404 Client Error: Not Found for url: https://rinfo.boverket.se/BFS2023-3/pdf/BFS2023-3.pdf",
+      "stage": "download"
+    },
+    {
+      "url": "https://rinfo.boverket.se/BFS2021-3/pdf/BFS2021-3.pdf",
+      "error": "404 Client Error: Not Found for url: https://rinfo.boverket.se/BFS2021-3/pdf/BFS2021-3.pdf",
+      "stage": "download"
+    }
+  ],
+  "end_time": "2025-12-07T19:42:29.688637",
+  "duration_seconds": 9.392,
+  "flagged": true,
+  "flag_reason": "Only 5 documents collected (minimum: 100)"
+}

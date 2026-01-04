@@ -1,0 +1,15 @@
+{
+  "source": "jordbruksverket",
+  "scraped_at": "2025-12-07T19:25:36.272992",
+  "duration_seconds": 162.31,
+  "stats": {
+    "foreskrifter": 51,
+    "rapporter": 61,
+    "statistik": 4,
+    "vagledningar": 1,
+    "errors": 0,
+    "total": 117
+  },
+  "flagged": false,
+  "flag_reason": null
+}

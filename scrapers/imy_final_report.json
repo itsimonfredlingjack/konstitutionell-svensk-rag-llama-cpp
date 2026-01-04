@@ -1,0 +1,103 @@
+{
+  "agency": "imy",
+  "full_name": "Integritetsskyddsmyndigheten",
+  "timestamp": "2025-12-07T20:53:00.000Z",
+  "scraper_version": "imy_scraper_v2.py",
+  "chromadb_collection": "swedish_gov_docs",
+  "chromadb_path": "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/chromadb_data",
+
+  "summary": {
+    "total_documents": 84,
+    "status": "FLAGGED",
+    "reason": "Below 100-document threshold",
+    "by_type": {
+      "tillsynsbeslut": 83,
+      "föreskrift": 1
+    }
+  },
+
+  "scraping_strategy": {
+    "main_pages_scraped": [
+      "https://www.imy.se/tillsyner/ (pages 1-9)",
+      "https://www.imy.se/om-oss/aktuellt-fran-oss/praxisbeslut/",
+      "https://www.imy.se/om-oss/aktuellt-fran-oss/foreskrifter-och-allmanna-rad/",
+      "https://www.imy.se/vagledningar/",
+      "https://www.imy.se/verksamhet/dataskydd/"
+    ],
+    "pagination_depth": 9,
+    "max_links_per_page": "30-50"
+  },
+
+  "document_types_found": {
+    "tillsynsbeslut": {
+      "count": 83,
+      "description": "Supervision decisions including GDPR sanctions",
+      "examples": [
+        "Försäkringskassan - GDPR-beslut",
+        "Sverigedemokraterna - Dataskydd",
+        "Spotify - Rätten till tillgång",
+        "Klarna Bank AB - Rättelse",
+        "H&M Hennes & Mauritz - GDPR"
+      ]
+    },
+    "föreskrift": {
+      "count": 1,
+      "description": "Regulations and general advice from IMY",
+      "source": "https://www.imy.se/om-oss/aktuellt-fran-oss/foreskrifter-och-allmanna-rad/"
+    }
+  },
+
+  "coverage_analysis": {
+    "scraped": [
+      "GDPR tillsynsbeslut",
+      "Sanktionsavgifter",
+      "Kamerabevakning-beslut",
+      "Kreditupp lysning-beslut",
+      "Praxisbeslut"
+    ],
+    "potentially_missing": [
+      "Older decisions (pre-2022)",
+      "Detailed PDF content from beslut",
+      "Vägledningar (only scraped main pages, not all linked documents)",
+      "Allmänna råd (general advice documents)"
+    ]
+  },
+
+  "data_quality": {
+    "content_captured": "HTML pages scraped, main text extracted",
+    "pdf_extraction": "Attempted but many PDFs skipped due to errors",
+    "content_limit": "10,000 characters per document",
+    "metadata_captured": [
+      "url",
+      "title",
+      "type",
+      "source (imy)",
+      "scraped_at"
+    ]
+  },
+
+  "recommendations": {
+    "to_reach_100_docs": [
+      "Scrape more vägledningar from /vagledningar/ subdirectories",
+      "Download and extract all linked PDFs from beslut pages",
+      "Scrape archived decisions from previous years",
+      "Include allmänna råd (general advice) as separate documents",
+      "Scrape AI-related guidance from /verksamhet/ai/"
+    ],
+    "technical_improvements": [
+      "Fix PDF extraction (many failed silently)",
+      "Implement better pagination detection",
+      "Add retry logic for failed requests",
+      "Increase timeout for large PDFs"
+    ]
+  },
+
+  "warning": "FLAGGED: Only 84 documents found (threshold: 100)",
+
+  "next_steps": [
+    "Run enhanced scraper with PDF fixes",
+    "Scrape vägledningar more aggressively",
+    "Query ChromaDB to verify all 84 docs were saved",
+    "Consider if threshold should be adjusted for smaller agencies"
+  ]
+}

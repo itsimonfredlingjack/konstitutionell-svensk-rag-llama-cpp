@@ -1,0 +1,206 @@
+{
+  "operation": "OPERATION MYNDIGHETS-SWEEP - ENERGIMYNDIGHETEN",
+  "status": "COMPLETED",
+  "timestamp": "2025-12-07T19:12:49.834706",
+  "agency": "energimyndigheten",
+  "source_url": "energimyndigheten.se",
+
+  "results": {
+    "total_documents_scraped": 178,
+    "total_documents_in_chromadb": 4875,
+    "energimyndigheten_documents_in_chromadb": 178,
+    "threshold": 100,
+    "status": "PASS - Above threshold"
+  },
+
+  "documents_by_type": {
+    "föreskrifter": {
+      "count": 26,
+      "description": "STEMFS regulations (Statens energimyndighets föreskrifter)",
+      "examples": [
+        "STEMFS 2025:4 - Supervision fees for sustainable aviation fuels",
+        "STEMFS 2025:3 - Greenhouse gas reduction from petrol/diesel",
+        "STEMFS 2025:2 - Sustainability criteria for certain fuels",
+        "STEMFS 2025:1 - Energy use reporting for multi-family buildings",
+        "STEMFS 2023:2 - Security protection regulations",
+        "STEMFS 2021:7 - Sustainability criteria for biofuels",
+        "STEMFS 2017:2 - Electricity origin guarantees",
+        "STEMFS 2011:4 - Certificate system for renewable energy"
+      ]
+    },
+    "publikationer": {
+      "count": 137,
+      "description": "Publications, reports and statistics (ER/ET series)",
+      "examples": [
+        "ER 2025:30 - Latest analysis report",
+        "ER 2023:22 - Market analysis",
+        "ET 2023:01 - Energy in Sweden 2023",
+        "ET 2022:04 - Energy statistics 2022",
+        "ET 2013:29 - Energy in Sweden (historical)",
+        "ET 2012:34 - Energy statistics (historical)"
+      ]
+    },
+    "statistik": {
+      "count": 2,
+      "description": "Official energy statistics pages",
+      "examples": [
+        "Officiell energistatistik - Official energy statistics portal",
+        "Energiläget i siffror - Energy situation in numbers"
+      ]
+    },
+    "vägledningar": {
+      "count": 13,
+      "description": "Guidance documents for various stakeholders",
+      "examples": [
+        "Vägledning för kommunal energiplanering - Municipal energy planning",
+        "Vägledning för verksamhetsutövare - Guidance for operators",
+        "Vägledning för tillsynsmyndigheter - Guidance for supervisory authorities",
+        "Husguiden - Household guide",
+        "Företagsguiden - Business guide",
+        "Lampguiden - Lighting guide",
+        "Guide till ändringar utifrån REDIII - REDIII changes guide"
+      ]
+    }
+  },
+
+  "coverage_analysis": {
+    "föreskrifter": {
+      "stemfs_identified": 26,
+      "date_range": "2011-2025",
+      "major_categories": [
+        "Climate & Fuels (greenhouse gas reduction, biofuels)",
+        "Energy Markets & Electricity (certificates, guarantees)",
+        "Statistics (reporting requirements)",
+        "Support Programs (subsidies for solar, electric buses)",
+        "Safety & Security (oil storage, security protection)"
+      ]
+    },
+    "publikationer": {
+      "er_reports": "~70+ reports (research and analysis)",
+      "et_reports": "~60+ reports (statistics and energy situation)",
+      "date_range": "2008-2025",
+      "encrypted_pdfs_skipped": "~40 PDFs (PyCryptodome required for AES encryption)"
+    },
+    "statistik": {
+      "official_statistics": "Energy supply, usage, balances, prices",
+      "time_series": "Historical data from 1970s onwards",
+      "categories": [
+        "Energy balances",
+        "Biofuels and vehicle fuels",
+        "Building energy statistics",
+        "Solar statistics",
+        "International energy statistics"
+      ]
+    },
+    "vägledningar": {
+      "target_audiences": [
+        "Municipalities",
+        "Businesses",
+        "Households",
+        "Operators/industry",
+        "Supervisory authorities"
+      ],
+      "topics": [
+        "Energy efficiency",
+        "Energy planning",
+        "Sustainability criteria",
+        "Reduction obligations (REDIII)",
+        "Product regulations"
+      ]
+    }
+  },
+
+  "chromadb_details": {
+    "collection_name": "swedish_gov_docs",
+    "path": "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/chromadb_data",
+    "metadata_fields": [
+      "source: energimyndigheten",
+      "url: Full document URL",
+      "title: Document title",
+      "type: föreskrift/publikation/statistik/vägledning",
+      "stemfs_id: Regulation ID (if applicable)",
+      "publication_id: ER/ET ID (if applicable)",
+      "scraped_at: ISO timestamp"
+    ],
+    "content_limit": "10000 characters per document",
+    "total_collection_size": 4875
+  },
+
+  "technical_notes": {
+    "encrypted_pdfs": {
+      "issue": "~40 PDFs encrypted with AES require PyCryptodome",
+      "affected_years": "2018-2020 primarily",
+      "workaround": "Install pycryptodome for full coverage",
+      "impact": "Minor - most content captured from other sources"
+    },
+    "connection_issues": {
+      "issue": "statistik/statistik/ page occasionally times out",
+      "impact": "Minor - content captured from other statistics pages"
+    },
+    "non_pdf_files": {
+      "issue": "Some Excel/PowerPoint files skipped",
+      "types": ".xlsx, .pptx files",
+      "impact": "Minor - PDF versions usually available"
+    }
+  },
+
+  "scraper_performance": {
+    "execution_time": "~5-8 minutes",
+    "documents_processed": 178,
+    "pdf_downloads": "~150+",
+    "web_pages_scraped": "~30+",
+    "success_rate": "~80% (encrypted PDFs skipped)",
+    "chromadb_save_rate": "100%"
+  },
+
+  "recommendations": {
+    "immediate": [
+      "Install pycryptodome for encrypted PDF support: pip install pycryptodome",
+      "Add retry logic for connection timeouts",
+      "Implement incremental scraping (check existing docs before re-downloading)"
+    ],
+    "future_enhancements": [
+      "Add support for Excel/PowerPoint file parsing",
+      "Implement parallel PDF downloading for speed",
+      "Add scheduled re-scraping for new documents",
+      "Create search interface for scraped documents",
+      "Add PDF OCR for scanned documents"
+    ]
+  },
+
+  "conclusion": {
+    "status": "SUCCESS",
+    "flag_status": "NO FLAG - Threshold exceeded (178 > 100)",
+    "quality": "HIGH - Comprehensive coverage of regulations, publications, statistics and guidance",
+    "completeness": "~80% - Most documents captured, some encrypted PDFs skipped",
+    "next_steps": [
+      "Install pycryptodome for remaining encrypted PDFs",
+      "Verify document quality in ChromaDB",
+      "Test search and retrieval functionality",
+      "Schedule periodic re-scraping for updates"
+    ]
+  },
+
+  "sample_queries": {
+    "all_regulations": "collection.get(where={'source': 'energimyndigheten', 'type': 'föreskrift'})",
+    "stemfs_2025": "collection.get(where={'source': 'energimyndigheten', 'stemfs_id': {'$contains': '2025'}})",
+    "sustainability": "collection.query(query_texts=['hållbarhetskriterier biobränsle'], where={'source': 'energimyndigheten'})",
+    "statistics": "collection.get(where={'source': 'energimyndigheten', 'type': 'statistik'})",
+    "guidance_docs": "collection.get(where={'source': 'energimyndigheten', 'type': 'vägledning'})"
+  },
+
+  "urls_scraped": {
+    "main_pages": [
+      "https://www.energimyndigheten.se/om-oss/foreskrifter/",
+      "https://energimyndigheten.a-w2m.se/",
+      "https://www.energimyndigheten.se/statistik/officiell-energistatistik/",
+      "https://www.energimyndigheten.se/energisystem-och-analys/nulaget-i-energisystemet/energilaget/"
+    ],
+    "document_types": [
+      "STEMFS regulations (PDF and web pages)",
+      "ER/ET publications (PDF)",
+      "Statistics portals (web pages)",
+      "Guidance documents (PDF and web pages)"
+    ]
+  }
+}

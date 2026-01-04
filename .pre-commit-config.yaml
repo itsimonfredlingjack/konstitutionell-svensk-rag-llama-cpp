@@ -1,0 +1,96 @@
+# Pre-commit hooks for Constitutional AI
+# Install: pip install pre-commit && pre-commit install
+# Run all: pre-commit run --all-files
+
+repos:
+  # General file fixes
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+        exclude: '(\.json|\.svg)$'
+      - id: check-yaml
+        args: [--unsafe]  # Allow custom tags
+      - id: check-json
+        exclude: 'node_modules/'
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Python - Ruff (linting + formatting)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        exclude: |
+          (?x)^(
+            venv/|
+            venv_scraper/|
+            node_modules/|
+            chromadb_data/|
+            pdf_cache/|
+            apps/
+          )
+      # Formatter
+      - id: ruff-format
+        exclude: |
+          (?x)^(
+            venv/|
+            venv_scraper/|
+            node_modules/|
+            chromadb_data/|
+            pdf_cache/|
+            apps/
+          )
+
+  # Python - Type checking (optional, runs on CI)
+  # Uncomment when ready for stricter type checking
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.8.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies: [types-requests]
+  #       exclude: |
+  #         (?x)^(
+  #           venv/|
+  #           venv_scraper/|
+  #           node_modules/
+  #         )
+
+  # TypeScript/JavaScript - ESLint
+  # Run: cd apps/<app> && npm run lint
+  - repo: local
+    hooks:
+      - id: eslint-constitutional-gpt
+        name: ESLint (constitutional-gpt)
+        entry: bash -c 'cd apps/constitutional-gpt && npm run lint 2>/dev/null || true'
+        language: system
+        files: '^apps/constitutional-gpt/.*\.(ts|tsx|js|jsx)$'
+        pass_filenames: false
+
+      - id: eslint-constitutional-dashboard
+        name: ESLint (constitutional-dashboard)
+        entry: bash -c 'cd apps/constitutional-dashboard && npm run lint 2>/dev/null || true'
+        language: system
+        files: '^apps/constitutional-dashboard/.*\.(ts|tsx|js|jsx)$'
+        pass_filenames: false
+
+  # Markdown linting (optional)
+  # - repo: https://github.com/igorshubovych/markdownlint-cli
+  #   rev: v0.38.0
+  #   hooks:
+  #     - id: markdownlint
+  #       args: [--fix]
+
+# CI Configuration
+ci:
+  autofix_commit_msg: 'style: auto-fix by pre-commit hooks'
+  autofix_prs: true
+  autoupdate_commit_msg: 'chore: update pre-commit hooks'
+  autoupdate_schedule: monthly
+  skip: [eslint-constitutional-gpt, eslint-constitutional-dashboard]  # Skip in CI, run separately

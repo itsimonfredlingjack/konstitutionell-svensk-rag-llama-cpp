@@ -1,0 +1,17 @@
+# OCR Dependencies for Constitutional AI
+# Install with: pip install -r requirements_ocr.txt
+
+# PDF Processing
+PyMuPDF>=1.23.0  # fitz - Fast PDF text extraction
+
+# OCR Engine
+paddlepaddle-gpu>=2.6.0  # GPU-accelerated (requires CUDA)
+# paddlepaddle>=2.6.0  # CPU-only fallback (uncomment if no GPU)
+paddleocr>=2.7.0  # OCR engine with multilingual support
+
+# Image Processing
+Pillow>=10.0.0  # Image handling
+
+# Optional: Alternative OCR engines (uncomment if needed)
+# pytesseract>=0.3.10  # Tesseract OCR wrapper
+# rapidocr-onnxruntime>=1.3.0  # Lightweight ONNX-based OCR

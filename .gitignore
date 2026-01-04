@@ -1,45 +1,113 @@
-# --- System & IDE ---
-.DS_Store
-.vscode/
-.idea/
+# Python
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# --- Environments (ALDRIG KÄNDA!) ---
+# Virtual environments
 venv/
-.venv/
+venv_scraper/
 env/
-node_modules/
+ENV/
+.venv/
 
-# --- Secrets (LIVSVIKTIGT!) ---
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Database files
+*.db
+*.sqlite3
+*.sqlite
+corpus_bridge.db
+chroma_db/
+chromadb/
+
+# Data directories
+chromadb_data/
+pdf_cache/
+scraped_data/
+harvest_results/
+logs/
+backups/
+data/
+downloads/
+temp/
+raw_data/
+
+# Cache and temporary files
+.cache/
+*.cache
+*.log
+*.tmp
+
+# Project specific
+benchmark_results.json
+kommuner_batch_list.json
+_TEMP_DUMP/
+
+# AI/ML models and data
+*.bin
+*.pt
+*.pth
+*.h5
+*.pkl
+*.pickle
+
+# Archive and old files
+archive/
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Environment variables
 .env
 .env.local
 config_local.py
 
-# --- Database & Storage ---
-*.db
-*.sqlite3
-chroma_db/
-chromadb/
+# Claude/Cursor specific
+.claude-flow/
+.conductor/
+.context/
+.hive-mind/
+.swarm/
 
-# --- Logs ---
-*.log
-logs/
-
-# --- SCRAPED DATA & JUNK (Anpassa dessa namn!) ---
-scraped_data/
-downloads/
-temp/
-raw_data/
+# Large documentation files that change frequently
 *.pdf
-*.csv
-*.json
+esv_docs/
+skatteverket_docs/
 
-# --- Temp Dump Organisering ---
-_TEMP_DUMP/
+# n8n workflows (if they contain sensitive data)
+n8n_workflows/
 
-# --- Specifika (behåll dessa!) ---
+# Node modules
+node_modules/
+
+# Specifika exceptions (behåll dessa!)
 !app/data/combined_training.jsonl
 !app/data/docs_qa_training.jsonl
 !app/data/eval_after_*.json
-

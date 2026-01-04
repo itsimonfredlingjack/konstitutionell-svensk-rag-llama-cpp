@@ -1,0 +1,14 @@
+{
+  "agency": "SGU",
+  "source": "sgu",
+  "total_documents": 143,
+  "document_types": {
+    "rapport": 116,
+    "periodisk_publikation": 8,
+    "karta": 8,
+    "föreskrift": 11
+  },
+  "status": "✓ SUCCESS",
+  "threshold": 100,
+  "timestamp": "2025-12-07T21:37:04.167297"
+}

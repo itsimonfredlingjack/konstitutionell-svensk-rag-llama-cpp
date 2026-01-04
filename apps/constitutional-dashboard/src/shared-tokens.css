@@ -1,0 +1,256 @@
+/**
+ * Constitutional AI Shared Design Tokens
+ * CSS-first approach via Tailwind v4 @theme
+ * Shared across all three apps
+ */
+
+@import "tailwindcss";
+
+@theme {
+  /* ========================================
+     COLORS - Void & Neon Palette
+     ======================================== */
+
+  /* Backgrounds */
+  --color-void-bg: #030305;
+  --color-void-surface: rgba(3, 3, 5, 0.8);
+
+  /* Glassmorphism */
+  --color-glass-surface: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-glass-highlight: rgba(255, 255, 255, 0.08);
+
+  /* Neon Accents */
+  --color-neon-cyan: #06b6d4;
+  --color-neon-cyan-light: #22d3ee;
+  --color-neon-cyan-dark: #0891b2;
+
+  --color-neon-purple: #7c3aed;
+  --color-neon-purple-light: #a78bfa;
+  --color-neon-purple-dark: #6d28d9;
+
+  --color-neon-emerald: #10b981;
+  --color-neon-emerald-light: #34d399;
+  --color-neon-emerald-dark: #059669;
+
+  --color-neon-amber: #f59e0b;
+  --color-neon-amber-light: #fbbf24;
+  --color-neon-amber-dark: #d97706;
+
+  --color-neon-rose: #f43f5e;
+  --color-neon-rose-light: #fb7185;
+  --color-neon-rose-dark: #e11d48;
+
+  /* Semantic Colors */
+  --color-status-online: var(--color-neon-emerald);
+  --color-status-offline: var(--color-neon-rose);
+  --color-status-syncing: var(--color-neon-amber);
+  --color-status-warning: var(--color-neon-amber);
+  --color-status-error: var(--color-neon-rose);
+  --color-status-success: var(--color-neon-emerald);
+
+  /* ========================================
+     BACKDROP BLUR LEVELS
+     ======================================== */
+
+  --backdrop-blur-glass-sm: 20px;
+  --backdrop-blur-glass-md: 40px;
+  --backdrop-blur-glass-lg: 60px;
+  --backdrop-blur-glass-xl: 80px;
+
+  /* ========================================
+     BOX SHADOWS - Glass & Glow
+     ======================================== */
+
+  --shadow-glass-sm: 0 4px 16px 0 rgba(0, 0, 0, 0.25);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --shadow-glass-lg: 0 16px 48px 0 rgba(0, 0, 0, 0.45);
+
+  /* Neon Glows */
+  --shadow-glow-cyan: 0 0 20px rgba(6, 182, 212, 0.3);
+  --shadow-glow-cyan-strong: 0 0 30px rgba(6, 182, 212, 0.5);
+  --shadow-glow-purple: 0 0 20px rgba(124, 58, 237, 0.3);
+  --shadow-glow-purple-strong: 0 0 30px rgba(124, 58, 237, 0.5);
+  --shadow-glow-emerald: 0 0 20px rgba(16, 185, 129, 0.3);
+  --shadow-glow-amber: 0 0 20px rgba(245, 158, 11, 0.3);
+  --shadow-glow-rose: 0 0 20px rgba(244, 63, 94, 0.3);
+
+  /* ========================================
+     TYPOGRAPHY
+     ======================================== */
+
+  --font-sans: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ========================================
+     BORDER RADIUS
+     ======================================== */
+
+  --radius-glass-sm: 0.5rem;    /* 8px */
+  --radius-glass-md: 0.75rem;   /* 12px */
+  --radius-glass-lg: 1rem;      /* 16px */
+  --radius-glass-xl: 1.25rem;   /* 20px */
+  --radius-glass-2xl: 1.5rem;  /* 24px */
+
+  /* ========================================
+     ANIMATION DURATIONS
+     ======================================== */
+
+  --animate-duration-fast: 200ms;
+  --animate-duration-normal: 300ms;
+  --animate-duration-slow: 500ms;
+  --animate-duration-slower: 700ms;
+
+  /* ========================================
+     SPACING SCALE
+     ======================================== */
+
+  --space-glass-xs: 0.5rem;   /* 8px */
+  --space-glass-sm: 1rem;      /* 16px */
+  --space-glass-md: 1.5rem;    /* 24px */
+  --space-glass-lg: 2rem;      /* 32px */
+  --space-glass-xl: 3rem;      /* 48px */
+  --space-glass-2xl: 4rem;     /* 64px */
+}
+
+/* ========================================
+   GLOBAL STYLES
+   ======================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-void-bg);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Glass Card Base */
+.glass-card {
+  @apply relative overflow-hidden rounded-glass-lg border border-glass-border bg-glass-surface;
+  backdrop-filter: blur(var(--backdrop-blur-glass-md));
+  box-shadow: var(--shadow-glass);
+  transition: all var(--animate-duration-normal) ease-out;
+}
+
+/* Glass Card Hover Effect */
+.glass-card-hover {
+  @apply hover:border-glass-highlight hover:bg-glass-highlight;
+}
+
+/* Glass Panel (Larger) */
+.glass-panel {
+  @apply relative overflow-hidden rounded-glass-xl border border-glass-border bg-glass-surface;
+  backdrop-filter: blur(var(--backdrop-blur-glass-lg));
+  box-shadow: var(--shadow-glass-lg);
+}
+
+/* Glare Effect */
+.glass-card::before,
+.glass-panel::before {
+  content: '';
+  @apply absolute inset-0 pointer-events-none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity var(--animate-duration-normal) ease-out;
+}
+
+.glass-card-hover:hover::before,
+.glass-panel:hover::before {
+  opacity: 1;
+}
+
+/* Neon Text Glow */
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
+}
+
+.text-glow-emerald {
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Hide Scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes pulse-neon-cyan {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(6, 182, 212, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+  }
+}
+
+@keyframes pulse-neon-purple {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(124, 58, 237, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+  }
+}
+
+.animate-pulse-neon-cyan {
+  animation: pulse-neon-cyan 2s ease-in-out infinite;
+}
+
+.animate-pulse-neon-purple {
+  animation: pulse-neon-purple 2s ease-in-out infinite;
+}
+
+/* ========================================
+   RESPONSIVE BREAKPOINTS
+   ======================================== */
+
+@custom-media --mobile (max-width: 640px);
+@custom-media --tablet (max-width: 1024px);
+@custom-media --desktop (min-width: 1025px);

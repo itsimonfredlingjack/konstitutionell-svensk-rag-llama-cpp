@@ -1,0 +1,32 @@
+# BOVERKET BULK DOCUMENT URLs
+# Format: URL|Title|Category|Year
+
+# BFS Regulations 2024
+https://rinfo.boverket.se/BFS2024-7/pdf/BFS2024-7.pdf|BFS 2024:7 - Föreskrifter om trycksystem och brandskydd|Föreskrifter|2024
+https://rinfo.boverket.se/BFS2024-9/pdf/BFS2024-9.pdf|BFS 2024:9|Föreskrifter|2024
+https://rinfo.boverket.se/BFS2024-12/pdf/BFS2024-12.pdf|BFS 2024:12 - Tillgänglighet för en- och tvåbostadshus|Föreskrifter|2024
+https://rinfo.boverket.se/BFS2024-6/pdf/BFS2024-6.pdf|BFS 2024:6|Föreskrifter|2024
+https://rinfo.boverket.se/BFS2024-2/pdf/BFS2024-2.pdf|BFS 2024:2|Föreskrifter|2024
+https://rinfo.boverket.se/BFS2024-8/pdf/BFS2024-8.pdf|BFS 2024:8 - Hygien, hälsa och miljö|Föreskrifter|2024
+https://rinfo.boverket.se/BFS2024-10/pdf/BFS2024-10.pdf|BFS 2024:10|Föreskrifter|2024
+
+# BFS Regulations 2023
+https://rinfo.boverket.se/BFS2011-16/pdf/BFS2023-4.pdf|BFS 2023:4 OVK 4 - Funktionskontroll ventilation|Föreskrifter|2023
+
+# Planning & Housing
+https://www.boverket.se/globalassets/publikationer/dokument/2019/konsten-att-bygga-en-stad-webb.pdf|Konsten att bygga en stad - svenska stadsplaner genom seklerna|Rapport|2019
+https://www.boverket.se/globalassets/publikationer/dokument/2022/ramverk-for-nationell-planering---slutrapport.pdf|Ramverk för nationell planering - Slutrapport|Rapport|2022
+https://www.boverket.se/globalassets/publikationer/dokument/2005/bygga_bra_bostader.pdf|Bygga Bra Bostäder|Handbok|2005
+https://www.boverket.se/contentassets/56b41b3b67c84d27bcd3245894c535fe/vasternorrlands-lan-2024.pdf|Bostadsmarknadsanalys 2024 Västernorrlands län|Rapport|2024
+https://www.boverket.se/contentassets/d6136e8e4ff143728ce52bdb20b6148f/pbl-kunskapsbanken-dp-fram-till-20141222.pdf|PBL kunskapsbanken Detaljplanering 2014|Vägledning|2014
+https://www.boverket.se/globalassets/publikationer/dokument/2007/bostadspolitiken.pdf|Bostadspolitiken - 130 år av svensk politik|Rapport|2007
+https://www.boverket.se/globalassets/publikationer/dokument/2014/samordna-planeringen-for-bebyggelse-och-transporter.pdf|Samordna planeringen för bebyggelse och transporter - Kunskapsöversikt|Rapport|2014
+
+# Accessibility & Elevators
+https://www.boverket.se/globalassets/publikationer/dokument/2012/bfs-2012-11-h-14.pdf|BFS 2012:11 H 14 - Föreskrifter om hissar och motordrivna anordningar|Föreskrifter|2012
+https://www.boverket.se/resources/constitutiontextstore/h/PDF/konsoliderad_h_bfs_2011-12.pdf|Konsoliderad H BFS 2011:12 - Hissar och lyftanordningar|Föreskrifter|2011
+https://www.boverket.se/globalassets/publikationer/dokument/2005/tillgangliga_platser.pdf|Tillgängliga platser|Handbok|2005
+https://www.boverket.se/globalassets/publikationer/dokument/2022/uppdrag-att-utreda-atgarder-for-vissa-sakerhetsrisker-i-aldre-hissar.pdf|Utredning - Säkerhetsrisker i äldre hissar|Rapport|2022
+https://rinfo.boverket.se/BFS2011-6/pdf/BFS2011-26.pdf|BFS 2011:26 BBR 19 - Rättelseblad|Föreskrifter|2011
+https://rinfo.boverket.se/BFS1993-57/pdf/BFS1998-38.pdf|BFS 1998:38 BBR 7 (historisk)|Föreskrifter|1998
+https://www.boverket.se/globalassets/publikationer/dokument/2025/lattnader-i-kraven-pa-byggnader-vid-andring-och-ombyggnad.pdf|Rapport 2025:12 - Lättnader vid ändring och ombyggnad|Rapport|2025

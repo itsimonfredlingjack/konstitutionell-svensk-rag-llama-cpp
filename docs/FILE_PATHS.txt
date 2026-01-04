@@ -1,0 +1,85 @@
+WEEKLY CORPUS REPORT - ABSOLUTE FILE PATHS
+===========================================
+
+All paths are absolute and ready to use.
+
+MAIN WORKFLOW (n8n JSON)
+=======================
+
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/n8n_workflows/weekly_corpus_report.json
+
+
+EXECUTABLE SCRIPTS
+==================
+
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/test_corpus_report.py
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/setup_telegram_workflow.sh
+
+
+DOCUMENTATION FILES
+===================
+
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/QUICK_START.md
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/WEEKLY_CORPUS_REPORT_SUMMARY.md
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/DEPLOYMENT_CHECKLIST.md
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/WEEKLY_CORPUS_REPORT_INDEX.md
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/n8n_workflows/README_WEEKLY_CORPUS_REPORT.md
+
+
+REFERENCE FILES (Auto-created)
+=============================
+
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/.env
+  Contains: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/corpus_reports/
+  Contains: corpus_report_YYYY-MM-DD_HH-mm.json files
+
+
+DATA DIRECTORIES (Existing)
+===========================
+
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/chromadb_data/
+  Contains: chroma.sqlite3 (14.14 GB) + collection metadata
+
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/pdf_cache/
+  Contains: 6,912 PDF files (18 GB)
+
+
+PROJECT ROOT
+============
+
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/
+
+
+QUICK COMMANDS
+==============
+
+cd /home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI
+./setup_telegram_workflow.sh
+python3 test_corpus_report.py
+
+python3 -m json.tool n8n_workflows/weekly_corpus_report.json
+ls -lth corpus_reports/
+tail -f corpus_reports/$(ls -t corpus_reports/ | head -1)
+
+
+COPY-PASTE READY PATHS
+======================
+
+Workflow:
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/n8n_workflows/weekly_corpus_report.json
+
+Test script:
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/test_corpus_report.py
+
+Setup assistant:
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/setup_telegram_workflow.sh
+
+Quick start:
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/QUICK_START.md
+
+Full documentation:
+/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/n8n_workflows/README_WEEKLY_CORPUS_REPORT.md
+
+Everything ready for deployment.

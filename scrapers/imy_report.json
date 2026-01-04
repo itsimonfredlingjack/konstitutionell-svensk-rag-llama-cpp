@@ -1,0 +1,516 @@
+{
+  "agency": "imy",
+  "timestamp": "2025-12-07T20:37:30.385595",
+  "total_documents": 84,
+  "by_type": {
+    "tillsynsbeslut": 83,
+    "föreskrift": 1
+  },
+  "documents": [
+    {
+      "url": "https://www.imy.se/privatperson/dataskydd/dina-rattigheter/automatiserade-beslut/",
+      "title": "Automatiserade beslut",
+      "type": "tillsynsbeslut",
+      "content_length": 6189
+    },
+    {
+      "url": "https://www.imy.se/privatperson/dataskydd/dina-rattigheter/galler-for-alla-rattigheterna/avgifter/",
+      "title": "Avgifter",
+      "type": "tillsynsbeslut",
+      "content_length": 1652
+    },
+    {
+      "url": "https://www.imy.se/verksamhet/dataskydd/dataskydd-pa-eu-niva/europeiska-datatillsynsmannen-edps/",
+      "title": "Europeiska datatillsynsmannen (EDPS)",
+      "type": "tillsynsbeslut",
+      "content_length": 3664
+    },
+    {
+      "url": "https://www.imy.se/verksamhet/dataskydd/dataskydd-pa-olika-omraden/arbetsliv/tillsyn-sanktionsavgifter-och-skadestand/",
+      "title": "Tillsyn, sanktionsavgifter och skadestånd",
+      "type": "tillsynsbeslut",
+      "content_length": 3108
+    },
+    {
+      "url": "https://www.imy.se/verksamhet/dataskydd/innovationsportalen/vagledning-om-ansiktsigenkanning-och-gdpr/riktlinjer-och-tillsynsbeslut-om-ansiktsigenkanningsteknik/",
+      "title": "Riktlinjer och tillsynsbeslut om ansiktsigenkänningsteknik",
+      "type": "tillsynsbeslut",
+      "content_length": 4347
+    },
+    {
+      "url": "https://www.imy.se/om-oss/aktuellt-fran-oss/praxisbeslut/",
+      "title": "Praxisbeslut",
+      "type": "tillsynsbeslut",
+      "content_length": 10000
+    },
+    {
+      "url": "https://www.imy.se/om-oss/aktuellt-fran-oss/praxisbeslut/rattsliga-stallningstaganden/",
+      "title": "Rättsliga ställningstaganden",
+      "type": "tillsynsbeslut",
+      "content_length": 1101
+    },
+    {
+      "url": "https://www.imy.se/om-oss/vart-uppdrag/sa-arbetar-vi-med-tillsyn/",
+      "title": "Så arbetar vi med tillsyn",
+      "type": "tillsynsbeslut",
+      "content_length": 3635
+    },
+    {
+      "url": "https://www.imy.se/om-oss/vart-uppdrag/sa-arbetar-vi-med-tillsyn/tillsynsprocessen/",
+      "title": "Tillsynsprocessen",
+      "type": "tillsynsbeslut",
+      "content_length": 2308
+    },
+    {
+      "url": "https://www.imy.se/om-oss/vart-uppdrag/sa-arbetar-vi-med-tillsyn/vad-kan-tillsynen-leda-till/",
+      "title": "Vad kan tillsynen leda till?",
+      "type": "tillsynsbeslut",
+      "content_length": 5629
+    },
+    {
+      "url": "https://www.imy.se/sokresultat/?query=Tillsyner+och+beslut",
+      "title": "Tillsyner och beslut",
+      "type": "tillsynsbeslut",
+      "content_length": 6172
+    },
+    {
+      "url": "https://www.imy.se/sokresultat/?query=",
+      "title": "Tillsyner och beslut",
+      "type": "tillsynsbeslut",
+      "content_length": 6452
+    },
+    {
+      "url": "https://www.imy.se/link/baab213206514ca789a7bfaa19ae45a2.aspx",
+      "title": "Praxisbeslut",
+      "type": "tillsynsbeslut",
+      "content_length": 10000
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/forsakringskassan/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_28e41135-e1d1-4d3d-b5f6-287b78ca7b37_sv&_t_hit.pos=1",
+      "title": "StatusBeslutEtiketterDataskydd,Dina rättigheter,MyndighetFörsäkringskassanTillsyn enligt dataskyddsförordningen. Beslut 2025-11-18.StatusBeslutEtiketterDataskydd,Dina rättigheter,Myndighet",
+      "type": "tillsynsbeslut",
+      "content_length": 1558
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/miljodata-i-karlskrona-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_af0d4370-ca1d-4bfd-8410-1fff613f690a_sv&_t_hit.pos=2",
+      "title": "StatusPågårEtiketterDataskyddMiljödata i Karlskrona ABTillsyn enligt dataskyddsförordningen.StatusPågårEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 1857
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/goteborgs-stad/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_d963f8a5-c843-4313-8492-612b92ab9d87_sv&_t_hit.pos=3",
+      "title": "StatusPågårEtiketterDataskyddGöteborgs stadTillsyn enligt dataskyddsförordningen.StatusPågårEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 1959
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/almhults-kommun/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_374f782e-2c3d-4a13-bcd8-b7b1bbd67a92_sv&_t_hit.pos=4",
+      "title": "StatusPågårEtiketterDataskyddÄlmhults kommunTillsyn enligt dataskyddsförordningen.StatusPågårEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 1652
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/region-vastmanland/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_08b5494b-e80c-44fc-8d56-cde871d1d116_sv&_t_hit.pos=5",
+      "title": "StatusPågårEtiketterDataskyddRegion VästmanlandTillsyn enligt dataskyddsförordningen.StatusPågårEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 1650
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/sverigedemokraterna/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_dd71679d-c101-4959-a9e2-7148473bcf3e_sv&_t_hit.pos=6",
+      "title": "StatusBeslutEtiketterDataskyddSverigedemokraternaTillsyn enligt dataskyddsförordningen. Beslut 2025-10-22.StatusBeslutEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 875
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/moderata-samlingspartiet-riksorganisationen/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_b5d59e2b-1f25-4da2-baad-ef010a90c5de_sv&_t_hit.pos=7",
+      "title": "StatusBeslutEtiketterDataskyddModerata samlingspartiet RiksorganisationenTillsyn enligt dataskyddsförordningen. Beslut 2025-10-22.StatusBeslutEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 730
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/tele2-sverige-ab-tele2.se?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_2380efee-77f4-4de2-872f-b8b25a6cfc3c_sv&_t_hit.pos=8",
+      "title": "StatusDomstolens avgörandeEtiketterDataskydd,Internet och apparTele2 Sverige ABTillsyn enligt dataskyddsförordningen. Beslut 2023-06-30.StatusDomstolens avgörandeEtiketterDataskydd,Internet och appar",
+      "type": "tillsynsbeslut",
+      "content_length": 1755
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/nusvar-ab2/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_be91cfde-bb19-4c9d-be37-ff6649bb6b59_sv&_t_hit.pos=9",
+      "title": "StatusPågårEtiketterDataskydd,Dina rättigheterNusvar AB, mrkoll.seTillsyn enligt dataskyddsförordningen.StatusPågårEtiketterDataskydd,Dina rättigheter",
+      "type": "tillsynsbeslut",
+      "content_length": 1005
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/upplysning-checknode-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_31d43c79-8141-481d-91dc-0b64eb3ff138_sv&_t_hit.pos=10",
+      "title": "StatusPågårEtiketterDataskydd,Dina rättigheterUpplysning Checknode AB, upplysning.seTillsyn enligt dataskyddsförordningen.StatusPågårEtiketterDataskydd,Dina rättigheter",
+      "type": "tillsynsbeslut",
+      "content_length": 1058
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/legal-newsdesk-sweden-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_a37df687-3785-42f8-be25-dc3f93c2aded_sv&_t_hit.pos=11",
+      "title": "StatusPågårEtiketterDataskydd,Dina rättigheterLegal Newsdesk Sweden AB, lexbase.seTillsyn enligt dataskyddsförordningen.StatusPågårEtiketterDataskydd,Dina rättigheter",
+      "type": "tillsynsbeslut",
+      "content_length": 1116
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/fuplex-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_53788a12-9bae-414b-9ac7-12c3e813acfa_sv&_t_hit.pos=12",
+      "title": "StatusPågårEtiketterDataskydd,Dina rättigheterFuplex AB, krimfup.seTillsyn enligt dataskyddsförordningen.StatusPågårEtiketterDataskydd,Dina rättigheter",
+      "type": "tillsynsbeslut",
+      "content_length": 1069
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/skrs-vantetidsdatabas/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_8feefa7a-f30d-4539-ab8e-076caa437310_sv&_t_hit.pos=13",
+      "title": "StatusDomstolens avgörandeEtiketterDataskydd,Hälso- och sjukvårdSveriges Kommuner och Regioner, väntetidsdatabasTillsyn enligt dataskyddsförordningen. Beslut 2024-12-18.StatusDomstolens avgörandeEtike",
+      "type": "tillsynsbeslut",
+      "content_length": 1065
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/sportadmin-i-skandinavien-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_fc4c223e-d28e-4903-8351-e8f2dc5f13e2_sv&_t_hit.pos=14",
+      "title": "StatusPågårEtiketterDataskydd,Informationssäkerhet,Dina rättigheter,FöreningSportAdmin i Skandinavien ABTillsyn enligt dataskyddsförordningenStatusPågårEtiketterDataskydd,Informationssäkerhet,Dina rät",
+      "type": "tillsynsbeslut",
+      "content_length": 834
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/aktiebolaget-storstockholms-lokaltrafik-sl/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_b49bc9d9-e2f1-4185-a9d5-0d071851d496_sv&_t_hit.pos=15",
+      "title": "StatusBeslutEtiketterDataskydd,Informationssäkerhet,Arbetsliv,Dina rättigheterAktiebolaget Storstockholms Lokaltrafik (SL)Tillsyn enligt dataskyddsförordningen. Beslut 2025-06-18.StatusBeslutEtiketter",
+      "type": "tillsynsbeslut",
+      "content_length": 649
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/waxholms-angfartygs-ab-waab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_23d3132f-135c-411f-9ddd-bedeea46c23c_sv&_t_hit.pos=16",
+      "title": "StatusBeslutEtiketterDataskydd,Informationssäkerhet,Arbetsliv,Dina rättigheterWaxholms Ångfartygs AB (WÅAB)Tillsyn enligt dataskyddsförordningen. Beslut 2025-06-18.StatusBeslutEtiketterDataskydd,Infor",
+      "type": "tillsynsbeslut",
+      "content_length": 623
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/securitas-sverige-aktiebolag/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_6986d31f-0939-4416-9a77-254b5bb3c7be_sv&_t_hit.pos=17",
+      "title": "StatusPågårEtiketterKamerabevakning,Arbetsliv,DataskyddSecuritas Sverige AktiebolagTillsyn enligt dataskyddsförordningen.StatusPågårEtiketterKamerabevakning,Arbetsliv,Dataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 786
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/spotify-ratten-till-tillgang/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_591cddb7-ba06-4f95-847b-b53319c38114_sv&_t_hit.pos=18",
+      "title": "StatusDomstolens avgörandeEtiketterDataskydd,Dina rättigheterSpotify, rätten till tillgångTillsyn enligt dataskyddsförordningen. Beslut 2023-06-12.StatusDomstolens avgörandeEtiketterDataskydd,Dina rät",
+      "type": "tillsynsbeslut",
+      "content_length": 2034
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/sveriges-ambassad-i-bangkok/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_7009e11e-82ea-4db3-b2ee-43c78a21ff34_sv&_t_hit.pos=19",
+      "title": "StatusBeslutEtiketterDataskyddSveriges ambassad i BangkokTillsyn enligt VIS-, SIS- samt dataskyddsförordningen. Beslut 2025-05-06.StatusBeslutEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 923
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/sveriges-generalkonsulat-istanbul/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_877184c2-0894-4a57-828c-39ca581fac17_sv&_t_hit.pos=20",
+      "title": "StatusBeslutEtiketterDataskyddSveriges generalkonsulat IstanbulTillsyn enligt VIS-, SIS- samt dataskyddsförordningen. Beslut 2025-05-06.StatusBeslutEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 1129
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/warner-music-sweden-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_09e74b9e-b8d1-4d5e-a2f3-155140c3470e_sv&_t_hit.pos=21",
+      "title": "StatusBeslutEtiketterInternet och apparWarner Music Sweden ABTillsyn enligt dataskyddsförordningen. Beslut 2024-10-04.StatusBeslutEtiketterInternet och appar",
+      "type": "tillsynsbeslut",
+      "content_length": 1092
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/aller-media-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_6f01c2f9-3b34-425a-a057-e91a524d2a15_sv&_t_hit.pos=22",
+      "title": "StatusBeslutEtiketterDataskydd,Internet och apparAller Media ABTillsyn enligt dataskyddsförordningen. Beslut 2025-04-28.StatusBeslutEtiketterDataskydd,Internet och appar",
+      "type": "tillsynsbeslut",
+      "content_length": 1042
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/aktiebolaget-trav-och-galopp/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_68a5a033-30ac-486a-9fca-f4fbf9c6682e_sv&_t_hit.pos=23",
+      "title": "StatusBeslutEtiketterDataskydd,Dina rättigheterAktiebolaget Trav och GaloppTillsyn enligt dataskyddsförordningen. Beslut 2024-12-16.StatusBeslutEtiketterDataskydd,Dina rättigheter",
+      "type": "tillsynsbeslut",
+      "content_length": 1237
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/diskrimineringsombudsmannen-do/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_03a8c1c1-dbab-4e0f-a369-a7a60fb06217_sv&_t_hit.pos=24",
+      "title": "StatusBeslutEtiketterDataskydd,Informationssäkerhet,Dina rättigheter,MyndighetDiskriminerings­ombudsmannen (DO)Tillsyn enligt dataskyddsförordningen. Beslut 2025-04-23StatusBeslutEtiketterDataskydd,In",
+      "type": "tillsynsbeslut",
+      "content_length": 635
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/region-uppsala2/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_144f3063-03c0-4b93-aa96-32b7dec301c4_sv&_t_hit.pos=25",
+      "title": "StatusBeslutEtiketterDataskydd,Hälso- och sjukvård,PersonuppgiftsincidentRegion Uppsala, gällande hantering av e-postTillsyn enligt dataskyddsförordningen. Beslut 2025-04-24.StatusBeslutEtiketterDatas",
+      "type": "tillsynsbeslut",
+      "content_length": 1346
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/bonnier-news-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_7ee058b8-9121-42cd-aabc-abdc97fddad7_sv&_t_hit.pos=26",
+      "title": "StatusProcess i domstolEtiketterDataskydd,Internet och apparBonnier News ABTillsyn enligt dataskyddsförordningen. Beslut 2023-06-26.StatusProcess i domstolEtiketterDataskydd,Internet och appar",
+      "type": "tillsynsbeslut",
+      "content_length": 2113
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/kry-international/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_9f5c8b5f-4d07-4af3-aefb-eecf68b14a75_sv&_t_hit.pos=27",
+      "title": "StatusBeslutEtiketterDataskydd,InformationssäkerhetKry gällande Meta-pixelTillsyn enligt dataskyddsförordningen. Beslut 2024-12-19.StatusBeslutEtiketterDataskydd,Informationssäkerhet",
+      "type": "tillsynsbeslut",
+      "content_length": 2131
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/apotea-facebook/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_dfec5f69-5e83-48b2-9de5-029fcc3877cf_sv&_t_hit.pos=28",
+      "title": "StatusBeslutEtiketterDataskydd,Informationssäkerhet,Dina rättigheter,Internet och apparApotea, gällande Meta-pixelTillsyn enligt dataskyddsförordningen. Beslut 2024-12-19.StatusBeslutEtiketterDataskyd",
+      "type": "tillsynsbeslut",
+      "content_length": 1781
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/lansforsakringar/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_e4a60dcf-9050-476d-bebf-e7ce46cef6ba_sv&_t_hit.pos=29",
+      "title": "StatusBeslutEtiketterDataskydd,Informationssäkerhet,Dina rättigheter,Internet och apparLänsförsäkringarTillsyn enligt dataskyddsförordningen. Beslut 2024-12-19StatusBeslutEtiketterDataskydd,Informatio",
+      "type": "tillsynsbeslut",
+      "content_length": 2656
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/granit-bostad-beritsholm-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_98765f63-5976-4cc3-adb2-3b941cbc454a_sv&_t_hit.pos=30",
+      "title": "StatusBeslutEtiketterKamerabevakning,DataskyddGranit Bostad Beritsholm ABTillsyn enligt dataskyddsförordningen. Beslut 2024-12-11.StatusBeslutEtiketterKamerabevakning,Dataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 1962
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/coop-sverige-ab-coop.se?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_529b5a78-4071-4cf3-8db4-41f6a87a72c9_sv&_t_hit.pos=31",
+      "title": "StatusBeslutEtiketterDataskydd,Internet och apparCoop Sverige ABTillsyn enligt dataskyddsförordningen. Beslut 2023-06-30.StatusBeslutEtiketterDataskydd,Internet och appar",
+      "type": "tillsynsbeslut",
+      "content_length": 1009
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/apohem/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_b7dd8345-b291-4405-bbb6-5ab52f8ff65c_sv&_t_hit.pos=32",
+      "title": "StatusÖverklaganEtiketterDataskydd,Informationssäkerhet,Dina rättigheterApohem, gällande Meta-pixelTillsyn enligt dataskyddsförordningen. Beslut 2024-08-29.StatusÖverklaganEtiketterDataskydd,Informati",
+      "type": "tillsynsbeslut",
+      "content_length": 1017
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/verisure/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_bf2ebae1-db8d-463e-8e7d-b0f9eefc8f9a_sv&_t_hit.pos=33",
+      "title": "StatusBeslutEtiketterDataskydd,KamerabevakningVerisure Sverige ABTillsyn enligt dataskyddsförordningen. Beslut 2024-11-27.StatusBeslutEtiketterDataskydd,Kamerabevakning",
+      "type": "tillsynsbeslut",
+      "content_length": 1052
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/sj-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_407ed6a6-2c83-422b-8d92-ce37846b303e_sv&_t_hit.pos=34",
+      "title": "StatusBeslutEtiketterDataskyddSJ ABTillsyn enligt dataskyddsförordningen. Beslut 2023-06-29.StatusBeslutEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 532
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/expressen-lifestyle-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_86723bcb-277b-4702-8fd9-107d22d586c3_sv&_t_hit.pos=35",
+      "title": "StatusBeslutEtiketterDataskyddExpressen Lifestyle ABTillsyn enligt dataskyddsförordningen. Beslut 2023-06-26.StatusBeslutEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 531
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/mag-interactive-ab2/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_0d0502cb-2199-4105-8d5d-6980dafdc964_sv&_t_hit.pos=36",
+      "title": "StatusBeslutEtiketterDataskyddMAG Interactive ABTillsyn enligt dataskyddsförordningen. Beslut 2023-05-22.StatusBeslutEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 537
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/cdon-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_61dd9c9f-c9e0-4cd3-a2b7-931574188159_sv&_t_hit.pos=37",
+      "title": "StatusBeslutEtiketterDataskyddCDON ABTillsyn enligt dataskyddsförordningen. Beslut 2023-03-31.StatusBeslutEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 501
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/lensway-group-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_15ed0ed3-ee2e-4beb-9320-f64b2e9c2611_sv&_t_hit.pos=38",
+      "title": "StatusBeslutEtiketterDataskyddLensway Group ABTillsyn enligt dataskyddsförordningen. Beslut 2023-01-19.StatusBeslutEtiketterDataskydd",
+      "type": "tillsynsbeslut",
+      "content_length": 538
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/nordea-bank-abp-filial-i-sverige/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_3e3f3502-999d-48c1-a40f-cfddcddea8fa_sv&_t_hit.pos=39",
+      "title": "StatusBeslutEtiketterDataskydd,Dina rättigheterNordea Bank AbpTillsyn enligt dataskyddsförordningen. Beslut 2023-06-12.StatusBeslutEtiketterDataskydd,Dina rättigheter",
+      "type": "tillsynsbeslut",
+      "content_length": 610
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/klarna-bank-ab-rattelse-av-felaktiga-uppgifter/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_c66fe8a0-5812-4065-805a-981a1ff253d6_sv&_t_hit.pos=40",
+      "title": "StatusBeslutEtiketterDataskydd,Dina rättigheterKlarna Bank AB, rättelse av felaktiga uppgifterTillsyn enligt dataskyddsförordningen. Beslut 2024-01-09.StatusBeslutEtiketterDataskydd,Dina rättigheter",
+      "type": "tillsynsbeslut",
+      "content_length": 723
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/hm-hennes--mauritz/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_d9541369-6000-4e61-9517-8498a203277f_sv&_t_hit.pos=41",
+      "title": "StatusBeslutEtiketterDataskydd,Dina rättigheter,Internet och apparH&M Hennes & MauritzTillsyn enligt dataskyddsförordningen. Beslut 2023-10-17.StatusBeslutEtiketterDataskydd,Dina rättigheter,Internet ",
+      "type": "tillsynsbeslut",
+      "content_length": 1444
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/barn--och-utbildningsnamnden-ostersunds-kommun/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_7b5f5ee6-3609-4aa7-a9c6-daba2a093c24_sv&_t_hit.pos=42",
+      "title": "StatusBeslutEtiketterDataskydd,Informationssäkerhet,Utbildning,Skola,KonsekvensbedömningBarn- och utbildningsnämnden, Östersunds kommunTillsyn enligt dataskyddsförordningen. Beslut 2023-11-28.StatusBe",
+      "type": "tillsynsbeslut",
+      "content_length": 1531
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/Trygg-Hansa/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_fa3bcee5-3f0f-4ff1-a754-e6694943dfef_sv&_t_hit.pos=43",
+      "title": "StatusBeslutEtiketterDataskydd,Informationssäkerhet,Dina rättigheter,Internet och apparTrygg-HansaTillsyn enligt dataskyddsförordningen. Beslut 2023-08-28.StatusBeslutEtiketterDataskydd,Informationssä",
+      "type": "tillsynsbeslut",
+      "content_length": 1571
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/dataskyddsombudens-roll-och-stallning/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_9017d09c-47ff-43d9-99b0-18fe9249fd78_sv&_t_hit.pos=44",
+      "title": "StatusBeslutEtiketterDataskydd,ArbetslivDataskyddsom­budens roll och ställningTillsyn enligt dataskyddsförordningen. Beslut 2024-06-27.StatusBeslutEtiketterDataskydd,Arbetsliv",
+      "type": "tillsynsbeslut",
+      "content_length": 1931
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/region-skane-usb-minne/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_8ade7698-b952-4a5e-86a8-139f215ac05d_sv&_t_hit.pos=45",
+      "title": "StatusBeslutEtiketterDataskydd,Informationssäkerhet,Dina rättigheter,Hälso- och sjukvårdRegionstyrelsen i Region SkåneTillsyn enligt dataskyddsförordningen. Beslut 2023-04-26.StatusBeslutEtiketterData",
+      "type": "tillsynsbeslut",
+      "content_length": 2434
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/if-skadeforsakring-ab/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_6846c8cf-7155-4388-afc6-bdd366b7e701_sv&_t_hit.pos=46",
+      "title": "StatusBeslutEtiketterDataskydd,InformationssäkerhetIf Skadeförsäkring ABTillsyn enligt dataskyddsförordningen. Beslut 2023-01-19.StatusBeslutEtiketterDataskydd,Informationssäkerhet",
+      "type": "tillsynsbeslut",
+      "content_length": 1674
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/region-dalarna/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_b6aa5b9d-dfa2-4c6a-87c4-255b760eb8ae_sv&_t_hit.pos=47",
+      "title": "StatusDomstolens avgörandeEtiketterDataskydd,Dina rättigheter,Hälso- och sjukvård,DataskyddHälso- och sjukvårdsnämnden i Region DalarnaTillsyn enligt dataskyddsförordningen. Beslut 2023-01-17.StatusDo",
+      "type": "tillsynsbeslut",
+      "content_length": 3077
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/polisen-e-post/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_8aeeac3b-18f3-4b33-9b15-76f99a57465a_sv&_t_hit.pos=48",
+      "title": "StatusBeslutEtiketterDataskydd,Dina rättigheter,Brottsbekämpning,MyndighetPolismyndigheten, e-postTillsyn enligt brottsdatalagen. Beslut 2023-01-16.StatusBeslutEtiketterDataskydd,Dina rättigheter,Brot",
+      "type": "tillsynsbeslut",
+      "content_length": 2344
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/klarna-bank-ab-begaran-om-tillgang-2022/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_06754181-eb21-40dc-940f-481aebfed85d_sv&_t_hit.pos=49",
+      "title": "StatusDomstolens avgörandeEtiketterDataskydd,Dina rättigheter,DataskyddKlarna Bank AB, begäran om tillgång 2022Tillsyn enligt dataskyddsförordningen. Beslut 2022-05-11.StatusDomstolens avgörandeEtiket",
+      "type": "tillsynsbeslut",
+      "content_length": 1417
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/vklass/?_t_tags=siteid%3a18263376-b78c-4463-91f5-39de8d45752d%2clanguage%3asv&_t_hit.id=IMY_Models_Pages_SupervisionPage/_21470b09-2e99-49d8-bd39-5e0489dfd1dc_sv&_t_hit.pos=50",
+      "title": "StatusBeslutEtiketterDataskydd,Internet och appar,Utbildning,Dataskydd,SkolaVklassTillsyn enligt dataskyddsförordningen. Beslut 2023-08-24.StatusBeslutEtiketterDataskydd,Internet och appar,Utbildning,",
+      "type": "tillsynsbeslut",
+      "content_length": 1124
+    },
+    {
+      "url": "https://www.imy.se/link/9017d09c47ff43d999b018fe9249fd78.aspx",
+      "title": "Läs tillsynsbesluten",
+      "type": "tillsynsbeslut",
+      "content_length": 1931
+    },
+    {
+      "url": "https://www.imy.se/link/a8656300a392483f919ffb0bf17f5268.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 2291
+    },
+    {
+      "url": "https://www.imy.se/link/1d081d0e81aa400f8727bafa90e68713.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 3639
+    },
+    {
+      "url": "https://www.imy.se/link/7b5f5ee636094aa7a9c6daba2a093c24.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 1531
+    },
+    {
+      "url": "https://www.imy.se/link/7ee058b8912142cdaabcabdc97fddad7.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 2113
+    },
+    {
+      "url": "https://www.imy.se/link/b5d59e2b1f254da2baadef010a90c5de.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 730
+    },
+    {
+      "url": "https://www.imy.se/link/c66fe8a058124065805a981a1ff253d6.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 723
+    },
+    {
+      "url": "https://www.imy.se/link/d954136960004e6195178498a203277f.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 1444
+    },
+    {
+      "url": "https://www.imy.se/link/407ed6a62c83422b8d92ce37846b303e.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 532
+    },
+    {
+      "url": "https://www.imy.se/link/3e3f3502999d48c1a40fcfddcddea8fa.aspx",
+      "title": "Läs tillsynsbeslutet här",
+      "type": "tillsynsbeslut",
+      "content_length": 610
+    },
+    {
+      "url": "https://www.imy.se/link/591cddb7ba064f95847bb53319c38114.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 2034
+    },
+    {
+      "url": "https://www.imy.se/link/0d0502cb219941058d5d6980dafdc964.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 537
+    },
+    {
+      "url": "https://www.imy.se/link/61dd9c9fc9e04cd3a2b7931574188159.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 501
+    },
+    {
+      "url": "https://www.imy.se/link/15ed0ed3ee2e4beb9320f64b2e9c2611.aspx",
+      "title": "Läs tillsynsbeslutet här",
+      "type": "tillsynsbeslut",
+      "content_length": 538
+    },
+    {
+      "url": "https://www.imy.se/link/8feefa7af30d4539ab8e076caa437310.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 1065
+    },
+    {
+      "url": "https://www.imy.se/link/86723bcb277b47028fd9107d22d586c3.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 531
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/apoteket/",
+      "title": "Läs tillsynsbeslutet mot Apoteket",
+      "type": "tillsynsbeslut",
+      "content_length": 867
+    },
+    {
+      "url": "https://www.imy.se/tillsyner/apohem/",
+      "title": "Läs tillsynsbeslutet mot Apohem",
+      "type": "tillsynsbeslut",
+      "content_length": 1017
+    },
+    {
+      "url": "https://www.imy.se/link/28e4eb7baa424a33a64170caeaa09016.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 812
+    },
+    {
+      "url": "https://www.imy.se/link/fa3bcee53f0f4ff1a754e6694943dfef.aspx",
+      "title": "Läs tillsynsbeslutet",
+      "type": "tillsynsbeslut",
+      "content_length": 1571
+    },
+    {
+      "url": "https://www.imy.se/om-oss/aktuellt-fran-oss/foreskrifter-och-allmanna-rad/",
+      "title": "IMY:s föreskrifter och allmänna råd",
+      "type": "föreskrift",
+      "content_length": 1862
+    }
+  ],
+  "warning": "FLAGGED: Only 84 documents found (threshold: 100)"
+}

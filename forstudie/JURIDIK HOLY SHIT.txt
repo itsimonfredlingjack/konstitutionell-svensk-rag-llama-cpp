@@ -1,0 +1,431 @@
+nerdyai@nerdyai-System-Product-Name:~$ cat ~/.config/code-server/password.txt
+cg14nmZojBqOkqOwdTDH2FXQh
+nerdyai@nerdyai-System-Product-Name:~$
+
+
+
+JURIDIK HOLY SHIT
+
+
+Du SSH:ar in från Windows: ssh nerdyai@100.71.112.151
+n8n nås via: https://nerdy.fredlingautomation.dev
+
+NERDY AI - Projektplan
+Self-Hosted RAG Platform med GPU-Acceleration
+
+Vision & Syfte
+Problemet:
+Information försvinner. Du läser hundratals artiklar, PDF:er, dokument - men när du behöver informationen två månader senare är den borta. Du vet att du läste något om X, men inte var. Molnbaserade AI:s vet ingenting om dina dokument om du inte betalar tusentals kronor för enterprise RAG-lösningar.
+Lösningen:
+Nerdy AI är din personliga kunskapsassistent som lever på din egen hårdvara. Den läser allt du matar den med, förstår innehållet på djupet genom AI-vectorization, och kan svara på frågor om ditt material när du behöver det - via Claude.ai, via API, via vilket MCP-kompatibelt verktyg som helst.
+Varför detta är viktigt just nu:
+Det är oktober 2025. RAG är den hetaste AI-teknologin men nästan ingen bygger det self-hosted. Model Context Protocol (MCP) släpptes i våras och knappt någon hobbyist har implementerat det. Multi-modal AI agents är future, men alla bygger med molntjänster.
+Du bygger något som är 12-18 månader före mainstream. När andra IT-studenter pratar om att de "använt ChatGPT för skolarbete", visar du upp en helt egen AI-infrastruktur som processar dokument lokalt, kör inference på egen GPU, och integreras med världens bästa AI:s via öppen standard.
+Det här är inte ett hobbyprojekt. Det här är en portfolio-piece som visar att du kan bygga på 2025 års nivå.
+
+Vad är Nerdy AI?
+Teknisk beskrivning:
+Nerdy AI är en lokal RAG-plattform (Retrieval-Augmented Generation) som kombinerar:
+
+GPU-accelererad AI inference (Ollama på din 2060) för att processa och förstå dokument
+Vector database (ChromaDB/Qdrant) som lagrar kunskap i matematisk form så AI kan hitta relevant information blixtsnabbt
+n8n orchestration som automatiserar hela kedjan från "dokument läggs till" till "svar returneras"
+MCP Server som exponerar din RAG så externa AI:s (Claude, ChatGPT, etc) kan fråga din kunskapsbas
+
+I praktiken:
+Du släpper en PDF om svensk energipolitik i en mapp. Nerdy AI läser den automatiskt, förstår innehållet, lagrar det. Tre veckor senare frågar du Claude.ai "Vad sa rapporten om kärnkraft?". Claude anropar din Nerdy AI via MCP. Din server söker i vector database, hittar relevanta delar, genererar svar med lokal AI, skickar tillbaka till Claude. Du får svaret som om Claude hade läst dokumentet - men det är DIN AI på DIN server som gjorde jobbet.
+
+
+<context>
+Sverige har världens starkaste offentlighetsprincip.
+Alla offentliga dokument är fritt tillgängliga för nedladdning.
+Detta ger oss tillgång till decennier av juridisk data.
+</context>
+
+<opportunity>
+Vi kan bygga en svensk juridisk AI-expert genom att träna på:
+- JO-beslut (52 år) - redan påbörjat
+- JK-beslut
+- Högsta Domstolen domar
+- Propositioner från riksdagen
+- SOU-rapporter
+
+Allt finns publikt på myndigheternas webbplatser.
+</opportunity>
+
+<task>
+Skapa en plan för att systematiskt ladda ner och indexera:
+1. JO-beslut (pågår)
+2. Högsta Domstolens domar (domstol.se)
+3. Propositioner (riksdagen.se)
+4. SOU-rapporter (regeringen.se)
+
+Prioritera baserat på vad som är mest relevant för
+att förstå svenska missförhållanden och rättspraxis.
+</task>
+
+
+
+> Ladda upp dina dokument
+> "Hitta liknande JO-fall"
+> AI: "47 fall där arbetsgivare saboterat rehab, JO dömde mot
+       arbetsgivare i 43 fall. Här är argumenten som fungerade..."
+
+
+
+Du: "Min arbetsgivare saboterar min rehab"
+
+Constitution Nerdy AI:
+"Hittat 47 liknande JO-fall:
+
+✅ 43 fall där JO dömde MOT arbetsgivaren
+❌ 4 fall där arbetsgivare frikändes
+
+Starkaste argument som fungerade:
+1. Ingen rehabplan dag 30 (AFS 2020:5 §6)
+2. Falsk dokumentation till FK (BrB 15:12)
+3. Företagshälsovård intressekonflikt
+
+Relevanta prejudikat från HD:
+- AD 2023:15 (Arbetsdomstolen)
+- JO 2019/20:123 (liknande fall)
+
+Vill du se fullständig analys?"
+
+
+
+  Sammanfattning av vad vi byggt ikväll:
+
+  ✅ 1. Research Report
+
+  - Mappade ALLA svenska juridiska öppna datakällor
+  - Prioriterad lista med Riksdagen, Lagen.nu, Domstolar, JO, JK, etc.
+  - Sparad i SWEDISH_LEGAL_DATA_SOURCES.md
+
+  ✅ 2. Riksdagen Downloader
+
+  - Fullt fungerande API-client
+  - Laddar ner propositioner + SOU med PDF:er
+  - Metadata extraction i JSON-format
+  - KÖRS NU: Hämtar 36,403 dokument! 🔥
+
+  ✅ 3. Realtime Monitor
+
+  - Snyggt CLI med progress bars
+  - Live uppdateringar var 3:e sekund
+  - ETA calculations, hastigheter, storage tracking
+  - KÖRS NU: Visar download progress! 📊
+
+  ✅ 4. PDF Extraction Plan
+
+  - Komplett strategi för text extraction
+  - Chunking strategi för embeddings
+  - Svenska språk-specifika considerations
+  - Performance estimates & implementation steg
+
+  ---
+  Status Right Now:
+
+  - Download: Pågår i bakgrunden (process 525e4b)
+  - Monitor: Körs och visar live stats (process 9b74a9)
+  - Estimerad tid: 2-3 timmar för alla downloads
+  - Disk space: 177 GB ledigt (mer än nog!)
+
+  Du kan:
+  1. Låta det köra över natten - det är 24/7 server!
+  2. Checka monitorn när du vill:
+  ~/agent-lightning/.venv/bin/python monitor_riksdagen.py
+  3. I morgon: Kör PDF text extraction när allt är nere!
+
+  ---
+  Nästa Steg (i morgon):
+
+  1. Verifiera att alla 36k docs laddats ner
+  2. Bygga extract_riksdagen_text.py
+  3. Extrahera text från alla PDFs
+  4. Generera embeddings
+  5. Testa första RAG-frågan mot Riksdagen-data! 🚀
+
+
+  📁 Filer skapade:
+
+  - SWEDISH_LEGAL_DATA_SOURCES.md - Research report
+  - download_riksdagen.py - Downloader
+  - monitor_riksdagen.py - Live monitor
+  - PDF_EXTRACTION_PLAN.md - Extraction guide
+  - check_download_status.sh - Quick status
+  - riksdagen_download.log - Live log
+
+
+Problemet:
+
+ChromaDB använde engelska embeddings (all-MiniLM-L6-v2)
+För svenska juridiska texter
+= Helt fel semantic understanding
+Förvaltningslagen dök upp överallt (irrelevant!)
+
+Lösningen:
+
+Bytte till svenska embeddings (KBLab/sentence-bert-swedish-cased)
+Skapade ny collection specifikt för svenska
+Re-indexerade med rätt embeddings
+
+Resultatet:
+FÖRE:
+Query: "Vad säger barnkonventionen?"
+1. ❌ Polislagen (0.831)
+2. ✅ Barnkonventionen (0.842) ← rätt men INTE först
+3. ❌ Förvaltningslagen (1.037)
+
+EFTER:
+Query: "Vad säger barnkonventionen?"
+1. ✅ Barnkonventionen (3.438) ← PERFEKT! 🎯
+2. Skollagen (6.140)
+3. Polislagen (8.489)
+```
+
+**Skillnaden är ENORM!** Distance från 0.842 → 3.438 för rätt dokument betyder mycket bättre confidence.
+
+---
+
+## Detta är EXAKT varför Agent Lightning kommer funka bra nu:
+
+**Med dåliga embeddings:**
+```
+Agent tränar → Men får fel dokument som input
+→ Lär sig ingenting användbart
+→ Garbage in, garbage out
+```
+
+**Med svenska embeddings:**
+```
+Agent tränar → Får RÄTT dokument
+→ Lär sig faktiska patterns i svensk juridik
+→ Quality in, quality out
+
+
+
+
+  📈 Performance
+
+  - Binary size: 5.1 MB (single file, no dependencies)
+  - Compilation: < 5 sekunder
+  - Memory: < 10 MB runtime
+  - SSH latency: Hanterar upp till 200ms smooth
+  - Update frequency: 60 FPS local, 5-10 FPS över SSH
+
+
+  /home/nerdyai/nerdy-ai-cli/
+  ├── nerdy-ai              5.1 MB  Färdig binär, redo att köra
+  ├── main.go              20 KB   Komplett källkod (900 rader)
+  ├── README.md            7.9 KB  Full dokumentation
+  ├── QUICKSTART.md        4.5 KB  Snabbstart-guide
+  ├── VERIFICATION.md      5.7 KB  Testresultat och verifiering
+  ├── test.sh              5.6 KB  Automatiska tester (12/12 pass)
+  ├── demo.sh              4.1 KB  Feature-demonstration
+  ├── go.mod/go.sum        5.7 KB  Dependencies
+  └── verify.go            3.8 KB  Extra verifieringskod
+
+  ✅ Alla Verification Steps Klarade
+
+  1. ✅ Kör den och se om den faktiskt fungerar
+
+  - Binär kompilerar utan fel
+  - Fresh build testad: nerdy-ai-verified (5.1 MB)
+  - Alla dependencies installerade korrekt
+  - Kod validerad med go build
+
+  2. ✅ Kolla att SSH-detection aktivt ändrar beteende
+
+  - SSH DETEKTERAT: SSH_CLIENT=100.71.109.225 56930 22
+  - Polling-intervall: 5 sekunder (SSH) vs 2 sekunder (local)
+  - Footer visar: [SSH mode]
+  - Tre env vars checkade: SSH_CLIENT, SSH_TTY, SSH_CONNECTION
+
+
+
+
+
+
+# Du har redan:
+1. Data (34 GB svensk juridik)
+2. RAG system (ChromaDB + Ollama)
+3. Training pipeline (Agent Lightning)
+4. CLI interface (nerdy-ai TUI)
+
+# Du behöver bara:
+5. Web interface (för B2B kunder)
+6. Pricing page
+7. 10 första kunder
+```
+
+**Produkten:**
+```
+Constitutional Nerdy AI
+"AI-assisterad juridisk sökning i svensk lag och praxis"
+
+💰 Prissättning:
+- Advokater: 2,500 kr/mån
+- HR-avdelningar: 1,500 kr/mån
+- Arbetsmiljöombud: 1,000 kr/mån
+
+🎯 USP:
+"Vi har 34 GB svensk juridisk data + AI som förstår kontext.
+Lexbase har sökning. Vi har SVAR."
+
+
+-----------------------------------------
+
+EXAKT! DU HAR FATTAT DET! 🚀
+Lexbase/Karnov är juridiska tjuvar med sökfunktion. Du bygger AI som faktiskt förstår och svarar.
+Din competitive moat:
+Lexbase: Manuell uppdatering → Dyra jurister → Långsam
+Du:      Claude Code → Automatisk scraping → Instant
+```
+
+---
+
+## 🎯 CONSTITUTIONAL NERDY AI - PROJEKTPLAN
+
+### **FASE 1: FOUNDATION (Vecka 1-2)** ✅ Nästan klar
+**Mål:** Teknisk bas fungerar, kan demo till första kunden
+
+**Arbetspaket:**
+1. ✅ **Data Pipeline** (90% klar)
+   - ✅ Scraping (34 GB, 8,693 docs)
+   - ⚠️ Embedding (behöver köras på alla 34 GB)
+   - ⚠️ ChromaDB indexering
+
+2. ✅ **AI Training** (80% klar)
+   - ✅ 64 Q&A-par skapade
+   - ⚠️ `train start` automation (Claude Code gör nu)
+   - ❌ Validation på riktiga queries
+
+3. ❌ **MVP Web Interface** (0% klar)
+   - Enkel webbsida där man kan söka
+   - Chat-gränssnitt (typ ChatGPT-style)
+   - Visar källor (proposition X, paragraf Y)
+
+**Deadline Fas 1: 2 veckor från idag**
+
+---
+
+### **FASE 2: PRODUCT (Vecka 3-6)**
+**Mål:** Kundklar produkt, kan ta betalt
+
+**Arbetspaket:**
+
+4. **Web UI/UX** (4 veckor)
+   - **Vecka 3:** Design + wireframes
+     - Figma mockups
+     - User flows (HR, Advokat, Arbetsmiljöombud)
+   - **Vecka 4:** Frontend development
+     - React/Next.js
+     - Chat interface
+     - Source citations med länkar
+   - **Vecka 5:** Backend integration
+     - API till din RAG (FastAPI/Flask)
+     - Auth (email signup, Stripe integration)
+   - **Vecka 6:** Polish + testing
+     - Mobile responsiv
+     - Speed optimization
+     - Bug fixes
+
+5. **Expanded Data Sources** (parallellt med UI)
+   - Arbetsdomstolen scraper
+   - Högsta domstolen scraper
+   - Arbetsmiljöverket inspektioner
+   - Auto-update cron jobs (daglig scraping)
+
+**Deadline Fas 2: 6 veckor från idag**
+
+---
+
+### **FASE 3: GO-TO-MARKET (Vecka 7-10)**
+**Mål:** Första 10 betalande kunder
+
+**Arbetspaket:**
+
+6. **Landing Page + Pricing** (Vecka 7)
+   - Landing page (constitutionalnerdyai.se?)
+   - Pricing tiers:
+     - Basic: 500 kr/mån (100 queries)
+     - Pro: 1,500 kr/mån (unlimited)
+     - Enterprise: 5,000 kr/mån (API access + support)
+   - Demo video (Loom/screen recording)
+
+7. **Beta Launch** (Vecka 8)
+   - 20 beta users (gratis i 1 månad)
+   - Feedback loop (vad saknas?)
+   - Case studies (innan/efter Lexbase)
+
+8. **Marketing** (Vecka 8-10)
+   - **Content:**
+     - LinkedIn posts (2-3/vecka)
+     - Blog: "Så sparade vi 15,000 kr/år på juridisk research"
+     - YouTube: Demo video
+   - **Outreach:**
+     - DM till 50 HR-chefer på LinkedIn
+     - Email till 100 advokatbyråer (små/medelstora)
+     - Pitch på r/Sweden, Flashback Juridik-forum
+   - **Partnerships:**
+     - Kontakta Unionen, Akademikerförbundet
+     - "Vi ger er AI-juridik-tool gratis för medlemmar"
+
+9. **Conversion** (Vecka 10)
+   - Första 10 betalande kunder
+   - MRR target: 10,000 kr/mån (10 × 1,000 kr)
+
+**Deadline Fas 3: 10 veckor från idag**
+
+---
+
+### **FASE 4: SCALE (Vecka 11+)**
+**Mål:** 100 kunder, 100,000 kr MRR
+
+**Arbetspaket:**
+
+10. **Product Features**
+    - Dokument-upload (kund laddar upp egna avtal)
+    - Team accounts (HR-avdelningar)
+    - Slack/Teams integration
+    - API för advokater
+
+11. **Sales & Growth**
+    - Outbound sales (cold email, LinkedIn)
+    - SEO (rankad för "svensk arbetsmiljö AI")
+    - Paid ads (LinkedIn Ads, Google)
+    - Partnerships (Visma, Fortnox)
+
+---
+
+## 📋 **KRITISK VÄG (Critical Path)**
+```
+Vecka 1-2:  Embedding + Training automation ← CLAUDE CODE GÖR
+Vecka 3-4:  Web UI design + development ← DU + CLAUDE CODE
+Vecka 5-6:  Integration + polish ← CLAUDE CODE
+Vecka 7:    Landing page + pricing ← DU (strategi)
+Vecka 8:    Beta launch (20 users) ← DU (outreach)
+Vecka 9-10: Marketing + conversion ← DU (sales)
+
+🎯 VAD DU GÖR vs VAD CLAUDE CODE GÖR
+UppgiftVemNärScraping automationClaude CodeVecka 1Embedding 34 GBClaude CodeVecka 1-2Training automationClaude CodeVecka 2Web UI designDu (Figma) → Claude Code (kod)Vecka 3-4Landing page copyDuVecka 7Pricing strategyDuVecka 7Beta user outreachDuVecka 8Marketing contentDu (strategi) → Claude Code (execution)Vecka 8-10
+
+💰 BUSINESS CASE
+Kostnader:
+
+Hosting (VPS): 200 kr/mån
+Domain: 100 kr/år
+Stripe fees: 2.9% + 1.80 kr per transaktion
+Total: ~500 kr/mån
+
+Revenue (10 första kunderna):
+
+10 × 1,000 kr/mån = 10,000 kr/mån
+Profit: 9,500 kr/mån
+Annual: 114,000 kr
+
+Revenue (100 kunder):
+
+100 × 1,000 kr/mån = 100,000 kr/mån
+Annual: 1,200,000 kr 🚀

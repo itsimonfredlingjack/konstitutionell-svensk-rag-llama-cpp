@@ -1,0 +1,110 @@
+{
+  "operation": "MYNDIGHETS-SWEEP - BOVERKET",
+  "timestamp": "2025-12-07T19:36:39.313923",
+  "source": "boverket.se",
+  "chromadb_collection": "swedish_gov_docs",
+  "total_boverket_documents": 82,
+  "success": false,
+  "flagged": true,
+  "flag_reason": "Only 82 documents (minimum: 100)",
+  "categories": {
+    "Övrigt": 41,
+    "Rapporter": 13,
+    "BBR - Byggregler": 10,
+    "Energi & Miljö": 4,
+    "CEX - Certifiering energiexperter": 3,
+    "OVK - Funktionskontroll": 2,
+    "BEN - Energianvändning": 2,
+    "EKS - Europeiska konstruktionsstandarder": 1,
+    "BBK - Betonghandbok": 1,
+    "BSK - Stålhandbok": 1,
+    "Handböcker": 1,
+    "Konsekvensutredningar": 1,
+    "Vägledningar": 1,
+    "BKR - Konstruktionsregler (äldre)": 1
+  },
+  "years": {
+    "2024": 31,
+    "2023": 10,
+    "2025": 7,
+    "2011": 6,
+    "2020": 3,
+    "2007": 3,
+    "2022": 3,
+    "2013": 2,
+    "2004": 2,
+    "2008": 2,
+    "2019": 2,
+    "2005": 2,
+    "2014": 2,
+    "1994": 1,
+    "2016": 1,
+    "2018": 1,
+    "2021": 1,
+    "2012": 1,
+    "1998": 1,
+    "2003": 1
+  },
+  "sample_documents": [
+    {
+      "title": "BBR 31 - BFS 2024:14 (gäller från 2025-01-01)",
+      "year": "2024",
+      "category": "BBR - Byggregler",
+      "url": "https://rinfo.boverket.se/BFS2011-6/pdf/BFS2024-14.pdf"
+    },
+    {
+      "title": "BBR 30 - BFS 2024:5 (gäller från 2025-01-01)",
+      "year": "2024",
+      "category": "BBR - Byggregler",
+      "url": "https://rinfo.boverket.se/BFS2011-6/pdf/BFS2024-5.pdf"
+    },
+    {
+      "title": "BBR BFS 2011:6 med ändringar till och med BFS 2020:4 (konsoliderad)",
+      "year": "2020",
+      "category": "BBR - Byggregler",
+      "url": "https://www.boverket.se/globalassets/publikationer/dokument/2020/konsoliderad-bbr-2011-6-tom-2020-4.pdf"
+    },
+    {
+      "title": "BBR 18 - BFS 2011:6 (originalversion)",
+      "year": "2011",
+      "category": "BBR - Byggregler",
+      "url": "https://rinfo.boverket.se/BFS2011-6/pdf/BFS2011-6.pdf"
+    },
+    {
+      "title": "BBR 29 - BFS 2020:4",
+      "year": "2020",
+      "category": "BBR - Byggregler",
+      "url": "https://rinfo.boverket.se/BFS2011-6/pdf/BFS2020-4.pdf"
+    },
+    {
+      "title": "BBR Konsoliderad BFS 2011:6 t.o.m BFS 2020:4",
+      "year": "2020",
+      "category": "BBR - Byggregler",
+      "url": "https://rinfo.boverket.se/BFS2011-6/dok/BFS2020-4_Konsolidering.pdf"
+    },
+    {
+      "title": "BBR BFS 2011:6 t.o.m 2013:3",
+      "year": "2013",
+      "category": "BBR - Byggregler",
+      "url": "https://www.boverket.se/contentassets/2b709d86893740bab472714cb1ffb4c0/boverkets-byggregler-bfs-2011-6-tom-2013-3.pdf"
+    },
+    {
+      "title": "EKS - Boverkets föreskrifter och allmänna råd om tillämpning av europeiska konstruktionsstandarder (konsoliderad BFS 2011:10)",
+      "year": "2011",
+      "category": "EKS - Europeiska konstruktionsstandarder",
+      "url": "https://www.boverket.se/resources/constitutiontextstore/eks/PDF/konsoliderad_eks_bfs_2011-10.pdf"
+    },
+    {
+      "title": "BFS 2024:7 - Föreskrifter om trycksystem och brandskydd",
+      "year": "2024",
+      "category": "Övrigt",
+      "url": "https://rinfo.boverket.se/BFS2024-7/pdf/BFS2024-7.pdf"
+    },
+    {
+      "title": "BFS 2024:9",
+      "year": "2024",
+      "category": "Övrigt",
+      "url": "https://rinfo.boverket.se/BFS2024-9/pdf/BFS2024-9.pdf"
+    }
+  ]
+}

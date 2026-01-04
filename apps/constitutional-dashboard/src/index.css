@@ -1,0 +1,335 @@
+/**
+ * Constitutional Dashboard - Main Styles
+ * Imports shared design tokens and adds dashboard-specific overrides
+ */
+
+@import "./shared-tokens.css";
+
+/* ========================================
+   DASHBOARD-SPECIFIC STYLES
+   ======================================== */
+
+/* Gradient Background */
+body {
+  background: radial-gradient(
+    ellipse at top,
+    rgba(6, 182, 212, 0.03) 0%,
+    rgba(124, 58, 237, 0.02) 30%,
+    transparent 70%
+  );
+}
+
+/* Subtle Grid Pattern Background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ========================================
+   HEADER STYLES
+   ======================================== */
+
+.dashboard-header {
+  @apply sticky top-0 z-50 backdrop-blur-glass-lg border-b border-glass-border;
+  background: rgba(3, 3, 5, 0.8);
+  transition: all var(--animate-duration-normal) ease-out;
+}
+
+.dashboard-header::after {
+  content: '';
+  @apply absolute bottom-0 left-0 right-0 h-[1px];
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-neon-cyan),
+    transparent
+  );
+  opacity: 0.3;
+}
+
+/* ========================================
+   NAVIGATION
+   ======================================== */
+
+.nav-link {
+  @apply relative px-4 py-2 rounded-glass-md text-gray-300 transition-all var(--animate-duration-normal);
+}
+
+.nav-link::before {
+  content: '';
+  @apply absolute inset-0 rounded-glass-md;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), transparent);
+  opacity: 0;
+  transition: opacity var(--animate-duration-normal);
+}
+
+.nav-link:hover {
+  @apply text-white;
+}
+
+.nav-link:hover::before {
+  opacity: 1;
+}
+
+.nav-link.active {
+  @apply text-white;
+  background: rgba(6, 182, 212, 0.15);
+  box-shadow: var(--shadow-glow-cyan);
+}
+
+.nav-link.active::after {
+  content: '';
+  @apply absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[2px] rounded-full;
+  background: var(--color-neon-cyan);
+  box-shadow: var(--shadow-glow-cyan);
+}
+
+/* ========================================
+   METRIC CARDS
+   ======================================== */
+
+.metric-card {
+  @apply glass-card glass-card-hover;
+  position: relative;
+}
+
+.metric-card::after {
+  content: '';
+  @apply absolute bottom-0 left-0 h-[2px];
+  width: 0%;
+  background: var(--color-neon-cyan);
+  box-shadow: var(--shadow-glow-cyan);
+  transition: width var(--animate-duration-normal) ease-out;
+}
+
+.metric-card:hover::after {
+  width: 60%;
+}
+
+/* ========================================
+   STATUS INDICATORS
+   ======================================== */
+
+.status-dot {
+  @apply w-2 h-2 rounded-full;
+  animation: pulse-status 2s ease-in-out infinite;
+}
+
+.status-dot.online {
+  background: var(--color-neon-emerald);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.status-dot.offline {
+  background: var(--color-neon-rose);
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.5);
+}
+
+.status-dot.syncing {
+  background: var(--color-neon-amber);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+@keyframes pulse-status {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+/* ========================================
+   CHART OVERRIDES
+   ======================================== */
+
+/* Recharts Custom Styling */
+.recharts-wrapper {
+  background: transparent !important;
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: rgba(255, 255, 255, 0.6) !important;
+  font-size: 12px !important;
+  font-family: var(--font-mono) !important;
+}
+
+.recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.05) !important;
+  stroke-dasharray: 3 3 !important;
+}
+
+.recharts-tooltip-wrapper {
+  z-index: 100 !important;
+}
+
+.recharts-default-tooltip {
+  background: rgba(3, 3, 5, 0.95) !important;
+  border: 1px solid var(--color-glass-border) !important;
+  border-radius: var(--radius-glass-md) !important;
+  backdrop-filter: blur(var(--backdrop-blur-glass-md)) !important;
+  box-shadow: var(--shadow-glass) !important;
+  padding: 12px !important;
+}
+
+.recharts-tooltip-item-name {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 12px !important;
+}
+
+.recharts-tooltip-item-value {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  font-family: var(--font-mono) !important;
+}
+
+/* ========================================
+   SEARCH INPUT
+   ======================================== */
+
+.search-input-wrapper {
+  @apply relative;
+}
+
+.search-input {
+  @apply w-full px-6 py-4 rounded-glass-xl border border-glass-border bg-glass-surface;
+  backdrop-filter: blur(var(--backdrop-blur-glass-lg));
+  color: white;
+  font-size: 16px;
+  transition: all var(--animate-duration-normal) ease-out;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-neon-cyan);
+  box-shadow: var(--shadow-glow-cyan);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.search-input-icon {
+  @apply absolute right-4 top-1/2 -translate-y-1/2 text-gray-400;
+  transition: color var(--animate-duration-normal);
+}
+
+.search-input:focus + .search-input-icon {
+  color: var(--color-neon-cyan);
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+.btn-glass {
+  @apply px-6 py-3 rounded-glass-lg border border-glass-border bg-glass-surface;
+  backdrop-filter: blur(var(--backdrop-blur-glass-md));
+  color: white;
+  font-weight: 500;
+  transition: all var(--animate-duration-normal) ease-out;
+  cursor: pointer;
+}
+
+.btn-glass:hover {
+  @apply border-glass-highlight bg-glass-highlight;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glass);
+}
+
+.btn-glass:active {
+  transform: translateY(0);
+}
+
+.btn-neon-cyan {
+  @apply px-6 py-3 rounded-glass-lg border border-neon-cyan;
+  background: rgba(6, 182, 212, 0.1);
+  color: var(--color-neon-cyan);
+  font-weight: 500;
+  transition: all var(--animate-duration-normal) ease-out;
+  cursor: pointer;
+}
+
+.btn-neon-cyan:hover {
+  background: rgba(6, 182, 212, 0.2);
+  box-shadow: var(--shadow-glow-cyan);
+  transform: translateY(-2px);
+}
+
+.btn-neon-cyan:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+.skeleton {
+  @apply bg-glass-surface rounded-glass-md;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+
+.badge {
+  @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider;
+}
+
+.badge-success {
+  @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/20;
+}
+
+.badge-warning {
+  @apply bg-amber-500/10 text-amber-400 border border-amber-500/20;
+}
+
+.badge-error {
+  @apply bg-rose-500/10 text-rose-400 border border-rose-500/20;
+}
+
+.badge-info {
+  @apply bg-cyan-500/10 text-cyan-400 border border-cyan-500/20;
+}
+
+/* ========================================
+   RESPONSIVE OVERRIDES
+   ======================================== */
+
+@media (--mobile) {
+  .nav-link span {
+    @apply hidden;
+  }
+
+  .glass-panel {
+    @apply rounded-glass-md;
+  }
+}

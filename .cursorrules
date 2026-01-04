@@ -1,0 +1,227 @@
+# Constitutional AI - Cursor Rules
+
+## Projektöversikt
+
+Constitutional AI är ett RAG-system för svenska myndighetsdokument med:
+- Backend: FastAPI på port 8000 (02_SIMONS-AI-BACKEND)
+- Frontend: React/Vite på port 3000 (apps/constitutional-gpt)
+- Vector DB: ChromaDB med 521K+ dokument
+- LLM: Ollama med ministral-3:14b och gpt-sw3:6.7b fallback
+
+## KRITISKA REGLER - Följ dessa ALLTID
+
+### 1. INGEN FILRADERING UTAN EXPLICIT TILLSTÅND
+
+**ALDRIG:**
+- Radera filer eller mappar utan explicit användarorder
+- Radera `gemmis-os-ui` eller andra projekt utan tillstånd
+- Ta bort ChromaDB-data eller backups
+- Radera dokumentation eller konfigurationsfiler
+
+**ALLTID:**
+- Fråga först: "Ska jag radera X?"
+- Kontrollera om filen används innan radering
+- Bekräfta med användaren innan destruktiva operationer
+
+### 2. INGEN SERVICE-START UTAN PORTKONTROLL
+
+**ALDRIG:**
+- Starta services utan att först kolla om porten är ledig
+- Starta `npm run dev` på redan använda portar
+- Starta om services utan explicit order
+
+**ALLTID:**
+```bash
+# Kolla portar först
+lsof -i :8000    # Backend
+lsof -i :3000    # Frontend
+lsof -i :11434   # Ollama
+
+# Kolla systemd services
+systemctl --user status simons-ai-backend
+systemctl --user status constitutional-gpt
+```
+
+### 3. GRANSKA KOD INNAN ÄNDRINGAR
+
+**ALDRIG:**
+- Gissa vad kod gör - läs den först
+- Ändra kod utan att förstå kontexten
+- Skapa nya features utan att kolla om de redan finns
+
+**ALLTID:**
+- Läs relevanta filer innan ändringar
+- Använd `grep` eller `codebase_search` för att hitta relaterad kod
+- Kolla dokumentation innan implementation
+
+### 4. ENDPOINT-DISCOVERY INNAN PÅSTÅENDEN
+
+**ALDRIG:**
+- Påstå att en endpoint saknas utan att kolla först
+- Skapa duplicerade endpoints
+
+**ALLTID:**
+```bash
+# Kolla routes
+grep -r "router\|@app\|@router" app/api/
+
+# Kolla OpenAPI
+curl http://localhost:8000/docs
+
+# Testa endpoint
+curl -X POST http://localhost:8000/api/constitutional/search \
+  -H "Content-Type: application/json" \
+  -d '{"query":"test","limit":10}'
+```
+
+## Projektstruktur
+
+### Viktiga filer och mappar
+
+**Backend:**
+- `/home/ai-server/AN-FOR-NO-ASSHOLES/02_SIMONS-AI-BACKEND/app/api/constitutional_routes.py` - Huvud-API med agent endpoints
+- `/home/ai-server/AN-FOR-NO-ASSHOLES/02_SIMONS-AI-BACKEND/app/main.py` - FastAPI app entry point
+
+**Frontend:**
+- `/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/apps/constitutional-gpt/src/hooks/useChatEngine.ts` - Chat engine hook
+- `/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/apps/constitutional-gpt/src/config/env.ts` - Environment config
+
+**Data:**
+- `/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/chromadb_data/` - ChromaDB data (521K+ dokument)
+- `/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/pdf_cache/` - PDF cache
+
+**Dokumentation:**
+- `/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/docs/guardrails.md` - Service management rules
+- `/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/docs/MODEL_OPTIMIZATION.md` - Modelloptimering (ny)
+
+## Modellkonfiguration
+
+### Nuvarande modeller
+- **Primär:** `ministral-3:14b` (Ollama)
+- **Fallback:** `gpt-sw3:6.7b` (vid timeout)
+
+### Modellparametrar (per mode)
+- **EVIDENCE:** temperature=0.2, top_p=0.9, repeat_penalty=1.1, num_predict=1024
+- **ASSIST:** temperature=0.4, top_p=0.9, repeat_penalty=1.1, num_predict=1024
+- **CHAT:** temperature=0.7, top_p=0.9, repeat_penalty=1.1, num_predict=512
+
+### System prompts
+- Se `docs/MODEL_OPTIMIZATION.md` för detaljerade prompts
+- Prompts refererar till korpusen (521K+ dokument)
+- Prompts instruerar modellen att använda källor från ChromaDB
+
+## Vanliga misstag att undvika
+
+### ❌ MISSTAG FRÅN TIDIGARE SESSIONER
+
+1. **Raderade gemmis-os-ui** - ALDRIG radera projekt utan explicit order
+2. **Skapade CLI-tjänst i juridik-ai** - ALDRIG skapa features som inte efterfrågas
+3. **Startade localhost dev-server på headless server** - Meningslöst, använd preview istället
+4. **Flera omstarter** - Dålig felsökning, granska loggar först
+
+### ✅ RÄTT SÄTT
+
+1. **Fråga först:** "Ska jag göra X?"
+2. **Granska först:** Läs kod och dokumentation innan ändringar
+3. **Testa försiktigt:** Kolla portar och services innan start
+4. **Dokumentera:** Uppdatera dokumentation när ändringar görs
+
+## Service Management
+
+### Backend (simons-ai-backend)
+```bash
+# Status
+systemctl --user status simons-ai-backend
+
+# Loggar
+journalctl -u simons-ai-backend -f
+
+# Port
+lsof -i :8000
+```
+
+### Frontend (constitutional-gpt)
+```bash
+# Status
+systemctl --user status constitutional-gpt
+
+# Körs i preview-mode (produktionsbygg)
+# Port: 3000
+lsof -i :3000
+```
+
+### Ollama
+```bash
+# Status
+ollama ps
+
+# Modeller
+ollama list
+
+# Port
+lsof -i :11434
+```
+
+## Kodstil och best practices
+
+### Python
+- Använd type hints för alla funktioner
+- Använd f-strings för strängformatering
+- Använd logging istället för print
+- Följ CONTRIBUTING.md för detaljer
+
+### TypeScript
+- Använd function components med hooks
+- Använd `import type` för type-only imports
+- Använd Tailwind CSS med `cn()` utility
+- Följ CONTRIBUTING.md för detaljer
+
+## Testing
+
+### Backend testing
+```bash
+# Health check
+curl http://localhost:8000/api/constitutional/health | jq .
+
+# Search test
+curl -X POST http://localhost:8000/api/constitutional/search \
+  -H "Content-Type: application/json" \
+  -d '{"query":"regeringsformen","limit":5}' | jq .
+
+# Agent query test
+curl -X POST http://localhost:8000/api/constitutional/agent/query \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Vad säger GDPR om personuppgifter?","mode":"assist"}' | jq .
+```
+
+### Frontend testing
+- Öppna `http://localhost:3000` i webbläsare
+- Kolla console.log i DevTools (F12)
+- ALDRIG automatisera UI-tester utan explicit tillstånd
+
+## Dokumentation
+
+### Viktiga dokument
+- `docs/guardrails.md` - Service management rules
+- `docs/MODEL_OPTIMIZATION.md` - Modelloptimering och prompts
+- `docs/system-overview.md` - Systemöversikt
+- `CONTRIBUTING.md` - Bidragsguide
+
+### När du uppdaterar dokumentation
+- Uppdatera relevanta sektioner
+- Lägg till exempel när möjligt
+- Referera till källkod när relevant
+
+## Escalation
+
+Om du är osäker:
+1. **Rapportera** vad du hittat
+2. **Fråga** användaren innan du gör ändringar
+3. **Vänta** på bekräftelse innan destruktiva operationer
+4. **Dokumentera** ändringar när de görs
+
+## Referenser
+
+- Se `docs/guardrails.md` för detaljerade service management rules
+- Se `docs/MODEL_OPTIMIZATION.md` för modelloptimering
+- Se `CONTRIBUTING.md` för kodstil och bidragsguide

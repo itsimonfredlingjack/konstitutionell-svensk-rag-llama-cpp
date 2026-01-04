@@ -1,0 +1,148 @@
+{
+  "agency": "migrationsverket",
+  "scraped_at": "2025-12-07T20:03:45.604944",
+  "total_documents": 289,
+  "document_types": {
+    "lifos_document": 225,
+    "country_info": 1,
+    "legal_position": 11,
+    "file_download": 39,
+    "report": 3,
+    "statistics": 10
+  },
+  "subsources": {
+    "lifos": 236,
+    "downloads": 39,
+    "publications": 3,
+    "legal_positions": 1,
+    "statistics": 10
+  },
+  "flag": false,
+  "flag_reason": null,
+  "sample_documents": [
+    {
+      "url": "https://lifos.migrationsverket.se/dokument?documentSummaryId=49618",
+      "title": "Dokumentinformation Källa: Migrationsanalys. Migrationsverkets funktion för land- och omvärldsanalys Upphovsdat: 2025-11-11 Dokumentnr: 49618 Referens: Migrationsanalys. Migrationsverkets funktion för",
+      "content": "Rapporten belyser några av alla de utmaningar som det nya Syrien och dess invånare står inför efter cirka fjorton års inbördeskrig och regimomstörtning.\nVad avser landets\nmånga\nolika potentiellt särskilt utsatta grupper eller kategorier, avhandlar den endast ett fåtal lite närmare, bl.a. kvinnor och flickor, men refererar samtidigt till en rad andra källor för fördjupning.\nHuvuddokument:\n",
+      "source": "migrationsverket",
+      "subsource": "lifos",
+      "document_type": "lifos_document",
+      "country": null,
+      "document_number": "49618",
+      "publication_date": "2025-11-11",
+      "source_organization": "Migrationsanalys. Migrationsverkets funktion för land- och omvärldsanalys",
+      "subject_terms": null,
+      "attachments": [
+        {
+          "url": "https://lifos.migrationsverket.se/dokument?documentAttachmentId=51062",
+          "filename": "251203571.pdf"
+        }
+      ],
+      "metadata": {
+        "Källa": "Migrationsanalys. Migrationsverkets funktion för land- och omvärldsanalys",
+        "Upphovsdat": "2025-11-11",
+        "Dokumentnr": "49618"
+      },
+      "scraped_at": "2025-12-07T19:59:19.600838"
+    },
+    {
+      "url": "https://lifos.migrationsverket.se/dokument?documentSummaryId=49384",
+      "title": "Dokumentinformation Källa: Migrationsverket, Migrationsanalys. Migrationsverkets funktion för land- och omvärldsanalys Upphovsdat: 2025-09-12 Dokumentnr: 49384 Referens: Migrationsverket, Migrationsan",
+      "content": "\nHuvuddokument:\n",
+      "source": "migrationsverket",
+      "subsource": "lifos",
+      "document_type": "lifos_document",
+      "country": null,
+      "document_number": "49384",
+      "publication_date": "2025-09-12",
+      "source_organization": "Migrationsverket, Migrationsanalys. Migrationsverkets funktion för land- och omvärldsanalys",
+      "subject_terms": null,
+      "attachments": [
+        {
+          "url": "https://lifos.migrationsverket.se/dokument?documentAttachmentId=50929",
+          "filename": "250912300.pdf"
+        }
+      ],
+      "metadata": {
+        "Källa": "Migrationsverket, Migrationsanalys. Migrationsverkets funktion för land- och omvärldsanalys",
+        "Upphovsdat": "2025-09-12",
+        "Dokumentnr": "49384"
+      },
+      "scraped_at": "2025-12-07T19:59:19.980714"
+    },
+    {
+      "url": "https://lifos.migrationsverket.se/dokument?documentSummaryId=49176",
+      "title": "Dokumentinformation Källa: Migrationsverket Upphovsdat: 2025-05-13 Dokumentnr: 49176 Referens: Migrationsverket, Landinformation: Somalia. Kvinnlig könsstympning (version 2.0), 2025-05-13 Ämnesord: So",
+      "content": "\nHuvuddokument:\n",
+      "source": "migrationsverket",
+      "subsource": "lifos",
+      "document_type": "country_info",
+      "country": null,
+      "document_number": "49176",
+      "publication_date": "2025-05-13",
+      "source_organization": "Migrationsverket",
+      "subject_terms": null,
+      "attachments": [
+        {
+          "url": "https://lifos.migrationsverket.se/dokument?documentAttachmentId=50839",
+          "filename": "250513300.pdf"
+        }
+      ],
+      "metadata": {
+        "Källa": "Migrationsverket",
+        "Upphovsdat": "2025-05-13",
+        "Dokumentnr": "49176"
+      },
+      "scraped_at": "2025-12-07T19:59:20.356176"
+    },
+    {
+      "url": "https://lifos.migrationsverket.se/dokument?documentSummaryId=49099",
+      "title": "Dokumentinformation Källa: Migrationsverket, Migrationsanalys. Migrationsverkets funktion för land- och omvärldsanalys Upphovsdat: 2025-03-25 Dokumentnr: 49099 Referens: Migrationsverket, Migrationsan",
+      "content": "Rapport från Migrationsanalys om förhållanden i förvars- och straffanläggningar i Belarus. Rapporten beskriver det belarusiska förvars- och straffsystemet, vilka förhållanden som råder i dess anläggningar samt hur olika kategorier av fångar (bl.a. politiska och icke-politiska fångar) riskerar att behandlas.\nHuvuddokument:\n",
+      "source": "migrationsverket",
+      "subsource": "lifos",
+      "document_type": "lifos_document",
+      "country": null,
+      "document_number": "49099",
+      "publication_date": "2025-03-25",
+      "source_organization": "Migrationsverket, Migrationsanalys. Migrationsverkets funktion för land- och omvärldsanalys",
+      "subject_terms": null,
+      "attachments": [
+        {
+          "url": "https://lifos.migrationsverket.se/dokument?documentAttachmentId=50802",
+          "filename": "250325100.pdf"
+        }
+      ],
+      "metadata": {
+        "Källa": "Migrationsverket, Migrationsanalys. Migrationsverkets funktion för land- och omvärldsanalys",
+        "Upphovsdat": "2025-03-25",
+        "Dokumentnr": "49099"
+      },
+      "scraped_at": "2025-12-07T19:59:20.739647"
+    },
+    {
+      "url": "https://lifos.migrationsverket.se/dokument?documentSummaryId=49637",
+      "title": "Dokumentinformation Instans: Upphovsdat: 2025-12-05 Dokumentnr: 49637 Referens: Migrationsverket, Rättsligt ställningstagande. Ordningen för prövningen enligt 21 kap. utlänningslagen (2005:716) - RS/0",
+      "content": "Rättsliga ställningstaganden utgör Migrationsverkets uttalanden om hur en författning bör tolkas och är styrande för myndighetens medarbetare. De beslutas av chefen för rättsavdelningen.\nDetta rättsliga ställningstagande ersätter version 4.0 som fastställdes 2025-08-11.\nHuvuddokument:\n",
+      "source": "migrationsverket",
+      "subsource": "lifos",
+      "document_type": "legal_position",
+      "country": null,
+      "document_number": "49637",
+      "publication_date": "2025-12-05",
+      "source_organization": null,
+      "subject_terms": null,
+      "attachments": [
+        {
+          "url": "https://lifos.migrationsverket.se/dokument?documentAttachmentId=51069",
+          "filename": "251205300.pdf"
+        }
+      ],
+      "metadata": {
+        "Upphovsdat": "2025-12-05",
+        "Dokumentnr": "49637"
+      },
+      "scraped_at": "2025-12-07T19:59:21.110624"
+    }
+  ]
+}

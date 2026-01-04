@@ -1,0 +1,14 @@
+{
+  "agency": "SGU",
+  "source": "sgu",
+  "total_documents": 0,
+  "document_types": {},
+  "source_types": {},
+  "geolagret_metadata_scraped": 0,
+  "urls_crawled": 100,
+  "status": "⚠ WARNING: Only 0 docs (< 100)",
+  "threshold": 100,
+  "chromadb_path": "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/chromadb_data",
+  "collection": "swedish_gov_docs",
+  "timestamp": "2025-12-07T21:06:50.760792"
+}
