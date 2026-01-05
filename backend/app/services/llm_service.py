@@ -104,13 +104,13 @@ class LLMService(BaseService):
     OLLAMA_PS_ENDPOINT = f"{OLLAMA_BASE_URL}/api/ps"
     OLLAMA_SHOW_ENDPOINT = f"{OLLAMA_BASE_URL}/api/show"
     OLLAMA_VERSION_ENDPOINT = f"{OLLAMA_BASE_URL}/api/version"
-    
+
     def _get_base_url(self) -> str:
         """Get base URL based on configuration"""
         if self.config.llama_server_enabled:
             return self.config.llama_server_base_url
         return self.OLLAMA_BASE_URL
-    
+
     def _get_chat_endpoint(self) -> str:
         """Get chat endpoint based on configuration"""
         base_url = self._get_base_url().rstrip("/")
@@ -120,7 +120,7 @@ class LLMService(BaseService):
                 return f"{base_url}/chat/completions"
             return f"{base_url}/v1/chat/completions"
         return self.OLLAMA_CHAT_ENDPOINT
-    
+
     def _get_models_endpoint(self) -> str:
         """Get models endpoint based on configuration"""
         base_url = self._get_base_url().rstrip("/")
@@ -129,7 +129,7 @@ class LLMService(BaseService):
                 return f"{base_url}/models"
             return f"{base_url}/v1/models"
         return self.OLLAMA_TAGS_ENDPOINT
-    
+
     def _get_health_endpoint(self) -> str:
         """Get health endpoint based on configuration"""
         if self.config.llama_server_enabled:
@@ -163,13 +163,17 @@ class LLMService(BaseService):
     async def initialize(self) -> None:
         """
         Initialize HTTP client for LLM communication.
-        
+
         Creates async httpx client with connection pooling.
         """
         if self._client is None:
             base_url = self._get_base_url()
-            timeout = self.config.llama_server_timeout if self.config.llama_server_enabled else self._config.timeout + 30.0
-            
+            timeout = (
+                self.config.llama_server_timeout
+                if self.config.llama_server_enabled
+                else self._config.timeout + 30.0
+            )
+
             self._client = httpx.AsyncClient(
                 base_url=base_url,
                 timeout=httpx.Timeout(timeout),
@@ -184,7 +188,7 @@ class LLMService(BaseService):
     async def health_check(self) -> bool:
         """
         Check if LLM service is healthy.
-        
+
         Returns:
             True if LLM is reachable, False otherwise
         """
@@ -215,9 +219,9 @@ class LLMService(BaseService):
     async def is_connected(self) -> bool:
         """
         Check if LLM server is reachable.
-        
+
         Lightweight check without full health check.
-        
+
         Returns:
             True if reachable, False otherwise
         """
@@ -232,7 +236,7 @@ class LLMService(BaseService):
     async def get_version(self) -> Optional[str]:
         """
         Get LLM server version.
-        
+
         Returns:
             Version string or None if unavailable
         """
@@ -251,7 +255,7 @@ class LLMService(BaseService):
     async def list_models(self) -> List[str]:
         """
         List available models.
-        
+
         Returns:
             List of model names
         """
@@ -275,7 +279,7 @@ class LLMService(BaseService):
     async def list_running_models(self) -> List[dict]:
         """
         List currently loaded/running models.
-        
+
         Returns:
             List of model info with name, size, etc.
         """
@@ -379,27 +383,27 @@ class LLMService(BaseService):
     ) -> AsyncGenerator[tuple[str, Optional[StreamStats]], None]:
         """
         Stream chat completion tokens.
-        
+
         Yields:
             Tuple of (token_content, stats)
             - During streaming: (token, None)
             - Final yield: ("", StreamStats)
-        
+
         Args:
             messages: Chat messages in OpenAI format
             model: Model name (uses default if None)
             config_override: Override model config (temperature, etc.)
-        
+
         Raises:
             LLMTimeoutError: If request times out
             LLMConnectionError: If connection fails
             LLMModelNotFoundError: If model not available
         """
         await self.ensure_initialized()
-        
+
         # Use provided model or default
         model_to_use = model or self._config.primary_model
-        
+
         # Build request based on API format
         if self.config.llama_server_enabled:
             # OpenAI-compatible format for llama-server
@@ -407,17 +411,31 @@ class LLMService(BaseService):
                 "model": model_to_use,
                 "messages": messages,
                 "stream": True,
-                "temperature": config_override.get("temperature", self._config.temperature) if config_override else self._config.temperature,
-                "top_p": config_override.get("top_p", self._config.top_p) if config_override else self._config.top_p,
-                "max_tokens": config_override.get("num_predict", self._config.num_predict) if config_override else self._config.num_predict,
+                "temperature": config_override.get("temperature", self._config.temperature)
+                if config_override
+                else self._config.temperature,
+                "top_p": config_override.get("top_p", self._config.top_p)
+                if config_override
+                else self._config.top_p,
+                "max_tokens": config_override.get("num_predict", self._config.num_predict)
+                if config_override
+                else self._config.num_predict,
             }
         else:
             # Ollama format
             model_options = {
-                "temperature": config_override.get("temperature", self._config.temperature) if config_override else self._config.temperature,
-                "top_p": config_override.get("top_p", self._config.top_p) if config_override else self._config.top_p,
-                "repeat_penalty": config_override.get("repeat_penalty", self._config.repeat_penalty) if config_override else self._config.repeat_penalty,
-                "num_predict": config_override.get("num_predict", self._config.num_predict) if config_override else self._config.num_predict,
+                "temperature": config_override.get("temperature", self._config.temperature)
+                if config_override
+                else self._config.temperature,
+                "top_p": config_override.get("top_p", self._config.top_p)
+                if config_override
+                else self._config.top_p,
+                "repeat_penalty": config_override.get("repeat_penalty", self._config.repeat_penalty)
+                if config_override
+                else self._config.repeat_penalty,
+                "num_predict": config_override.get("num_predict", self._config.num_predict)
+                if config_override
+                else self._config.num_predict,
             }
             payload = {
                 "model": model_to_use,
@@ -425,15 +443,21 @@ class LLMService(BaseService):
                 "stream": True,
                 "options": model_options,
             }
-        
+
         stats = StreamStats(start_time=0.0, model_used=model_to_use)
-        
+
         try:
             chat_endpoint = self._get_chat_endpoint()
-            timeout = self.config.llama_server_timeout if self.config.llama_server_enabled else self._config.timeout + 30.0
-            
-            self.logger.info(f"Starting LLM chat stream with {model_to_use} (endpoint: {chat_endpoint})")
-            
+            timeout = (
+                self.config.llama_server_timeout
+                if self.config.llama_server_enabled
+                else self._config.timeout + 30.0
+            )
+
+            self.logger.info(
+                f"Starting LLM chat stream with {model_to_use} (endpoint: {chat_endpoint})"
+            )
+
             async with self._client.stream(
                 "POST",
                 chat_endpoint,
@@ -441,17 +465,13 @@ class LLMService(BaseService):
                 timeout=httpx.Timeout(timeout),
             ) as response:
                 if response.status_code == 404:
-                    raise LLMModelNotFoundError(
-                        f"Model {model_to_use} not found"
-                    )
-                
+                    raise LLMModelNotFoundError(f"Model {model_to_use} not found")
+
                 if response.status_code != 200:
                     error_text = await response.aread()
                     self.logger.error(f"LLM error {response.status_code}: {error_text}")
-                    raise LLMConnectionError(
-                        f"LLM returned {response.status_code}: {error_text}"
-                    )
-                
+                    raise LLMConnectionError(f"LLM returned {response.status_code}: {error_text}")
+
                 # Process streaming response
                 first_token = False
                 if self.config.llama_server_enabled:
@@ -459,49 +479,49 @@ class LLMService(BaseService):
                     async for line in response.aiter_lines():
                         if not line:
                             continue
-                        
+
                         if not line.startswith("data: "):
                             continue
-                        
+
                         line = line[6:]  # Remove "data: " prefix
-                        
+
                         if line.strip() == "[DONE]":
                             break
-                        
+
                         try:
                             data = json.loads(line)
                         except json.JSONDecodeError:
                             continue
-                        
+
                         # Set start time on first token
                         if not first_token:
                             stats.start_time = asyncio.get_event_loop().time()
                             stats.first_token_time = stats.start_time
                             first_token = True
-                        
+
                         # Extract token content (OpenAI format)
                         delta = data.get("choices", [{}])[0].get("delta", {})
                         content = delta.get("content", "")
-                        
+
                         if content:
                             stats.tokens_generated += 1
                             yield content, None
-                        
+
                         # Check for completion
                         finish_reason = data.get("choices", [{}])[0].get("finish_reason")
                         if finish_reason:
                             stats.end_time = asyncio.get_event_loop().time()
-                            
+
                             # Extract usage stats (OpenAI format)
                             usage = data.get("usage", {})
                             stats.prompt_eval_count = usage.get("prompt_tokens", 0)
-                            
+
                             self.logger.info(
                                 f"LLM chat complete: {stats.tokens_generated} tokens "
                                 f"in {stats.total_duration_ms}ms "
                                 f"({stats.tokens_per_second:.1f} tok/s)"
                             )
-                            
+
                             # Final yield with stats
                             yield "", stats
                             break
@@ -510,53 +530,51 @@ class LLMService(BaseService):
                     async for line in response.aiter_lines():
                         if not line:
                             continue
-                        
+
                         try:
                             data = json.loads(line)
                         except json.JSONDecodeError:
                             continue
-                        
+
                         # Set start time on first token
                         if not first_token:
                             stats.start_time = asyncio.get_event_loop().time()
                             stats.first_token_time = stats.start_time
                             first_token = True
-                        
+
                         # Extract token content (Ollama format)
                         message = data.get("message", {})
                         content = message.get("content", "")
-                        
+
                         if content:
                             stats.tokens_generated += 1
                             yield content, None
-                        
+
                         # Check for completion
                         if data.get("done", False):
                             stats.end_time = asyncio.get_event_loop().time()
-                            
+
                             # Extract final stats from Ollama
                             stats.prompt_eval_count = data.get("prompt_eval_count", 0)
                             stats.prompt_eval_duration_ns = data.get("prompt_eval_duration", 0)
-                            
+
                             self.logger.info(
                                 f"LLM chat complete: {stats.tokens_generated} tokens "
                                 f"in {stats.total_duration_ms}ms "
                                 f"({stats.tokens_per_second:.1f} tok/s)"
                             )
-                            
+
                             # Final yield with stats
                             yield "", stats
                             break
-        
+
         except httpx.TimeoutException as e:
             self.logger.error(f"LLM request timed out: {e}")
-            raise LLMTimeoutError(f"Request timed out") from e
-        
+            raise LLMTimeoutError("Request timed out") from e
+
         except httpx.ConnectError as e:
             self.logger.error(f"LLM connection failed: {e}")
-            raise LLMConnectionError(
-                "Cannot connect to LLM server"
-            ) from e
+            raise LLMConnectionError("Cannot connect to LLM server") from e
 
     async def chat_complete(
         self,

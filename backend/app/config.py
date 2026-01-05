@@ -27,7 +27,6 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_timeout_seconds: int = 120
 
-
     # CORS - explicit origins needed when allow_credentials=True
     cors_origins: list[str] = [
         "http://localhost:5173",
