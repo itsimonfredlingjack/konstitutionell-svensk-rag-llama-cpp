@@ -37,7 +37,6 @@ npm run dev -- --port 3001 --host 0.0.0.0
 │   └── requirements.txt
 ├── apps/
 │   ├── constitutional-retardedantigravity/ # Main RAG interface (Vite + React + 3D)
-│   ├── constitutional-dashboard/ # Admin/server control dashboard (Vite + React)
 │   └── constitutional-gpt-database/ # Database interface (experimental)
 ├── docs/                 # Dokumentation
 │   ├── system-overview.md
@@ -57,7 +56,7 @@ npm run dev -- --port 3001 --host 0.0.0.0
 ### Systemdokumentation
 - **Systemöversikt**: [docs/system-overview.md](docs/system-overview.md)
 - **Backend Status**: [docs/BACKEND_STATUS.md](docs/BACKEND_STATUS.md)
-- **API Dokumentation**: [apps/constitutional-dashboard/CONSTITUTIONAL_API.md](apps/constitutional-dashboard/CONSTITUTIONAL_API.md)
+- **API Dokumentation**: Se backend OpenAPI docs på `http://localhost:8900/docs`
 - **Modelloptimering**: [docs/MODEL_OPTIMIZATION.md](docs/MODEL_OPTIMIZATION.md)
 - **Agent Guardrails**: [docs/guardrails.md](docs/guardrails.md)
 
@@ -79,7 +78,6 @@ npm run dev -- --port 3001 --host 0.0.0.0
 |--------|------|--------|
 | Constitutional AI Backend | 8900 | 🟢 Active |
 | Constitutional RAG Frontend | 3001 | 🟢 Active |
-| Constitutional Dashboard | 5175 | 🟢 Active |
 | Ollama | 11434 | Running |
 
 ## API Endpoints
@@ -96,7 +94,7 @@ npm run dev -- --port 3001 --host 0.0.0.0
 ### Search
 - `POST /api/constitutional/search` - Document search
 
-Se [API Dokumentation](apps/constitutional-dashboard/CONSTITUTIONAL_API.md) för fullständig lista.
+Se backend OpenAPI docs på `http://localhost:8900/docs` för fullständig lista.
 
 ## Data
 
