@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const BACKEND_URL = 'http://192.168.86.32:8900';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 const API_ENDPOINT = `${BACKEND_URL}/api/constitutional/agent/query/stream`;
 
 // Prevent overlapping streams when user iterates quickly.
@@ -53,6 +53,8 @@ interface AppState {
     connectorCoords: { x: number; y: number } | null;
     answer: string;
     error: string | null;
+    currentSearchId: string | null;
+    lastStageChangeTimestamp: number;
 
     setQuery: (q: string) => void;
     startSearch: (mode?: 'auto' | 'chat' | 'assist' | 'evidence') => Promise<void>;
@@ -93,6 +95,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     connectorCoords: null,
     answer: '',
     error: null,
+    currentSearchId: null,
+    lastStageChangeTimestamp: 0,
 
     setQuery: (query) => set({ query }),
 
@@ -113,9 +117,8 @@ export const useAppStore = create<AppState>((set, get) => ({
             activeAbortController.abort();
         }
         activeAbortController = new AbortController();
+        const searchId = crypto.randomUUID();
 
-        let decontextTimer: ReturnType<typeof setTimeout> | null = null;
-        let retrievalTimer: ReturnType<typeof setTimeout> | null = null;
         let generationLogged = false;
 
         get().addQueryToHistory(query);
@@ -142,37 +145,38 @@ export const useAppStore = create<AppState>((set, get) => ({
             sources: [],
             answer: '',
             error: null,
-            evidenceLevel: null
+            evidenceLevel: null,
+            currentSearchId: searchId,
+            lastStageChangeTimestamp: Date.now(),
         });
 
+        // Helper to enforce minimum visual duration for stages
+        const updateStageWithDelay = (
+            updateFn: () => void,
+            minDurationMs: number = 500
+        ) => {
+            const { lastStageChangeTimestamp, currentSearchId } = get();
+
+            // If search was aborted/changed, don't update
+            if (currentSearchId !== searchId) return;
+
+            const now = Date.now();
+            const elapsed = now - lastStageChangeTimestamp;
+            const remaining = Math.max(0, minDurationMs - elapsed);
+
+            if (remaining > 0) {
+                setTimeout(() => {
+                    if (get().currentSearchId !== searchId) return;
+                    updateFn();
+                    set({ lastStageChangeTimestamp: Date.now() });
+                }, remaining);
+            } else {
+                updateFn();
+                set({ lastStageChangeTimestamp: Date.now() });
+            }
+        };
+
         try {
-            // Optimistic / inferred transitions: keep the cockpit feeling alive even if backend is quiet early.
-            decontextTimer = setTimeout(() => {
-                const state = get();
-                if (state.searchStage !== 'searching') return;
-                if (state.pipelineStage !== 'query_classification') return;
-                set((s) => ({
-                    pipelineStage: 'decontextualization',
-                    pipelineLog: [
-                        ...s.pipelineLog,
-                        { ts: Date.now(), stage: 'decontextualization', message: 'Decontext: rewriting query…' },
-                    ].slice(-50),
-                }));
-            }, 260);
-
-            retrievalTimer = setTimeout(() => {
-                const state = get();
-                if (state.searchStage !== 'searching') return;
-                if (state.pipelineStage !== 'query_classification' && state.pipelineStage !== 'decontextualization') return;
-                set((s) => ({
-                    pipelineStage: 'retrieval',
-                    pipelineLog: [
-                        ...s.pipelineLog,
-                        { ts: Date.now(), stage: 'retrieval', message: 'Retrieval: fetching sources…' },
-                    ].slice(-50),
-                }));
-            }, 740);
-
             const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -197,6 +201,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
             while (true) {
                 const { done, value } = await reader.read();
+                // Check if we've been superseded by a new search
+                if (get().currentSearchId !== searchId) break;
+
                 if (done) break;
 
                 const chunk = decoder.decode(value, { stream: true });
@@ -228,42 +235,47 @@ export const useAppStore = create<AppState>((set, get) => ({
                                 if (data.evidence_level) {
                                     set({ evidenceLevel: data.evidence_level });
                                 }
-                                set((state) => {
-                                    const nextLog: PipelineLogEntry[] = [
-                                        ...state.pipelineLog,
-                                        {
-                                            ts: Date.now(),
-                                            stage: 'retrieval',
-                                            message: `Retrieval: fetched ${data.sources?.length ?? 0} sources`,
-                                        },
-                                    ];
-                                    return {
-                                        pipelineLog: nextLog.slice(-50),
-                                        pipelineStage: 'generation',
-                                        searchStage: 'reading',
-                                    };
-                                });
+
+                                updateStageWithDelay(() => {
+                                    set((state) => {
+                                        const nextLog: PipelineLogEntry[] = [
+                                            ...state.pipelineLog,
+                                            {
+                                                ts: Date.now(),
+                                                stage: 'retrieval',
+                                                message: `Retrieval: fetched ${data.sources?.length ?? 0} sources`,
+                                            },
+                                        ];
+                                        return {
+                                            pipelineLog: nextLog.slice(-50),
+                                            pipelineStage: 'generation',
+                                            searchStage: 'reading',
+                                        };
+                                    });
+                                }, 600); // Ensure retrieval takes a bit of time visually
                                 break;
 
                             case 'decontextualized':
                                 // Query was rewritten for context
-                                set((state) => {
-                                    const rewritten = typeof data.rewritten === 'string' ? data.rewritten : '';
-                                    const nextLog: PipelineLogEntry[] = [
-                                        ...state.pipelineLog,
-                                        {
-                                            ts: Date.now(),
-                                            stage: 'decontextualization',
-                                            message: rewritten
-                                                ? `Decontext: “${rewritten}”`
-                                                : 'Decontext: query rewritten',
-                                        },
-                                    ];
-                                    return {
-                                        pipelineLog: nextLog.slice(-50),
-                                        pipelineStage: 'decontextualization',
-                                    };
-                                });
+                                updateStageWithDelay(() => {
+                                    set((state) => {
+                                        const rewritten = typeof data.rewritten === 'string' ? data.rewritten : '';
+                                        const nextLog: PipelineLogEntry[] = [
+                                            ...state.pipelineLog,
+                                            {
+                                                ts: Date.now(),
+                                                stage: 'decontextualization',
+                                                message: rewritten
+                                                    ? `Decontext: “${rewritten}”`
+                                                    : 'Decontext: query rewritten',
+                                            },
+                                        ];
+                                        return {
+                                            pipelineLog: nextLog.slice(-50),
+                                            pipelineStage: 'decontextualization',
+                                        };
+                                    });
+                                }, 400); // Ensure decontextualization is visible
                                 break;
 
                             case 'token':
@@ -274,7 +286,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                         set((state) => ({
                                             pipelineLog: [
                                                 ...state.pipelineLog,
-                                                { ts: Date.now(), stage: 'generation', message: 'Generate: composing answer…' },
+                                                { ts: Date.now(), stage: 'generation' as PipelineStage, message: 'Generate: composing answer…' },
                                             ].slice(-50),
                                         }));
                                     }
@@ -323,7 +335,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                         ...state.pipelineLog,
                                         {
                                             ts: Date.now(),
-                                            stage: 'guardrail_validation',
+                                            stage: 'guardrail_validation' as PipelineStage,
                                             message: `Complete: ${typeof data.total_time_ms === 'number' ? `${data.total_time_ms}ms` : 'done'}`,
                                         },
                                     ].slice(-50),
@@ -361,14 +373,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
             // Ensure we mark as complete if stream ended without 'done' event
             const currentState = get();
-            if (currentState.isSearching) {
+            if (currentState.isSearching && currentState.currentSearchId === searchId) {
                 set((state) => ({
                     searchStage: 'complete',
                     pipelineStage: 'idle',
                     isSearching: false,
                     pipelineLog: [
                         ...state.pipelineLog,
-                        { ts: Date.now(), stage: 'guardrail_validation', message: 'Complete: stream ended' },
+                        { ts: Date.now(), stage: 'guardrail_validation' as PipelineStage, message: 'Complete: stream ended' },
                     ].slice(-50),
                 }));
             }
@@ -376,6 +388,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         } catch (error) {
             // Ignore aborts (expected when user starts a new query).
             if (error instanceof DOMException && error.name === 'AbortError') {
+                return;
+            }
+            // Check if this error belongs to the current search
+            if (get().currentSearchId !== searchId) {
                 return;
             }
             console.error('Search failed:', error);
@@ -386,8 +402,6 @@ export const useAppStore = create<AppState>((set, get) => ({
                 error: error instanceof Error ? error.message : 'Search failed'
             });
         } finally {
-            if (decontextTimer) clearTimeout(decontextTimer);
-            if (retrievalTimer) clearTimeout(retrievalTimer);
             if (activeAbortController?.signal.aborted) {
                 // Keep controller cleared on abort
                 activeAbortController = null;

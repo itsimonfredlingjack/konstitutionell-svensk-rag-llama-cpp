@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../../stores/useAppStore';
 import { motion } from 'framer-motion';
-import { Terminal, Cpu, Network, Database, Sparkles, ShieldCheck, Activity, Clock, FileText } from 'lucide-react';
+import { Terminal, Cpu, Network, Database, Sparkles, ShieldCheck, Clock, FileText } from 'lucide-react';
 import clsx from 'clsx';
 
 export const QueryProcessor: React.FC<{ className?: string }> = ({ className }) => {

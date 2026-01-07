@@ -35,7 +35,6 @@ const EvidenceLevelInline = ({ level }: { level: EvidenceLevel }) => {
 export function ResultsSection() {
     const {
         sources,
-        submittedQuery,
         hoveredSourceId,
         lockedSourceId,
         searchStage,
