@@ -13,7 +13,7 @@
   --neon-purple: #bc13fe;
 
   --text-main: #e0faff;
-  --text-muted: rgba(224, 250, 255, 0.6);
+  --text-muted: rgba(224, 250, 255, 0.85);
 
   --glass-border: 1px solid rgba(0, 243, 255, 0.2);
   --glass-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
@@ -561,7 +561,7 @@ body {
 .card-desc {
   display: block;
   font-size: 12px;
-  color: rgba(224, 250, 255, 0.62);
+  color: var(--text-muted);
   margin-top: 2px;
   white-space: normal;
   line-height: 1.25;
