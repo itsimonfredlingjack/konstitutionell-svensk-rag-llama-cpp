@@ -125,6 +125,15 @@ class ConfigSettings(BaseSettings):
     # Mock Data (for local development only)
     use_mock_data: bool = False
 
+    # Structured Output & Critic→Revise Loop (Constitutional AI)
+    structured_output_enabled: bool = True
+    critic_revise_enabled: bool = False  # Default False för safe rollout
+    critic_max_revisions: int = 2
+    critic_temperature: float = 0.1
+
+    # Refusal Template
+    evidence_refusal_template: str = "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats i den här sökningen. Underlag saknas för att ge ett rättssäkert svar, och jag kan därför inte spekulera. Om du vill kan du omformulera frågan eller ange vilka dokument/avsnitt du vill att jag ska söker i."
+
 
 class ConfigService:
     """
@@ -305,6 +314,32 @@ class ConfigService:
         }
 
         return mode_config_map.get(mode.lower(), mode_config_map["assist"])
+
+    @property
+    def structured_output_effective_enabled(self) -> bool:
+        """
+        Consolidate all conditions for structured output enablement.
+
+        Returns:
+            True if structured output should be used, False otherwise
+        """
+        return (
+            self._settings.structured_output_enabled
+            and not self._settings.debug  # Disable in debug mode if needed
+        )
+
+    @property
+    def critic_revise_effective_enabled(self) -> bool:
+        """
+        Consolidate all conditions for critic enablement.
+
+        Returns:
+            True if critic→revise loop should be used, False otherwise
+        """
+        return (
+            self._settings.critic_revise_enabled
+            and self._settings.structured_output_enabled  # Depends on structured output
+        )
 
     def reload(self) -> None:
         """Reload configuration from environment"""
