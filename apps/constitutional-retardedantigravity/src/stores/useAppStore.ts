@@ -118,6 +118,32 @@ export const useAppStore = create<AppState>((set, get) => ({
         const searchId = crypto.randomUUID();
 
         let generationLogged = false;
+        let gradingWatchdog: ReturnType<typeof setTimeout> | null = null;
+
+        const clearGradingWatchdog = () => {
+            if (gradingWatchdog) {
+                clearTimeout(gradingWatchdog);
+                gradingWatchdog = null;
+            }
+        };
+
+        const armGradingWatchdog = () => {
+            clearGradingWatchdog();
+            gradingWatchdog = setTimeout(() => {
+                if (get().currentSearchId !== searchId) return;
+                if (get().pipelineStage !== 'grading') return;
+
+                set((state) => ({
+                    pipelineStage: 'generation',
+                    searchStage: state.searchStage === 'complete' || state.searchStage === 'error' ? state.searchStage : 'reasoning',
+                    pipelineLog: [...state.pipelineLog, {
+                        ts: Date.now(),
+                        stage: 'grading',
+                        message: 'Grading: timeout, proceeding to generation',
+                    }].slice(-50),
+                }));
+            }, 2000);
+        };
 
         get().addQueryToHistory(query);
 
@@ -226,25 +252,38 @@ export const useAppStore = create<AppState>((set, get) => ({
                                         pipelineStage: 'grading',
                                         searchStage: 'reading',
                                     }));
+                                    armGradingWatchdog();
                                 }, 600);
                                 break;
 
-                            case 'grading':
-                                // NYTT: Visar att vi bedömer dokument
+                            case 'grading': {
+                                // Defensiv: acceptera både (relevant/total) och (relevant_count/total_count)
+                                clearGradingWatchdog();
+
+                                const relevant = data.relevant ?? data.relevant_count ?? 0;
+                                const total = data.total ?? data.total_count ?? 0;
+
+                                // Undvik att backa pipelinen om vi redan har gått vidare
+                                const shouldAdvance = get().pipelineStage === 'grading';
+
                                 updateStageWithDelay(() => {
                                     set((state) => ({
                                         pipelineLog: [...state.pipelineLog, {
                                             ts: Date.now(),
                                             stage: 'grading',
-                                            message: `Grading: ${data.relevant_count}/${data.total_count} documents relevant`,
+                                            message: typeof data.message === 'string'
+                                                ? data.message
+                                                : `Grading: ${relevant}/${total} documents relevant`,
                                         }].slice(-50),
-                                        pipelineStage: 'self_reflection',
+                                        pipelineStage: shouldAdvance ? 'self_reflection' : state.pipelineStage,
                                     }));
                                 }, 400);
                                 break;
+                            }
 
                             case 'thought_chain':
-                                // NYTT: Tar emot tankekedjan
+                                clearGradingWatchdog();
+                                // Tar emot tankekedjan
                                 set({ thoughtChain: data.content });
                                 updateStageWithDelay(() => {
                                     set((state) => ({
@@ -260,6 +299,8 @@ export const useAppStore = create<AppState>((set, get) => ({
                                 break;
 
                             case 'token':
+                                // If generation starts, kill grading watchdog immediately
+                                clearGradingWatchdog();
                                 if (data.content) {
                                     if (!generationLogged) {
                                         generationLogged = true;
@@ -280,6 +321,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                 break;
 
                             case 'corrections':
+                                clearGradingWatchdog();
                                 set((state) => ({
                                     pipelineStage: 'guardrail_validation',
                                     pipelineLog: [...state.pipelineLog, {
@@ -292,6 +334,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                 break;
 
                             case 'done':
+                                clearGradingWatchdog();
                                 set((state) => ({
                                     searchStage: 'complete',
                                     pipelineStage: 'idle',
@@ -305,6 +348,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                 break;
 
                             case 'error':
+                                clearGradingWatchdog();
                                 set((state) => ({
                                     error: data.message || 'Unknown error',
                                     searchStage: 'error',
@@ -327,12 +371,14 @@ export const useAppStore = create<AppState>((set, get) => ({
             // Cleanup check
             const currentState = get();
             if (currentState.isSearching && currentState.currentSearchId === searchId) {
+                clearGradingWatchdog();
                 set({ isSearching: false, searchStage: 'complete' });
             }
 
         } catch (error) {
             if (error instanceof DOMException && error.name === 'AbortError') return;
             if (get().currentSearchId !== searchId) return;
+            clearGradingWatchdog();
             set({
                 isSearching: false,
                 searchStage: 'error',
@@ -340,6 +386,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                 error: error instanceof Error ? error.message : 'Search failed'
             });
         } finally {
+            clearGradingWatchdog();
             if (activeAbortController?.signal.aborted) activeAbortController = null;
         }
     },
