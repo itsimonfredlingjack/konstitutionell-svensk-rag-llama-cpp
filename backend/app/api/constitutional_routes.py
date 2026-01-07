@@ -4,7 +4,7 @@ Refactored with Service Layer Architecture
 """
 
 import asyncio
-from fastapi import APIRouter, Header, Depends
+from fastapi import APIRouter, Header, Depends, WebSocket
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
@@ -105,25 +105,54 @@ class AgentQueryRequest(BaseModel):
     )
 
 
-class AgentSource(BaseModel):
+class SourceItem(BaseModel):
     id: str
     title: str
     snippet: str
-    score: float
+    score: Optional[float] = None
     doc_type: Optional[str] = None
-    source: str
+    source: Optional[str] = None
+    retriever: Optional[str] = None
+    loc: Optional[str] = None
 
 
 class AgentQueryResponse(BaseModel):
     answer: str
-    sources: List[AgentSource]
-    reasoning_steps: List[str]
-    model_used: str
-    total_time_ms: int
+    sources: List[SourceItem]
     mode: str
-    warden_status: str
-    evidence_level: str
-    corrections_applied: List[str]
+    saknas_underlag: bool
+    evidence_level: Optional[str] = None
+
+
+def _looks_like_structured_json(answer: str) -> bool:
+    stripped = answer.lstrip()
+    return stripped.startswith("{") and '"mode"' in stripped and '"svar"' in stripped
+
+
+def _sanitize_answer(
+    answer: str,
+    mode_value: str,
+    refusal_text: str,
+    safe_fallback: str,
+) -> tuple[str, bool, bool]:
+    """
+    Sanitize answer to avoid leaking structured JSON or internal fields.
+
+    Returns:
+        (sanitized_answer, saknas_underlag_override, was_sanitized)
+    """
+    if answer is None:
+        answer = ""
+
+    looks_like_json = _looks_like_structured_json(answer)
+    contains_internal = "arbetsanteckning" in answer or "fakta_utan_kalla" in answer
+
+    if looks_like_json or contains_internal:
+        if mode_value == "evidence":
+            return refusal_text, True, True
+        return safe_fallback, False, True
+
+    return answer, False, False
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -240,32 +269,66 @@ async def agent_query(
             history=history,
         )
 
-        # Convert to response format
+        mode_value = result.mode.value if hasattr(result.mode, "value") else str(result.mode)
+        refusal_text = getattr(
+            orchestrator.config.settings,
+            "evidence_refusal_template",
+            "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats...",
+        )
+        safe_fallback = "Jag kunde inte tolka modellens svar. Försök igen."
+
+        answer, saknas_override, was_sanitized = _sanitize_answer(
+            result.answer,
+            mode_value,
+            refusal_text,
+            safe_fallback,
+        )
+
+        # Determine saknas_underlag
+        saknas_underlag = getattr(result.metrics, "saknas_underlag", None)
+        if was_sanitized:
+            saknas_underlag = saknas_override
+        elif saknas_underlag is None:
+            if mode_value == "evidence" and refusal_text in answer:
+                saknas_underlag = True
+            else:
+                saknas_underlag = False
+
+        # Ensure non-empty answer
+        if not answer.strip():
+            if mode_value == "evidence":
+                answer = refusal_text
+                saknas_underlag = True
+            else:
+                answer = safe_fallback
+                saknas_underlag = False
+
+        # Sources: only from orchestrator result, but empty on refusal/sanitized fallback
+        sources = result.sources or []
+        if mode_value == "evidence" and saknas_underlag:
+            sources = []
+        if was_sanitized and mode_value == "assist":
+            sources = []
+
+        # Convert to response format (no internal fields)
         return AgentQueryResponse(
-            answer=result.answer,
+            answer=answer,
             sources=[
-                AgentSource(
+                SourceItem(
                     id=s.id,
                     title=s.title,
                     snippet=s.snippet,
                     score=s.score,
                     doc_type=s.doc_type,
                     source=s.source,
+                    retriever=getattr(s, "retriever", None),
+                    loc=getattr(s, "loc", None),
                 )
-                for s in result.sources
+                for s in sources
             ],
-            reasoning_steps=result.reasoning_steps,
-            model_used=result.metrics.model_used,
-            total_time_ms=int(result.metrics.total_pipeline_ms),
-            mode=result.mode.value,
-            warden_status=result.guardrail_status.value,
+            mode=mode_value,
+            saknas_underlag=bool(saknas_underlag),
             evidence_level=result.evidence_level,
-            corrections_applied=[
-                f"{c.original_term} → {c.corrected_term}"
-                for c in result.guardrail_result.corrections
-            ]
-            if hasattr(result, "guardrail_result")
-            else [],
         )
 
     except Exception:
@@ -332,9 +395,6 @@ async def agent_query_stream(
 # ═════════════════════════════════════════════════════════════════════════
 # WEBSOCKET ENDPOINTS
 # ═════════════════════════════════════════════════════════════════════════
-
-# Import at module level (added to avoid FastAPI dependency issues)
-from fastapi import WebSocket
 
 
 async def harvest_websocket(websocket: WebSocket):
