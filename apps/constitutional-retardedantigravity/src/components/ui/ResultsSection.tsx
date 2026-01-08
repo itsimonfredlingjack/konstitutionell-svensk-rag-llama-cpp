@@ -8,6 +8,7 @@ import { SourcesPanel } from './SourcesPanel';
 import { AnswerWithCitations, extractCitedSourceIds } from './AnswerWithCitations';
 import { QueryBar } from './QueryBar';
 import { SearchOverlay } from './SearchOverlay';
+import { ThoughtChain } from './ThoughtChain';
 
 
 const EvidenceLevelInline = ({ level }: { level: EvidenceLevel }) => {
@@ -39,6 +40,7 @@ export function ResultsSection() {
         lockedSourceId,
         searchStage,
         answer,
+        thoughtChain,
         evidenceLevel
     } = useAppStore();
     const answerContainerRef = useRef<HTMLDivElement>(null);
@@ -160,6 +162,7 @@ export function ResultsSection() {
 
                             {(searchStage === 'reading' || searchStage === 'complete') && (
                                 <div className="relative z-10">
+                                    <ThoughtChain thought={thoughtChain} />
                                     {answer ? (
                                         <div
                                             className="text-stone-900 font-sans text-[15px]"

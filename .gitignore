@@ -74,9 +74,14 @@ _TEMP_DUMP/
 *.h5
 *.pkl
 *.pickle
+*.gguf
+*.backup
 
 # Archive and old files
 archive/
+
+# Optional local llama.cpp checkout (keep out of git)
+llama.cpp/
 
 # Test coverage
 .coverage

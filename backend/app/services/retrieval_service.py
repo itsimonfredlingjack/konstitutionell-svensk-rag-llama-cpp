@@ -278,6 +278,21 @@ class RetrievalService(BaseService):
         # Initialize embedding service
         self._embedding_service = get_embedding_service(self.config)
 
+        # Warn early if we switched embedding dimensions but collections are not re-indexed yet
+        try:
+            if self.config.expected_embedding_dim == 1024:
+                existing = {c.name for c in self._chromadb_client.list_collections()}
+                expected = set(self.config.effective_default_collections)
+                missing = sorted(list(expected - existing))
+                if missing:
+                    logger.warning(
+                        "Embedding dimension is 1024 (BGE-M3) but expected Chroma collections are missing. "
+                        "Search will return empty results until re-indexing is completed. "
+                        f"Missing collections: {missing}"
+                    )
+        except Exception as e:
+            logger.warning(f"Unable to validate 1024-dim collections: {e}")
+
         # Initialize RetrievalOrchestrator if available
         if self.RETRIEVAL_ORCHESTRATOR_AVAILABLE:
             try:
@@ -321,7 +336,7 @@ class RetrievalService(BaseService):
 
     async def ensure_initialized(self) -> None:
         """Ensure service is initialized"""
-        super().ensure_initialized()
+        await super().ensure_initialized()
 
         if self._chromadb_client is None:
             raise ServiceNotInitializedError(
@@ -360,7 +375,7 @@ class RetrievalService(BaseService):
 
         try:
             # Use provided collections or default
-            collections_to_search = collections or self.config.default_collections
+            collections_to_search = collections or self.config.effective_default_collections
 
             # Map our RetrievalStrategy to orchestrator's strategy
             if self.RETRIEVAL_ORCHESTRATOR_AVAILABLE and self._orchestrator:
@@ -416,7 +431,9 @@ class RetrievalService(BaseService):
                     score_entropy=metrics_dict.get("scores", {}).get("entropy", 0.0),
                     dense_timeout=metrics_dict.get("timeouts", {}).get("dense", False),
                     bm25_timeout=metrics_dict.get("timeouts", {}).get("bm25", False),
-                    strategy=metrics_dict.get("strategy", strategy if isinstance(strategy, str) else strategy.value),
+                    strategy=metrics_dict.get(
+                        "strategy", strategy if isinstance(strategy, str) else strategy.value
+                    ),
                     rewrite_used=metrics_dict.get("rewrite", {}).get("used", False),
                     rewrite_latency_ms=metrics_dict.get("rewrite", {}).get("latency_ms", 0.0),
                     original_query=metrics_dict.get("rewrite", {}).get("original_query", ""),
@@ -518,12 +535,12 @@ class RetrievalService(BaseService):
                             all_results.append(
                                 SearchResult(
                                     id=doc_id,
-                                    title=metadata.get("title", "Untitled"),
+                                    title=str(metadata.get("title", "Untitled")),
                                     snippet=snippet,
                                     score=round(score, 4),
                                     source=collection_name,
-                                    doc_type=metadata.get("doc_type"),
-                                    date=metadata.get("date"),
+                                    doc_type=str(metadata.get("doc_type") or ""),
+                                    date=str(metadata.get("date") or ""),
                                     retriever="dense",
                                 )
                             )

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import type { Source } from '../../stores/useAppStore';
 import { useAppStore } from '../../stores/useAppStore';
 
-const CITATION_RE = /\[Källa\s+(\d+)\]/g;
+const CITATION_RE = /\[(?:Källa\s+)?(\d+)\]/g;
 
 export function extractCitedSourceIds(answer: string, sources: Source[]): Set<string> {
     const cited = new Set<string>();

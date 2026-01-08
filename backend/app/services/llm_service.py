@@ -194,6 +194,9 @@ class LLMService(BaseService):
         """
         try:
             await self.ensure_initialized()
+            if self._client is None:
+                self.logger.error("LLM client is not initialized")
+                return False
             health_endpoint = self._get_health_endpoint()
             response = await self._client.get(health_endpoint, timeout=2.0)
             is_healthy = response.status_code == 200
@@ -400,6 +403,8 @@ class LLMService(BaseService):
             LLMModelNotFoundError: If model not available
         """
         await self.ensure_initialized()
+        if self._client is None:
+            raise LLMConnectionError("LLM client is not initialized")
 
         # Use provided model or default
         model_to_use = model or self._config.primary_model

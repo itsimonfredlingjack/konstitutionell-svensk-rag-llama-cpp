@@ -14,6 +14,7 @@ from datetime import datetime
 from ..services.orchestrator_service import OrchestratorService, get_orchestrator_service, RAGResult
 from ..services.retrieval_service import get_retrieval_service, RetrievalStrategy
 
+
 router = APIRouter(prefix="/api/constitutional", tags=["constitutional"])
 
 
@@ -230,22 +231,6 @@ async def agent_query(
 ):
     """
     Full agentic RAG pipeline using OrchestratorService.
-
-    Pipeline:
-    1. Query classification (CHAT/ASSIST/EVIDENCE)
-    2. Query decontextualization (if history provided)
-    3. Document retrieval (Phase 1-4 RetrievalOrchestrator)
-    4. LLM generation (Ministral 3 14B)
-    5. Guardrail validation (Jail Warden v2)
-    6. Evidence level assignment
-
-    Response modes:
-    - CHAT: Direct LLM response, no sources
-    - ASSIST: Search + LLM with conversational tone
-    - EVIDENCE: Search + LLM with formal tone and citations
-
-    Headers:
-    - X-Retrieval-Strategy: "parallel_v1" (default) | "rewrite_v1" | "rag_fusion" | "adaptive"
     """
     try:
         # Map header to RetrievalStrategy
@@ -255,7 +240,10 @@ async def agent_query(
             "rag_fusion": RetrievalStrategy.RAG_FUSION,
             "adaptive": RetrievalStrategy.ADAPTIVE,
         }
-        retrieval_strategy = strategy_map.get(x_retrieval_strategy, RetrievalStrategy.PARALLEL_V1)
+
+        # FIX: Säkra upp None-värde innan lookup
+        strategy_key = x_retrieval_strategy or "parallel_v1"
+        retrieval_strategy = strategy_map.get(strategy_key, RetrievalStrategy.PARALLEL_V1)
 
         # Convert history for OrchestratorService
         history = [{"role": msg.role, "content": msg.content} for msg in request.history or []]
@@ -365,7 +353,8 @@ async def agent_query_stream(
         "rag_fusion": RetrievalStrategy.RAG_FUSION,
         "adaptive": RetrievalStrategy.ADAPTIVE,
     }
-    retrieval_strategy = strategy_map.get(x_retrieval_strategy, RetrievalStrategy.PARALLEL_V1)
+    retrieval_key = x_retrieval_strategy or "parallel_v1"
+    retrieval_strategy = strategy_map.get(retrieval_key, RetrievalStrategy.PARALLEL_V1)
 
     # Convert history for OrchestratorService
     history = [{"role": msg.role, "content": msg.content} for msg in request.history or []]

@@ -1,6 +1,6 @@
 """
-Embedding Service - Singleton KBLab Swedish BERT Wrapper
-Manages KBLab sentence-transformer model with lazy loading
+Embedding Service - Singleton SentenceTransformer Wrapper
+Manages sentence-transformer embedding model with lazy loading
 """
 
 from typing import List, Optional
@@ -16,12 +16,12 @@ logger = get_logger(__name__)
 
 class EmbeddingService:
     """
-    Singleton service for KBLab Swedish BERT embedding model.
+    Singleton service for sentence-transformer embedding models.
 
     Features:
     - Lazy loading (loads on first use)
     - Singleton pattern (one model instance)
-    - Dimension validation (verifies 768-dim output)
+    - Dimension validation (verifies expected output)
     - Batch embedding support
     """
 
@@ -46,7 +46,7 @@ class EmbeddingService:
 
     def _load_model(self) -> None:
         """
-        Load KBLab Swedish BERT model (lazy loading).
+        Load embedding model (lazy loading).
 
         Only called on first embedding operation.
         """
@@ -56,7 +56,15 @@ class EmbeddingService:
         try:
             logger.info(f"Loading embedding model: {self.config.embedding_model}")
             # Force CPU to save VRAM for the LLM
-            self._model = SentenceTransformer(self.config.embedding_model, device="cpu")
+            try:
+                self._model = SentenceTransformer(
+                    self.config.embedding_model,
+                    device="cpu",
+                    trust_remote_code=True,
+                )
+            except TypeError:
+                # Older sentence-transformers versions may not support trust_remote_code.
+                self._model = SentenceTransformer(self.config.embedding_model, device="cpu")
 
             # Verify dimension on load
             test_text = ["test"]
@@ -85,7 +93,7 @@ class EmbeddingService:
             texts: List of text strings to embed
 
         Returns:
-            List of embedding vectors (768-dim)
+            List of embedding vectors
 
         Raises:
             RuntimeError: If model fails to load or dimension mismatch
@@ -117,7 +125,7 @@ class EmbeddingService:
             text: Single text string to embed
 
         Returns:
-            Single embedding vector (768-dim)
+            Single embedding vector
         """
         return self.embed([text])[0]
 
@@ -129,7 +137,7 @@ class EmbeddingService:
             texts: List of text strings to embed
 
         Returns:
-            List of embedding vectors (768-dim)
+            List of embedding vectors
         """
         import asyncio
 
@@ -150,17 +158,12 @@ class EmbeddingService:
             text: Single text string to embed
 
         Returns:
-            Single embedding vector (768-dim)
+            Single embedding vector
         """
         return (await self.embed_async([text]))[0]
 
     def get_dimension(self) -> int:
-        """
-        Get the embedding dimension (768 for KBLab BERT).
-
-        Returns:
-            Embedding dimension (number of floats per vector)
-        """
+        """Get the embedding dimension configured for this model."""
         return self.config.expected_embedding_dim
 
     def is_loaded(self) -> bool:

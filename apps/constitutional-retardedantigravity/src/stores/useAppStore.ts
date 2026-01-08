@@ -299,8 +299,8 @@ export const useAppStore = create<AppState>((set, get) => ({
                                 break;
 
                             case 'token':
-                                // If generation starts, kill grading watchdog immediately
                                 clearGradingWatchdog();
+                                // If generation starts, kill grading watchdog immediately
                                 if (data.content) {
                                     if (!generationLogged) {
                                         generationLogged = true;

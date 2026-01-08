@@ -37,11 +37,14 @@ class ConfigSettings(BaseSettings):
     pdf_cache_path: str = "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/pdf_cache"
 
     # Collections
+    # NOTE: Embedding switch to BGE-M3 (1024 dim) requires re-indexing.
+    # Use new collection names to avoid dimension-mismatch crashes against legacy 768-dim collections.
     default_collections: list[str] = ["sfs_lagtext", "riksdag_documents_p1", "swedish_gov_docs"]
 
-    # Embedding Model (KBLab Swedish BERT)
-    embedding_model: str = "KBLab/sentence-bert-swedish-cased"
-    expected_embedding_dim: int = 768
+    # Embedding Model (BGE-M3, 1024 dim) - requires re-indexing
+    embedding_model: str = "BAAI/bge-m3"
+    expected_embedding_dim: int = 1024
+    embedding_collection_suffix: str = "_bge_m3_1024"
 
     # LLM Configuration (Constitutional AI)
     constitutional_model: str = "Mistral-Nemo-Instruct-2407-Q5_K_M.gguf"
@@ -133,6 +136,15 @@ class ConfigSettings(BaseSettings):
 
     # Refusal Template
     evidence_refusal_template: str = "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats i den här sökningen. Underlag saknas för att ge ett rättssäkert svar, och jag kan därför inte spekulera. Om du vill kan du omformulera frågan eller ange vilka dokument/avsnitt du vill att jag ska söker i."
+
+    # CRAG (Corrective RAG) Configuration
+    crag_enabled: bool = False  # Safe rollout - disabled by default
+    crag_grade_threshold: float = 0.3  # Relevance threshold for document grading
+    crag_max_rewrite_attempts: int = 2  # Max query rewrite attempts if no relevant docs
+    crag_grader_model: str = "Qwen2.5-0.5B-Instruct-Q5_K_M.gguf"  # Lightweight model for grading
+    crag_enable_self_reflection: bool = False  # Chain of Thought before answering
+    crag_max_concurrent_grading: int = 5  # Max parallel document grading
+    crag_grade_timeout: float = 10.0  # Timeout per document grading in seconds
 
 
 class ConfigService:
@@ -269,6 +281,17 @@ class ConfigService:
     @property
     def default_collections(self) -> list[str]:
         return self._settings.default_collections
+
+    @property
+    def effective_default_collections(self) -> list[str]:
+        """Return the default collections adjusted for embedding dimension changes."""
+        base = self._settings.default_collections
+        suffix = self._settings.embedding_collection_suffix
+
+        if self._settings.expected_embedding_dim == 1024 and suffix:
+            return [f"{name}{suffix}" for name in base]
+
+        return base
 
     @property
     def search_timeout(self) -> float:
