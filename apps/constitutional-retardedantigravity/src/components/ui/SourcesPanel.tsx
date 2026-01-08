@@ -5,6 +5,28 @@ import { useMemo, useState } from 'react';
 
 import { useAppStore } from '../../stores/useAppStore';
 
+// Load thresholds from env vars (default: 0.7, 0.5)
+const SCORE_THRESHOLD_GOOD = Number(import.meta.env.NEXT_PUBLIC_SCORE_THRESHOLD_GOOD) || 0.7;
+const SCORE_THRESHOLD_OK = Number(import.meta.env.NEXT_PUBLIC_SCORE_THRESHOLD_OK) || 0.5;
+
+const getScoreColor = (score: number): string => {
+    if (score >= SCORE_THRESHOLD_GOOD) return 'bg-emerald-500';
+    if (score >= SCORE_THRESHOLD_OK) return 'bg-amber-500';
+    return 'bg-red-500/50'; // Röd/Grå för låg relevans
+};
+
+const getScoreBadgeColor = (score: number): string => {
+    if (score >= SCORE_THRESHOLD_GOOD) return 'text-emerald-700 bg-emerald-50';
+    if (score >= SCORE_THRESHOLD_OK) return 'text-amber-700 bg-amber-50';
+    return 'text-red-700 bg-red-50';
+};
+
+const getScoreLabel = (score: number): string => {
+    if (score >= SCORE_THRESHOLD_GOOD) return 'Hög relevans';
+    if (score >= SCORE_THRESHOLD_OK) return 'Möjlig relevans';
+    return 'Låg relevans';
+};
+
 type SourcesPanelProps = {
     className?: string;
     citedSourceIds?: Set<string>;
@@ -55,8 +77,11 @@ export function SourcesPanel({ className, citedSourceIds }: SourcesPanelProps) {
                         const isLocked = lockedSourceId === source.id;
                         const isCited = citedSourceIds ? citedSourceIds.has(source.id) : false;
 
-                        // Micro-indicator: keep it low-key
+                        // Micro-indicator with color coding
                         const scoreWidth = Math.max(10, Math.round(source.score * 46)); // 10–46px
+                        const scoreColor = getScoreColor(source.score);
+                        const scoreBadgeColor = getScoreBadgeColor(source.score);
+                        const scoreLabel = getScoreLabel(source.score);
 
                         return (
                             <motion.div
@@ -108,12 +133,25 @@ export function SourcesPanel({ className, citedSourceIds }: SourcesPanelProps) {
                                     </div>
 
                                     <div className="flex flex-col items-end gap-2 pt-0.5">
+                                        {/* Relevance Badge med Label */}
+                                        <div className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${scoreBadgeColor}`}>
+                                            {scoreLabel}
+                                        </div>
+                                        
+                                        {/* Numeriskt Score */}
+                                        <div className="text-[10px] font-mono text-stone-500">
+                                            {source.score.toFixed(3)}
+                                        </div>
+                                        
+                                        {/* Color-coded Indicator Bar */}
                                         <div className="h-1.5 w-12 rounded-full bg-stone-200 overflow-hidden">
                                             <div
-                                                className="h-full rounded-full bg-teal-700/60"
+                                                className={`h-full rounded-full ${scoreColor}`}
                                                 style={{ width: `${scoreWidth}px` }}
                                             />
                                         </div>
+                                        
+                                        {/* Lock Indicator */}
                                         {isLocked && (
                                             <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">
                                                 Locked
@@ -155,6 +193,9 @@ export function SourcesPanel({ className, citedSourceIds }: SourcesPanelProps) {
                                     {previewSource.source} •{" "}
                                     <span className="font-mono text-[10px]">
                                         {previewSource.doc_type.toUpperCase()}
+                                    </span> •{" "}
+                                    <span className={`font-mono text-[10px] ${getScoreBadgeColor(previewSource.score)}`}>
+                                        Score: {previewSource.score.toFixed(3)}
                                     </span>
                                 </div>
                             </div>

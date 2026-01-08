@@ -8,6 +8,7 @@ import asyncio
 from dataclasses import dataclass, field
 from enum import Enum
 import time
+import os
 
 from .base_service import BaseService
 from .config_service import ConfigService, get_config_service
@@ -16,6 +17,9 @@ from ..core.exceptions import RetrievalError, ServiceNotInitializedError
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
+
+# RAG Similarity Threshold - Direct env var (no config dependency)
+SCORE_THRESHOLD = float(os.getenv("RAG_SIMILARITY_THRESHOLD", "0.5"))
 
 # ═════════════════════════════════════════════════════════════════════════
 # RETRIEVAL ORCHESTRATOR IMPORT (Module level for visibility in methods)
@@ -474,6 +478,20 @@ class RetrievalService(BaseService):
                     f"{metrics.total_latency_ms:.1f}ms (strategy: {strategy if isinstance(strategy, str) else strategy.value})"
                 )
 
+                # Apply similarity threshold filtering (BEFORE trimming to k)
+                qualified_results = [r for r in search_results if r.score >= SCORE_THRESHOLD]
+
+                # Adaptive fallback: if all filtered out, return top 3 anyway but log warning
+                if not qualified_results and search_results:
+                    qualified_results = search_results[:3]
+                    logger.warning(
+                        f"All {len(search_results)} results below threshold {SCORE_THRESHOLD:.3f}. "
+                        f"Adaptive fallback: returning top 3 results."
+                    )
+
+                # Trim to requested k
+                search_results = qualified_results[:k]
+
                 return RetrievalResult(
                     results=search_results,
                     metrics=metrics,
@@ -551,7 +569,20 @@ class RetrievalService(BaseService):
 
             # Sort by score
             all_results.sort(key=lambda x: -x.score)
-            results = all_results[:k]
+            
+            # Apply similarity threshold filtering (BEFORE trimming to k)
+            qualified_results = [r for r in all_results if r.score >= SCORE_THRESHOLD]
+
+            # Adaptive fallback: if all filtered out, return top 3 anyway but log warning
+            if not qualified_results and all_results:
+                qualified_results = all_results[:3]
+                logger.warning(
+                    f"All {len(all_results)} results below threshold {SCORE_THRESHOLD:.3f}. "
+                    f"Adaptive fallback: returning top 3 results."
+                )
+
+            # Trim to requested k
+            results = qualified_results[:k]
 
             latency_ms = (time.perf_counter() - start_time) * 1000
 
