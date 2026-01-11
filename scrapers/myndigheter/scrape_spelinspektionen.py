@@ -10,7 +10,6 @@ import json
 import logging
 import time
 from datetime import datetime
-from typing import Optional
 from urllib.parse import urljoin
 
 import chromadb
@@ -58,7 +57,7 @@ class SpelinspeketionenScraper:
         content = f"{url}|{title}"
         return hashlib.sha256(content.encode()).hexdigest()[:16]
 
-    def fetch_page(self, url: str) -> Optional[BeautifulSoup]:
+    def fetch_page(self, url: str) -> BeautifulSoup | None:
         """Fetch and parse a page"""
         try:
             full_url = urljoin(self.BASE_URL, url)

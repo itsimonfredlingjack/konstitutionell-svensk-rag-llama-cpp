@@ -446,7 +446,7 @@ def main():
 
     try:
         for idx, (start_year, end_year) in enumerate(YEAR_RANGES[start_idx:], start=start_idx):
-            print(f"\n[{idx+1}/{len(YEAR_RANGES)}] Processing years {start_year}-{end_year}")
+            print(f"\n[{idx + 1}/{len(YEAR_RANGES)}] Processing years {start_year}-{end_year}")
 
             year_records = harvest_year_range(start_year, end_year, existing_pmids)
             all_records.extend(year_records)
@@ -474,7 +474,7 @@ def main():
                 json.dump(result, f, ensure_ascii=False)
 
             print(
-                f"  Saved. Total: {len(all_records):,} | Rate: {rate:.0f}/min | Elapsed: {elapsed/60:.1f}m"
+                f"  Saved. Total: {len(all_records):,} | Rate: {rate:.0f}/min | Elapsed: {elapsed / 60:.1f}m"
             )
 
     except KeyboardInterrupt:
@@ -510,7 +510,7 @@ def main():
     print("=" * 70)
     print(f"Documents fetched: {len(all_records):,}")
     print(f"Total available: {total_available:,}")
-    print(f"Time elapsed: {elapsed/60:.1f} minutes")
+    print(f"Time elapsed: {elapsed / 60:.1f} minutes")
     print(f"Rate: {rate:.0f} docs/minute")
     print(f"Output: {OUTPUT_FILE}")
     print("Status: COMPLETE")

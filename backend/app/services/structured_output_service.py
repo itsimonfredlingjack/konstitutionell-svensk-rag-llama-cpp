@@ -10,9 +10,9 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, ValidationError
 
+from ..utils.logging import get_logger
 from .base_service import BaseService
 from .config_service import ConfigService, get_config_service
-from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 

@@ -7,16 +7,16 @@ based on critic feedback. Used in the critic→revise loop for improved accuracy
 Feature-flagged: CONSTITUTIONAL_CRITIC_ENABLED
 """
 
-from typing import Dict, List, Optional
-from dataclasses import dataclass
 import json
 import time
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
+from ..utils.logging import get_logger
 from .base_service import BaseService
 from .config_service import ConfigService, get_config_service
-from .retrieval_service import SearchResult
 from .llm_service import LLMService, get_llm_service
-from ..utils.logging import get_logger
+from .retrieval_service import SearchResult
 
 logger = get_logger(__name__)
 
@@ -208,7 +208,7 @@ class CriticService(BaseService):
         """
         sources_text = "\n".join(
             [
-                f"[{i+1}] {s.title} (score: {s.score:.2f})\n{s.snippet[:200]}..."
+                f"[{i + 1}] {s.title} (score: {s.score:.2f})\n{s.snippet[:200]}..."
                 for i, s in enumerate(sources[:5])  # Limit to top 5 sources
             ]
         )

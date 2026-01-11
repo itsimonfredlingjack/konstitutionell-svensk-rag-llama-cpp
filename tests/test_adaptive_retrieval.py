@@ -16,17 +16,17 @@ Reference: Self-RAG (Asai et al.) - Learning to Retrieve, Generate, and Critique
 
 import pytest
 from app.services.confidence_signals import (
-    ConfidenceSignals,
-    ConfidenceCalculator,
-    EscalationPolicy,
-    AdaptiveResult,
     DEFAULT_THRESHOLDS,
+    AdaptiveResult,
+    ConfidenceCalculator,
+    ConfidenceSignals,
+    EscalationPolicy,
 )
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FIXTURES
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def calculator():
@@ -86,19 +86,31 @@ def duplicate_results():
             "id": "doc1",
             "text": "GDPR samtycke är viktigt.",
             "score": 0.8,
-            "metadata": {"doc_type": "sfs", "source": "riksdagen", "title": "Samma titel här och där"},
+            "metadata": {
+                "doc_type": "sfs",
+                "source": "riksdagen",
+                "title": "Samma titel här och där",
+            },
         },
         {
             "id": "doc2",
             "text": "GDPR samtycke är viktigt.",
             "score": 0.75,
-            "metadata": {"doc_type": "sfs", "source": "riksdagen", "title": "Samma titel här och där"},
+            "metadata": {
+                "doc_type": "sfs",
+                "source": "riksdagen",
+                "title": "Samma titel här och där",
+            },
         },
         {
             "id": "doc3",
             "text": "GDPR samtycke är viktigt.",
             "score": 0.7,
-            "metadata": {"doc_type": "sfs", "source": "riksdagen", "title": "Samma titel här och där"},
+            "metadata": {
+                "doc_type": "sfs",
+                "source": "riksdagen",
+                "title": "Samma titel här och där",
+            },
         },
     ]
 
@@ -106,6 +118,7 @@ def duplicate_results():
 # ═══════════════════════════════════════════════════════════════════════════
 # CONFIDENCE SIGNALS TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestConfidenceSignals:
     """Tests for ConfidenceSignals dataclass."""
@@ -145,6 +158,7 @@ class TestConfidenceSignals:
 # ═══════════════════════════════════════════════════════════════════════════
 # CONFIDENCE CALCULATOR TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestConfidenceCalculator:
     """Tests for ConfidenceCalculator logic."""
@@ -259,6 +273,7 @@ class TestDiversitySignals:
 # ESCALATION POLICY TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEscalationPolicy:
     """Tests for EscalationPolicy configuration."""
 
@@ -303,6 +318,7 @@ class TestEscalationPolicy:
 # ═══════════════════════════════════════════════════════════════════════════
 # ESCALATION DECISION TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestEscalationDecision:
     """Tests for should_escalate logic."""
@@ -387,6 +403,7 @@ class TestEscalationDecision:
 # CONFIDENCE TIER TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestConfidenceTier:
     """Tests for confidence tier assignment."""
 
@@ -414,6 +431,7 @@ class TestConfidenceTier:
 # ═══════════════════════════════════════════════════════════════════════════
 # ADAPTIVE RESULT TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestAdaptiveResult:
     """Tests for AdaptiveResult dataclass."""
@@ -449,13 +467,19 @@ class TestAdaptiveResult:
 # WEIGHTED CONFIDENCE TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestWeightedConfidence:
     """Tests for overall confidence calculation."""
 
     def test_perfect_signals_high_confidence(self, calculator):
         """Perfect signals → high overall confidence."""
         results = [
-            {"id": "a", "score": 1.0, "text": "GDPR samtycke", "metadata": {"doc_type": "sfs", "source": "a", "title": "A"}},
+            {
+                "id": "a",
+                "score": 1.0,
+                "text": "GDPR samtycke",
+                "metadata": {"doc_type": "sfs", "source": "a", "title": "A"},
+            },
         ]
 
         signals = calculator.compute(results, ["GDPR", "samtycke"])
@@ -479,6 +503,7 @@ class TestWeightedConfidence:
 # ═══════════════════════════════════════════════════════════════════════════
 # THRESHOLD CONFIGURATION TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestThresholds:
     """Tests for threshold configuration."""
@@ -510,6 +535,7 @@ class TestThresholds:
 # ═══════════════════════════════════════════════════════════════════════════
 # FUSION METRICS INTEGRATION TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestFusionMetricsIntegration:
     """Tests for fusion metrics in confidence calculation."""
@@ -546,6 +572,7 @@ class TestFusionMetricsIntegration:
 # EDGE CASE TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEdgeCases:
     """Edge case tests."""
 
@@ -575,7 +602,12 @@ class TestEdgeCases:
     def test_results_with_distance(self, calculator):
         """ChromaDB _distance converted to similarity."""
         results = [
-            {"id": "a", "_distance": 0.1, "text": "test", "metadata": {}},  # distance 0.1 → high similarity
+            {
+                "id": "a",
+                "_distance": 0.1,
+                "text": "test",
+                "metadata": {},
+            },  # distance 0.1 → high similarity
             {"id": "b", "_distance": 0.5, "text": "test", "metadata": {}},
         ]
 
@@ -599,6 +631,7 @@ class TestEdgeCases:
 # ═══════════════════════════════════════════════════════════════════════════
 # REGRESSION TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestRegression:
     """Regression tests to prevent breaking changes."""
@@ -631,9 +664,14 @@ class TestRegression:
         d = signals.to_dict()
 
         required_keys = [
-            "top_score", "margin", "must_include_hit_rate",
-            "fusion_gain", "overlap_ratio", "near_duplicate_ratio",
-            "overall_confidence", "confidence_tier"
+            "top_score",
+            "margin",
+            "must_include_hit_rate",
+            "fusion_gain",
+            "overlap_ratio",
+            "near_duplicate_ratio",
+            "overall_confidence",
+            "confidence_tier",
         ]
 
         for key in required_keys:

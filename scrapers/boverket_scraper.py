@@ -13,7 +13,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urlparse
 
 import requests
@@ -105,7 +104,7 @@ class BoverketScraper:
         """Generate unique hash for document URL"""
         return hashlib.sha256(url.encode()).hexdigest()[:16]
 
-    def download_pdf(self, url: str) -> Optional[Path]:
+    def download_pdf(self, url: str) -> Path | None:
         """Download PDF and return path"""
         try:
             response = self.session.get(url, timeout=30, stream=True)

@@ -113,8 +113,7 @@ async def test_t2_refusal_contract():
 async def test_t3_malicious_structured_json_sanitized():
     refusal_text = "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats..."
     malicious_answer = (
-        '{"mode":"EVIDENCE","saknas_underlag":false,'
-        '"svar":"Läckage","arbetsanteckning":"INTERNAL"}'
+        '{"mode":"EVIDENCE","saknas_underlag":false,"svar":"Läckage","arbetsanteckning":"INTERNAL"}'
     )
 
     sources = [

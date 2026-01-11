@@ -2,20 +2,15 @@
 Tests for Orchestrator Service with Structured Output Integration
 """
 
-import pytest
 import json
-from unittest.mock import Mock, AsyncMock
-import sys
-from pathlib import Path
+from unittest.mock import AsyncMock, Mock
 
-# Add backend to path
-backend_path = Path(__file__).parent.parent
-sys.path.insert(0, str(backend_path))
+import pytest
 
+from app.services.llm_service import StreamStats
 from app.services.orchestrator_service import OrchestratorService
 from app.services.query_processor_service import ResponseMode
-from app.services.retrieval_service import SearchResult, RetrievalResult, RetrievalMetrics
-from app.services.llm_service import StreamStats
+from app.services.retrieval_service import RetrievalMetrics, RetrievalResult, SearchResult
 
 
 class TestOrchestratorStructuredOutput:
@@ -28,6 +23,10 @@ class TestOrchestratorStructuredOutput:
         self.mock_config.structured_output_effective_enabled = True
         self.mock_config.structured_output_enabled = True
         self.mock_config.settings.debug = False
+        self.mock_config.settings.crag_enabled = False
+        self.mock_config.critic_revise_effective_enabled = (
+            False  # Disable critic to avoid Mock comparisons
+        )
         self.mock_config.evidence_refusal_template = (
             "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats..."
         )
@@ -38,6 +37,34 @@ class TestOrchestratorStructuredOutput:
         self.mock_retrieval = Mock()
         self.mock_reranker = Mock()
         self.mock_structured_output = Mock()
+        self.mock_critic = Mock()
+        self.mock_grader = Mock()
+
+        # Set async methods to AsyncMock for all services
+        for mock_service in [
+            self.mock_llm_service,
+            self.mock_query_processor,
+            self.mock_guardrail,
+            self.mock_retrieval,
+            self.mock_reranker,
+            self.mock_structured_output,
+            self.mock_critic,
+            self.mock_grader,
+        ]:
+            mock_service.initialize = AsyncMock()
+            mock_service.close = AsyncMock()
+
+        # Set common async methods
+        self.mock_retrieval.search = AsyncMock()
+        self.mock_grader.grade_documents = AsyncMock()
+        self.mock_critic.self_reflection = AsyncMock()
+        self.mock_critic.critique = AsyncMock()
+        self.mock_critic.revise = AsyncMock()
+        self.mock_reranker.rerank = AsyncMock()
+        # self.mock_llm_service.chat_stream = AsyncMock()  # Tests set this specifically
+        self.mock_structured_output.parse_llm_json = Mock()  # Not async
+        self.mock_structured_output.validate_output = Mock()  # Not async
+        self.mock_structured_output.strip_internal_note = Mock()  # Not async
 
         # Create orchestrator with mocked dependencies
         self.orchestrator = OrchestratorService(
@@ -48,22 +75,14 @@ class TestOrchestratorStructuredOutput:
             retrieval=self.mock_retrieval,
             reranker=self.mock_reranker,
             structured_output=self.mock_structured_output,
+            critic=self.mock_critic,
+            grader=self.mock_grader,
         )
 
     @pytest.mark.asyncio
     async def test_it1_evidence_with_sources_success(self):
         """IT1: EVIDENCE + sources + structured JSON → verify success, sources in result, no arbetsanteckningar"""
-        # FIX: Make initialize() and close() methods async mocks
-        self.mock_llm_service.initialize = AsyncMock()
-        self.mock_query_processor.initialize = AsyncMock()
-        self.mock_guardrail.initialize = AsyncMock()
-        self.mock_retrieval.initialize = AsyncMock()
-        self.mock_structured_output.initialize = AsyncMock()
-        self.mock_reranker.initialize = AsyncMock()
-        self.mock_llm_service.close = AsyncMock()
-        self.mock_retrieval.close = AsyncMock()
-        self.mock_reranker.close = AsyncMock()
-        self.mock_structured_output.close = AsyncMock()
+        # NOTE: Now handled in setup_method
 
         # Initialize orchestrator
         await self.orchestrator.initialize()
@@ -186,17 +205,7 @@ class TestOrchestratorStructuredOutput:
     @pytest.mark.asyncio
     async def test_it2_evidence_no_sources_refusal(self):
         """IT2: EVIDENCE + no sources → refusal (saknas_underlag=True) → verify success and empty sources"""
-        # FIX: Make initialize() and close() methods async mocks
-        self.mock_llm_service.initialize = AsyncMock()
-        self.mock_query_processor.initialize = AsyncMock()
-        self.mock_guardrail.initialize = AsyncMock()
-        self.mock_retrieval.initialize = AsyncMock()
-        self.mock_structured_output.initialize = AsyncMock()
-        self.mock_reranker.initialize = AsyncMock()
-        self.mock_llm_service.close = AsyncMock()
-        self.mock_retrieval.close = AsyncMock()
-        self.mock_reranker.close = AsyncMock()
-        self.mock_structured_output.close = AsyncMock()
+        # NOTE: AsyncMock setup now handled in setup_method
 
         # Initialize orchestrator
         await self.orchestrator.initialize()
@@ -280,17 +289,7 @@ class TestOrchestratorStructuredOutput:
     @pytest.mark.asyncio
     async def test_it3_invalid_json_retry_then_success(self):
         """IT3: Invalid JSON attempt1 + valid JSON attempt2 → verify retry (call_count==2) and safe output"""
-        # FIX: Make initialize() and close() methods async mocks
-        self.mock_llm_service.initialize = AsyncMock()
-        self.mock_query_processor.initialize = AsyncMock()
-        self.mock_guardrail.initialize = AsyncMock()
-        self.mock_retrieval.initialize = AsyncMock()
-        self.mock_structured_output.initialize = AsyncMock()
-        self.mock_reranker.initialize = AsyncMock()
-        self.mock_llm_service.close = AsyncMock()
-        self.mock_retrieval.close = AsyncMock()
-        self.mock_reranker.close = AsyncMock()
-        self.mock_structured_output.close = AsyncMock()
+        # NOTE: AsyncMock setup now handled in setup_method
 
         # Initialize orchestrator
         await self.orchestrator.initialize()

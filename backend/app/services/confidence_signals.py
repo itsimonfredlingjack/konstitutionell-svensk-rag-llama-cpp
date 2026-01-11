@@ -14,10 +14,9 @@ References:
   - Cormack & Clarke: RRF k=60 near-optimal
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional
 import re
-
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CONFIGURATION

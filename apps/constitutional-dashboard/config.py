@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -18,7 +18,7 @@ def _env_str(name: str, default: str) -> str:
     return default if raw is None or raw.strip() == "" else raw.strip()
 
 
-def _parse_json_env(name: str) -> Optional[Any]:
+def _parse_json_env(name: str) -> Any | None:
     raw = os.getenv(name)
     if raw is None or raw.strip() == "":
         return None
@@ -65,13 +65,13 @@ class Config:
     dashboard_port: int
     dashboard_public_url: str
 
-    api_token: Optional[str]
+    api_token: str | None
     enable_auth: bool
 
     cast_display_name: str
     cast_speaker_name: str
 
-    rag_status_url: Optional[str]
+    rag_status_url: str | None
 
     ollama_url: str
     briefing_model: str
@@ -80,7 +80,7 @@ class Config:
     system_reset_commands: list[list[str]]
 
     @staticmethod
-    def from_env() -> "Config":
+    def from_env() -> Config:
         host = _env_str("DASHBOARD_HOST", "0.0.0.0")
         port_raw = _env_str("DASHBOARD_PORT", "5000")
         try:

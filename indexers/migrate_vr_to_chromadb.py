@@ -27,7 +27,7 @@ def migrate_sqlite_to_chromadb(db_path: str, chromadb_path: str):
 
     try:
         collection = client.get_collection("swedish_gov_docs")
-    except:
+    except Exception:
         collection = client.create_collection(
             name="swedish_gov_docs", metadata={"description": "Swedish government documents"}
         )

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import shlex
+import shutil
 import subprocess
 import time
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 from urllib.request import urlopen
 

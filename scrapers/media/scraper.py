@@ -10,7 +10,6 @@ import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Would use firecrawl-py in production, but we're using MCP
 # This script is for reference and local testing
@@ -23,10 +22,10 @@ class Article:
     url: str
     source: str
     title: str
-    author: Optional[str]
-    published_date: Optional[str]
-    category: Optional[str]
-    summary: Optional[str]
+    author: str | None
+    published_date: str | None
+    category: str | None
+    summary: str | None
     content: str
     tags: list[str]
     scraped_at: str

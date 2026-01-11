@@ -10,7 +10,6 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import chromadb
 import requests
@@ -112,7 +111,7 @@ class JKScraper:
             self.stats["errors"].append(f"Year page error ({year_url}): {e!s}")
             return []
 
-    def extract_decision_metadata(self, soup: BeautifulSoup, url: str) -> Optional[dict]:
+    def extract_decision_metadata(self, soup: BeautifulSoup, url: str) -> dict | None:
         """Extract metadata from a decision page"""
         try:
             # Extract diary number from URL
@@ -169,7 +168,7 @@ class JKScraper:
             self.stats["errors"].append(f"Metadata extraction error ({url}): {e!s}")
             return None
 
-    def scrape_decision(self, url: str) -> Optional[dict]:
+    def scrape_decision(self, url: str) -> dict | None:
         """Scrape a single decision page"""
         try:
             time.sleep(0.5)  # Rate limiting

@@ -117,10 +117,10 @@ def fetch_decision_page(url):
 
 def harvest_court(court):
     """Harvest all decisions from a court's RSS feed."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"HARVESTING: {court['name']}")
     print(f"RSS: {court['rss_url']}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     try:
         xml_text = fetch_rss(court["rss_url"])

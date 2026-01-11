@@ -23,7 +23,7 @@ import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from rich import box
@@ -34,7 +34,7 @@ from rich.table import Table
 
 # Import our RAGAS wrapper
 try:
-    from ragas_wrapper import MetricsProvider, get_metrics_provider
+    from ragas_wrapper import get_metrics_provider
 except ImportError:
     print("ERROR: ragas_wrapper.py not found. Make sure it's in the same directory.")
     sys.exit(1)
@@ -88,7 +88,7 @@ class EvalResult:
     contexts: list[str]
     metrics: EvalMetrics
     passed: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -365,7 +365,7 @@ def print_report(report: EvalReport):
         f"[bold]Questions:[/bold] {report.total_questions} | "
         f"[green]Pass:[/green] {report.passed} | "
         f"[red]Fail:[/red] {report.failed} | "
-        f"[cyan]Pass Rate:[/cyan] {report.pass_rate*100:.1f}%"
+        f"[cyan]Pass Rate:[/cyan] {report.pass_rate * 100:.1f}%"
     )
 
     # RAGAS Scores

@@ -170,4 +170,4 @@ def get_progress():
 if __name__ == "__main__":
     store_results()
     total, done, failed = get_progress()
-    print(f"Progress: {done}/{total} ({done/total*100:.1f}%), Failed: {failed}")
+    print(f"Progress: {done}/{total} ({done / total * 100:.1f}%), Failed: {failed}")

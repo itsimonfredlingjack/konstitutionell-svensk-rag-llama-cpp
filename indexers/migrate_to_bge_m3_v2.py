@@ -11,7 +11,7 @@ from sentence_transformers import SentenceTransformer
 
 CHROMADB_PATH = "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/chromadb_data"
 NEW_EMBEDDING_MODEL = "BAAI/bge-m3"
-BATCH_SIZE = 64  # Stable batch - 320 docs/min (OOM with 96, 256)
+BATCH_SIZE = 20  # Increased to 20 for better throughput (was 16). Monitor GPU temp!
 
 
 class ChromaDBMigrator:
@@ -47,17 +47,50 @@ class ChromaDBMigrator:
     def create_new_collection(self, old_name: str) -> str:
         new_name = f"{old_name}_bge_m3_1024"
         try:
+            # Get legacy collection count
+            old_collection = self.client.get_collection(old_name)
+            old_count = old_collection.count()
+
+            # Check if new collection already exists
             try:
                 existing = self.client.get_collection(new_name)
                 existing_count = existing.count()
+
                 if not self.force:
                     print(f"Collection {new_name} already exists ({existing_count:,} docs)!")
+                    print(
+                        f"Legacy has {old_count:,} docs. ({existing_count:,}/{old_count:,} migrated)"
+                    )
                     print("Use --force to overwrite.")
                     sys.exit(1)
-                self.client.delete_collection(new_name)
-                print(f"Dropped existing collection: {new_name} ({existing_count:,} docs)")
-            except:
-                pass
+
+                # Force mode: check migration status
+                print("Force mode: Checking migration status...")
+                print(f"  Target: {old_count:,} docs (legacy collection)")
+                print(f"  Current: {existing_count:,} docs (new collection)")
+
+                if existing_count >= old_count:
+                    # Fully migrated - safe to drop and restart
+                    print(
+                        f"Collection fully migrated ({existing_count:,}/{old_count:,}). Dropping and restarting..."
+                    )
+                    self.client.delete_collection(new_name)
+                    print(f"Dropped existing collection: {new_name}")
+                    # Will create new collection below
+                    new_collection = None
+                else:
+                    # Partial migration - RESUME, don't delete!
+                    pct = (existing_count / old_count) * 100
+                    print(
+                        f"Partial migration detected: {existing_count:,}/{old_count:,} ({pct:.1f}%)"
+                    )
+                    print("🔄 RESUMING migration (keeping existing collection)")
+                    # Don't delete, just return the new name
+                    # migrate_collection will handle resume
+                    return new_name
+            except Exception:
+                # New collection doesn't exist - create it
+                print(f"New collection {new_name} does not exist. Creating...")
 
             self.client.create_collection(
                 name=new_name,
@@ -77,7 +110,26 @@ class ChromaDBMigrator:
     def migrate_collection(self, old_name: str, new_name: str) -> dict[str, Any]:
         print(f"\nMigrating {old_name} -> {new_name}")
         old_collection = self.client.get_collection(old_name)
-        new_collection = self.client.get_collection(new_name)
+
+        # Check if new collection exists for resume
+        new_collection_exists = False
+        new_collection = None
+
+        try:
+            new_collection = self.client.get_collection(new_name)
+            new_collection_exists = True
+            print(f"Found existing new collection: {new_name}")
+        except:
+            print(f"Creating new collection: {new_name}")
+            new_collection = self.client.create_collection(
+                name=new_name,
+                metadata={
+                    "description": f"Migrated from {old_name} with BGE-M3 1024-dim embeddings",
+                    "embedding_model": NEW_EMBEDDING_MODEL,
+                    "embedding_dimension": self.new_dim,
+                    "migration_date": time.strftime("%Y-%m-%d %H:%M:%S"),
+                },
+            )
 
         total_docs = old_collection.count()
         print(f"Total documents to migrate: {total_docs}")
@@ -86,10 +138,24 @@ class ChromaDBMigrator:
             print(f"Collection {old_name} is empty, skipping")
             return {"migrated": 0, "errors": 0, "skipped": 0}
 
+        # Resume from existing collection if partial migration
         migrated = 0
+        if new_collection_exists:
+            migrated = new_collection.count()
+            pct = (migrated / total_docs) * 100
+            print(f"Resuming from offset {migrated} ({pct:.1f}% complete)")
+            if migrated >= total_docs:
+                print("Collection already fully migrated. Skipping.")
+                return {"migrated": migrated, "errors": 0, "skipped": 0}
+        else:
+            print("Starting from scratch (no existing collection)")
+            migrated = 0
+
         errors = 0
         skipped = 0
-        offset = 0
+
+        # Start offset from migrated count (resume support)
+        offset = migrated
 
         while offset < total_docs:
             try:
@@ -103,7 +169,7 @@ class ChromaDBMigrator:
 
                 batch_size = len(ids)
                 print(
-                    f"  Processing batch {offset//BATCH_SIZE + 1}: {batch_size} docs (offset {offset})"
+                    f"  Processing batch {offset // BATCH_SIZE + 1}: {batch_size} docs (offset {offset})"
                 )
 
                 documents = batch.get("documents") or []
@@ -147,7 +213,13 @@ class ChromaDBMigrator:
                     print(f"  Migrated: {migrated}/{total_docs} ({pct:.1f}%)")
 
             except Exception as e:
-                print(f"  Error processing batch at offset {offset}: {e}")
+                error_msg = str(e)
+                print(f"  Error processing batch at offset {offset}: {error_msg}")
+
+                if "CUDA out of memory" in error_msg:
+                    print("🚨 CRITICAL: GPU Out of Memory! Stopping immediately to prevent loop.")
+                    sys.exit(1)
+
                 import traceback
 
                 traceback.print_exc()
@@ -174,7 +246,7 @@ class ChromaDBMigrator:
             "migration_complete": new_count >= old_count,
         }
 
-    def run_migration(self, collections: list[str] = None) -> dict[str, Any]:
+    def run_migration(self, collections: list[str] | None = None) -> dict[str, Any]:
         if collections is None:
             collections = self.get_collections_to_migrate()
 
@@ -186,9 +258,9 @@ class ChromaDBMigrator:
 
         for old_name in collections:
             try:
-                print(f"\n{'='*60}")
+                print(f"\n{'=' * 60}")
                 print(f"MIGRATING: {old_name}")
-                print(f"{'='*60}")
+                print(f"{'=' * 60}")
 
                 new_name = self.create_new_collection(old_name)
                 migration_result = self.migrate_collection(old_name, new_name)
@@ -212,9 +284,9 @@ class ChromaDBMigrator:
         return results
 
     def print_summary(self, results: dict[str, Any]):
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("MIGRATION SUMMARY")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         total_migrated = 0
         total_errors = 0

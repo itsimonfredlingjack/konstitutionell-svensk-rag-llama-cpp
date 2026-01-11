@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: Constitutional AI Backend API
+  description: FastAPI backend for Swedish legal document RAG system
+  version: 2.0.0
+servers:
+  - url: http://localhost:8900
+    description: Local development server
+tags:
+  - name: constitutional
+    description: Constitutional AI RAG endpoints
+paths:
+  /api/constitutional/health:
+    get:
+      summary: Health check
+      tags: [constitutional]
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                type: object

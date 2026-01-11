@@ -123,9 +123,9 @@ def create_worker_orchestrator(worker: dict) -> Path:
 
 async def run_worker(worker: dict, source_db: Path):
     """Run a single worker orchestrator."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"Starting Worker {worker['id']}: Kommuner {worker['start']}-{worker['end']}")
-    print(f"{'='*50}\n")
+    print(f"{'=' * 50}\n")
 
     # Setup database
     worker_db = setup_worker_database(worker, source_db)

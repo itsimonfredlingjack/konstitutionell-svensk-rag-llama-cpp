@@ -2,21 +2,16 @@
 Tests for Critic→Revise Loop Integration
 """
 
-import pytest
 import json
-from unittest.mock import Mock, AsyncMock
-import sys
-from pathlib import Path
+from unittest.mock import AsyncMock, Mock
 
-# Add backend to path
-backend_path = Path(__file__).parent.parent
-sys.path.insert(0, str(backend_path))
+import pytest
 
+from app.services.critic_service import CriticResult
+from app.services.llm_service import StreamStats
 from app.services.orchestrator_service import OrchestratorService
 from app.services.query_processor_service import ResponseMode
-from app.services.retrieval_service import SearchResult, RetrievalResult, RetrievalMetrics
-from app.services.llm_service import StreamStats
-from app.services.critic_service import CriticResult
+from app.services.retrieval_service import RetrievalMetrics, RetrievalResult, SearchResult
 
 
 class TestCriticReviseLoop:
@@ -196,7 +191,7 @@ class TestCriticReviseLoop:
         assert "GDPR" in result.answer
         assert result.metrics.structured_output_enabled is True
         assert result.metrics.critic_revision_count == 0  # C1: No revisions needed
-        assert result.metrics.critic_ok == True
+        assert result.metrics.critic_ok
         # Verify critic was called exactly once
         self.mock_critic.critique.assert_called_once()
 
@@ -325,7 +320,7 @@ class TestCriticReviseLoop:
         assert "GDPR" in result.answer
         assert result.metrics.structured_output_enabled is True
         assert result.metrics.critic_revision_count == 1  # C2: 1 revision needed
-        assert result.metrics.critic_ok == True  # Final result is OK
+        assert result.metrics.critic_ok  # Final result is OK
         # Verify critic was called twice
         assert self.mock_critic.critique.call_count == 2
 
@@ -448,7 +443,7 @@ class TestCriticReviseLoop:
         assert "Tyvärr kan jag inte besvara" in result.answer  # Should get refusal
         assert result.metrics.structured_output_enabled is True
         assert result.metrics.critic_revision_count == 2  # C3: 2 revision attempts
-        assert result.metrics.critic_ok == False  # Final result is still not OK
+        assert not result.metrics.critic_ok  # Final result is still not OK
         # Verify critic was called twice (max attempts)
         assert self.mock_critic.critique.call_count == 2
 

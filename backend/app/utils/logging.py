@@ -5,8 +5,8 @@ Colored console output with JSON support for production
 
 import logging
 import sys
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
 
 class ColoredFormatter(logging.Formatter):

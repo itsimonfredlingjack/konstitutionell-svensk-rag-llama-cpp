@@ -5,13 +5,13 @@ Code Pattern Extractor
 Extraherar kod från Python/TypeScript filer och skapar träningsexempel.
 """
 
+import ast
 import json
 import re
-import ast
 from pathlib import Path
-from typing import List, Dict, Tuple
 
-def extract_python_functions(content: str, filepath: str) -> List[Dict]:
+
+def extract_python_functions(content: str, filepath: str) -> list[dict]:
     """Extrahera funktioner från Python-fil."""
     examples = []
 
@@ -26,15 +26,15 @@ def extract_python_functions(content: str, filepath: str) -> List[Dict]:
             docstring = ast.get_docstring(node) or ""
 
             # Hoppa över privata funktioner utan docstring
-            if node.name.startswith('_') and not docstring:
+            if node.name.startswith("_") and not docstring:
                 continue
 
             # Hämta funktionskod
             try:
                 start_line = node.lineno - 1
                 end_line = node.end_lineno
-                lines = content.split('\n')[start_line:end_line]
-                func_code = '\n'.join(lines)
+                lines = content.split("\n")[start_line:end_line]
+                func_code = "\n".join(lines)
             except:
                 continue
 
@@ -43,20 +43,22 @@ def extract_python_functions(content: str, filepath: str) -> List[Dict]:
                 instruction = f"Implementera en Python-funktion: {docstring.split('.')[0]}"
             else:
                 # Generera beskrivning från funktionsnamn
-                name_words = re.sub(r'([A-Z])', r' \1', node.name).replace('_', ' ').strip()
+                name_words = re.sub(r"([A-Z])", r" \1", node.name).replace("_", " ").strip()
                 is_async = isinstance(node, ast.AsyncFunctionDef)
                 prefix = "async " if is_async else ""
                 instruction = f"Skapa en {prefix}Python-funktion som {name_words.lower()}"
 
-            examples.append({
-                "instruction": instruction,
-                "output": f"```python\n{func_code}\n```\n\nDenna funktion finns i `{filepath}`."
-            })
+            examples.append(
+                {
+                    "instruction": instruction,
+                    "output": f"```python\n{func_code}\n```\n\nDenna funktion finns i `{filepath}`.",
+                }
+            )
 
     return examples
 
 
-def extract_python_classes(content: str, filepath: str) -> List[Dict]:
+def extract_python_classes(content: str, filepath: str) -> list[dict]:
     """Extrahera klasser från Python-fil."""
     examples = []
 
@@ -73,8 +75,8 @@ def extract_python_classes(content: str, filepath: str) -> List[Dict]:
             try:
                 start_line = node.lineno - 1
                 end_line = min(node.end_lineno, start_line + 100)
-                lines = content.split('\n')[start_line:end_line]
-                class_code = '\n'.join(lines)
+                lines = content.split("\n")[start_line:end_line]
+                class_code = "\n".join(lines)
                 if node.end_lineno > start_line + 100:
                     class_code += "\n    # ... (truncated)"
             except:
@@ -83,23 +85,27 @@ def extract_python_classes(content: str, filepath: str) -> List[Dict]:
             if docstring:
                 instruction = f"Implementera en Python-klass: {docstring.split('.')[0]}"
             else:
-                name_words = re.sub(r'([A-Z])', r' \1', node.name).strip()
+                name_words = re.sub(r"([A-Z])", r" \1", node.name).strip()
                 instruction = f"Skapa en Python-klass för {name_words.lower()}"
 
-            examples.append({
-                "instruction": instruction,
-                "output": f"```python\n{class_code}\n```\n\nKlassen finns i `{filepath}`."
-            })
+            examples.append(
+                {
+                    "instruction": instruction,
+                    "output": f"```python\n{class_code}\n```\n\nKlassen finns i `{filepath}`.",
+                }
+            )
 
     return examples
 
 
-def extract_typescript_patterns(content: str, filepath: str) -> List[Dict]:
+def extract_typescript_patterns(content: str, filepath: str) -> list[dict]:
     """Extrahera patterns från TypeScript/React filer."""
     examples = []
 
     # React komponenter
-    component_pattern = r'(?:export\s+)?(?:const|function)\s+(\w+)\s*[=:]\s*(?:\([^)]*\)|[^=]*)\s*(?:=>|{)'
+    component_pattern = (
+        r"(?:export\s+)?(?:const|function)\s+(\w+)\s*[=:]\s*(?:\([^)]*\)|[^=]*)\s*(?:=>|{)"
+    )
     for match in re.finditer(component_pattern, content):
         name = match.group(1)
         if name[0].isupper():  # React komponenter börjar med stor bokstav
@@ -110,12 +116,12 @@ def extract_typescript_patterns(content: str, filepath: str) -> List[Dict]:
             end = start
             in_string = False
             for i, char in enumerate(content[start:]):
-                if char in '"\'`' and content[start + i - 1] != '\\':
+                if char in "\"'`" and content[start + i - 1] != "\\":
                     in_string = not in_string
                 if not in_string:
-                    if char == '{':
+                    if char == "{":
                         depth += 1
-                    elif char == '}':
+                    elif char == "}":
                         depth -= 1
                         if depth == 0:
                             end = start + i + 1
@@ -124,38 +130,47 @@ def extract_typescript_patterns(content: str, filepath: str) -> List[Dict]:
             if end > start:
                 component_code = content[start:end]
                 if len(component_code) < 3000:  # Max storlek
-                    examples.append({
-                        "instruction": f"Skapa en React-komponent för {re.sub(r'([A-Z])', r' \\1', name).strip().lower()}",
-                        "output": f"```typescript\n{component_code}\n```\n\nKomponenten finns i `{filepath}`."
-                    })
+                    name_formatted = re.sub(r"([A-Z])", r" \1", name).strip().lower()
+                    examples.append(
+                        {
+                            "instruction": f"Skapa en React-komponent för {name_formatted}",
+                            "output": f"```typescript\n{component_code}\n```\n\nKomponenten finns i `{filepath}`.",
+                        }
+                    )
 
     # TypeScript interfaces
-    interface_pattern = r'(?:export\s+)?interface\s+(\w+)\s*{([^}]+)}'
+    interface_pattern = r"(?:export\s+)?interface\s+(\w+)\s*{([^}]+)}"
     for match in re.finditer(interface_pattern, content):
         name, body = match.groups()
-        examples.append({
-            "instruction": f"Definiera ett TypeScript interface för {re.sub(r'([A-Z])', r' \\1', name).strip().lower()}",
-            "output": f"```typescript\ninterface {name} {{{body}}}\n```"
-        })
+        name_formatted = re.sub(r"([A-Z])", r" \1", name).strip().lower()
+        examples.append(
+            {
+                "instruction": f"Definiera ett TypeScript interface för {name_formatted}",
+                "output": f"```typescript\ninterface {name} {{{body}}}\n```",
+            }
+        )
 
     # Custom hooks
-    hook_pattern = r'export\s+function\s+(use\w+)\s*\([^)]*\)[^{]*{'
+    hook_pattern = r"export\s+function\s+(use\w+)\s*\([^)]*\)[^{]*{"
     for match in re.finditer(hook_pattern, content):
         name = match.group(1)
         # Extrahera hook (förenklad)
         start = match.start()
-        end = content.find('\n\n', start + 100) or start + 500
+        end = content.find("\n\n", start + 100) or start + 500
         hook_code = content[start:end]
 
-        examples.append({
-            "instruction": f"Implementera en React hook: {re.sub(r'([A-Z])', r' \\1', name[3:]).strip().lower()}",
-            "output": f"```typescript\n{hook_code}\n```"
-        })
+        name_formatted = re.sub(r"([A-Z])", r" \1", name[3:]).strip().lower()
+        examples.append(
+            {
+                "instruction": f"Implementera en React hook: {name_formatted}",
+                "output": f"```typescript\n{hook_code}\n```",
+            }
+        )
 
     return examples
 
 
-def process_directory(base_dir: str, patterns: List[str]) -> List[Dict]:
+def process_directory(base_dir: str, patterns: list[str]) -> list[dict]:
     """Process alla filer i katalogen."""
     all_examples = []
     base_path = Path(base_dir)
@@ -166,17 +181,17 @@ def process_directory(base_dir: str, patterns: List[str]) -> List[Dict]:
                 continue
 
             try:
-                content = filepath.read_text(encoding='utf-8')
+                content = filepath.read_text(encoding="utf-8")
             except Exception as e:
                 print(f"  Skip: {filepath} ({e})")
                 continue
 
             rel_path = str(filepath.relative_to(base_path))
 
-            if filepath.suffix == '.py':
+            if filepath.suffix == ".py":
                 examples = extract_python_functions(content, rel_path)
                 examples.extend(extract_python_classes(content, rel_path))
-            elif filepath.suffix in ['.ts', '.tsx']:
+            elif filepath.suffix in [".ts", ".tsx"]:
                 examples = extract_typescript_patterns(content, rel_path)
             else:
                 continue
@@ -198,16 +213,22 @@ def main():
 
     # Python patterns
     print("\nExtracting Python patterns...")
-    py_examples = process_directory(base_dir, [
-        "app/**/*.py",
-    ])
+    py_examples = process_directory(
+        base_dir,
+        [
+            "app/**/*.py",
+        ],
+    )
 
     # TypeScript patterns
     print("\nExtracting TypeScript patterns...")
-    ts_examples = process_directory(base_dir, [
-        "frontend/src/**/*.ts",
-        "frontend/src/**/*.tsx",
-    ])
+    ts_examples = process_directory(
+        base_dir,
+        [
+            "frontend/src/**/*.ts",
+            "frontend/src/**/*.tsx",
+        ],
+    )
 
     all_examples = py_examples + ts_examples
 
@@ -222,9 +243,9 @@ def main():
 
     # Spara
     print(f"\nSaving {len(unique_examples)} examples to {output_file}")
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         for ex in unique_examples:
-            f.write(json.dumps(ex, ensure_ascii=False) + '\n')
+            f.write(json.dumps(ex, ensure_ascii=False) + "\n")
 
     print("Done!")
 

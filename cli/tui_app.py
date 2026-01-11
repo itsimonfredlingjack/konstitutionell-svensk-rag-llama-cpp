@@ -5,18 +5,19 @@ SOUL INJECTION Edition - Robot Avatar + Cyberpunk Dashboard
 Built with Textual TUI by Will McGugan
 """
 
-from textual.app import App, ComposeResult
-from textual.widgets import Input, RichLog, Static
-from textual import work
-from textual.containers import Horizontal, Vertical
-from textual.binding import Binding
-from textual.reactive import reactive
-from rich.text import Text
-from rich.panel import Panel
+import random
+from typing import ClassVar
+
 from rich.align import Align
 from rich.console import Group
-import random
-
+from rich.panel import Panel
+from rich.text import Text
+from textual import work
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Horizontal
+from textual.reactive import reactive
+from textual.widgets import Input, RichLog, Static
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ROBOT AVATAR - THE SOUL
@@ -54,15 +55,15 @@ AVATARS = {
     | ~~~~~ |
     ╘▅▄▄▄▄▄▅╛
      //ERROR
-"""
+""",
 }
 
 # State colors (vibe-coding approved)
 STATE_COLORS = {
-    "idle": "#00F3FF",      # Neon Cyan
+    "idle": "#00F3FF",  # Neon Cyan
     "thinking": "#FFB74D",  # Amber
     "speaking": "#00FF41",  # Neon Green
-    "error": "#FF00FF"      # Magenta
+    "error": "#FF00FF",  # Magenta
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -118,10 +119,7 @@ class RobotHeader(Static):
         title.append(status)
 
         # Combine avatar and title side by side
-        return Group(
-            Align.center(avatar_styled),
-            Align.center(title)
-        )
+        return Group(Align.center(avatar_styled), Align.center(title))
 
 
 class SystemMonitor(Static):
@@ -145,7 +143,7 @@ class SystemMonitor(Static):
             "idle": "IDLE",
             "thinking": "PROCESSING",
             "speaking": "STREAMING",
-            "error": "ERROR"
+            "error": "ERROR",
         }
         status = status_map.get(self.state, "UNKNOWN")
 
@@ -173,10 +171,7 @@ class SystemMonitor(Static):
         content.append_text(Text.from_markup(ci_badge))
 
         return Panel(
-            content,
-            title="[bold #FFAE00]SYSTEM MONITOR[/]",
-            border_style="#FFAE00",
-            padding=(0, 1)
+            content, title="[bold #FFAE00]SYSTEM MONITOR[/]", border_style="#FFAE00", padding=(0, 1)
         )
 
 
@@ -244,7 +239,7 @@ class SimonsAIApp(App):
     }
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("ctrl+c", "quit", "Quit", show=True),
         Binding("ctrl+l", "clear_chat", "Clear", show=True),
         Binding("ctrl+a", "toggle_agent", "Agent", show=True),
@@ -263,19 +258,11 @@ class SimonsAIApp(App):
 
         # MIDDLE: Chat + System Monitor (70/30 split)
         with Horizontal(id="main-area"):
-            yield RichLog(
-                id="chat",
-                markup=True,
-                highlight=True,
-                wrap=True
-            )
+            yield RichLog(id="chat", markup=True, highlight=True, wrap=True)
             yield SystemMonitor(id="system-monitor")
 
         # BOTTOM: Input
-        yield Input(
-            id="input",
-            placeholder="Skriv kommando... (/help för hjälp)"
-        )
+        yield Input(id="input", placeholder="Skriv kommando... (/help för hjälp)")
 
     async def on_mount(self):
         """Initialize on startup."""
@@ -287,21 +274,15 @@ class SimonsAIApp(App):
         monitor = self.query_one("#system-monitor", SystemMonitor)
 
         # Welcome banner
-        log.write(Text.from_markup(
-            "[dim]════════════════════════════════════════════════════════════[/]"
-        ))
-        log.write(Text.from_markup(
-            "[bold #00F3FF]       ╒▅▀▀▀▀▀▅╕  THE OPUS TERMINAL[/]"
-        ))
-        log.write(Text.from_markup(
-            "[bold #00F3FF]       | ▬   ▬ |  SIMONS AI v4.0[/]"
-        ))
-        log.write(Text.from_markup(
-            "[bold #00F3FF]       ╘▅▄▄▄▄▄▅╛  Textual + Robot Soul[/]"
-        ))
-        log.write(Text.from_markup(
-            "[dim]════════════════════════════════════════════════════════════[/]"
-        ))
+        log.write(
+            Text.from_markup("[dim]════════════════════════════════════════════════════════════[/]")
+        )
+        log.write(Text.from_markup("[bold #00F3FF]       ╒▅▀▀▀▀▀▅╕  THE OPUS TERMINAL[/]"))
+        log.write(Text.from_markup("[bold #00F3FF]       | ▬   ▬ |  SIMONS AI v4.0[/]"))
+        log.write(Text.from_markup("[bold #00F3FF]       ╘▅▄▄▄▄▄▅╛  Textual + Robot Soul[/]"))
+        log.write(
+            Text.from_markup("[dim]════════════════════════════════════════════════════════════[/]")
+        )
         log.write("")
 
         # Connect to backend
@@ -310,15 +291,11 @@ class SimonsAIApp(App):
             robot.state = "idle"
             robot.status_text = "ONLINE"
             monitor.agent = self.client.get_profile()
-            log.write(Text.from_markup(
-                "[bold #00FF41]✓ Connected to backend[/]"
-            ))
+            log.write(Text.from_markup("[bold #00FF41]✓ Connected to backend[/]"))
         except Exception as e:
             robot.state = "error"
             robot.status_text = "OFFLINE"
-            log.write(Text.from_markup(
-                f"[bold #FF00FF]✗ Connection failed: {e}[/]"
-            ))
+            log.write(Text.from_markup(f"[bold #FF00FF]✗ Connection failed: {e}[/]"))
 
         log.write("")
 
@@ -376,7 +353,7 @@ class SimonsAIApp(App):
             log.write(Text.from_markup("[bold #00FF41]AI ▸[/] "), end="")
 
             self.current_response = ""
-            async for token, stats in self.client.receive_stream():
+            async for token, _stats in self.client.receive_stream():
                 if token:
                     self.current_response += token
                     log.write(token, end="")
@@ -402,24 +379,18 @@ class SimonsAIApp(App):
         command = parts[0].lower()
 
         if command == "/help":
-            log.write(Text.from_markup(
-                "[dim]═══════════════════ COMMANDS ═══════════════════[/]"
-            ))
+            log.write(Text.from_markup("[dim]═══════════════════ COMMANDS ═══════════════════[/]"))
             log.write(Text.from_markup("[#00F3FF]/help[/]    - Visa denna hjälp"))
             log.write(Text.from_markup("[#00F3FF]/clear[/]   - Rensa chatten"))
             log.write(Text.from_markup("[#7A00FF]/sven[/]    - 🧠 Arkitekten (planering)"))
             log.write(Text.from_markup("[#00FF41]/kod[/]     - ⚡ Kodaren (implementation)"))
             log.write(Text.from_markup("[#00F3FF]/status[/]  - Visa status"))
             log.write(Text.from_markup("[#00F3FF]/quit[/]    - Avsluta"))
-            log.write(Text.from_markup(
-                "[dim]═══════════════════ SHORTCUTS ══════════════════[/]"
-            ))
+            log.write(Text.from_markup("[dim]═══════════════════ SHORTCUTS ══════════════════[/]"))
             log.write(Text.from_markup("[#00F3FF]Ctrl+C[/]   - Quit"))
             log.write(Text.from_markup("[#00F3FF]Ctrl+L[/]   - Clear"))
             log.write(Text.from_markup("[#00F3FF]Ctrl+A[/]   - Växla Agent (cykel)"))
-            log.write(Text.from_markup(
-                "[dim]════════════════════════════════════════════════[/]"
-            ))
+            log.write(Text.from_markup("[dim]════════════════════════════════════════════════[/]"))
 
         elif command == "/clear":
             log.clear()
@@ -437,23 +408,19 @@ class SimonsAIApp(App):
             agent_cfg = AGENTS.get(agent_id, AGENTS["gpt-oss"])
             status_color = "#00FF41" if connected else "#FF00FF"
             status_text = "ONLINE" if connected else "OFFLINE"
-            log.write(Text.from_markup(
-                f"[dim]Connection:[/] [{status_color}]{status_text}[/]"
-            ))
-            log.write(Text.from_markup(
-                f"[dim]Agent:[/] [{agent_cfg['color']}]{agent_cfg['icon']} {agent_cfg['name']}[/]"
-            ))
-            log.write(Text.from_markup(
-                f"[dim]Backend:[/] ws://localhost:8000/api/chat"
-            ))
+            log.write(Text.from_markup(f"[dim]Connection:[/] [{status_color}]{status_text}[/]"))
+            log.write(
+                Text.from_markup(
+                    f"[dim]Agent:[/] [{agent_cfg['color']}]{agent_cfg['icon']} {agent_cfg['name']}[/]"
+                )
+            )
+            log.write(Text.from_markup("[dim]Backend:[/] ws://localhost:8000/api/chat"))
 
         elif command in ["/quit", "/exit", "/q"]:
             self.exit()
 
         else:
-            log.write(Text.from_markup(
-                f"[#FFB74D]Okänt kommando: {command}. Prova /help[/]"
-            ))
+            log.write(Text.from_markup(f"[#FFB74D]Okänt kommando: {command}. Prova /help[/]"))
 
     def _switch_agent(self, agent_id: str, log: RichLog, monitor: SystemMonitor):
         """Helper to switch agent."""
@@ -461,13 +428,13 @@ class SimonsAIApp(App):
             self.client.set_profile(agent_id)
             monitor.agent = agent_id
             agent_cfg = AGENTS[agent_id]
-            log.write(Text.from_markup(
-                f"[{agent_cfg['color']}]{agent_cfg['icon']} Switched to {agent_cfg['name']}[/]"
-            ))
+            log.write(
+                Text.from_markup(
+                    f"[{agent_cfg['color']}]{agent_cfg['icon']} Switched to {agent_cfg['name']}[/]"
+                )
+            )
             if agent_cfg["code_interpreter"]:
-                log.write(Text.from_markup(
-                    "[bold #00FF41]   🔧 Code Interpreter ACTIVE[/]"
-                ))
+                log.write(Text.from_markup("[bold #00FF41]   🔧 Code Interpreter ACTIVE[/]"))
 
     def action_clear_chat(self):
         """Ctrl+L."""

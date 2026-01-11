@@ -3,9 +3,10 @@ Application configuration for Constitutional AI Backend
 Environment variables and settings
 """
 
-from typing import Optional
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+from typing import Optional
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):

@@ -10,7 +10,6 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import chromadb
@@ -385,7 +384,7 @@ class EnergimyndighetenScraper:
             except Exception as e:
                 print(f"  ✗ Error scraping {url}: {e}")
 
-    def download_pdf(self, url: str) -> Optional[str]:
+    def download_pdf(self, url: str) -> str | None:
         """Download and extract text from PDF"""
         try:
             response = self.session.get(url, timeout=60)
@@ -407,7 +406,7 @@ class EnergimyndighetenScraper:
             print(f"    ⚠ PDF error ({url}): {e}")
             return None
 
-    def scrape_page(self, url: str) -> Optional[str]:
+    def scrape_page(self, url: str) -> str | None:
         """Scrape text content from a webpage"""
         try:
             response = self.session.get(url, timeout=30)

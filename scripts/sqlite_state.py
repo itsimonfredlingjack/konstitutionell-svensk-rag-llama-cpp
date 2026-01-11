@@ -9,7 +9,6 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 DB_PATH = Path("kommun_tasks.db")
 
@@ -20,31 +19,31 @@ class KommunTask:
     namn: str
     url: str
     status: str = "pending"  # pending|running|done|failed
-    batch_id: Optional[int] = None
+    batch_id: int | None = None
     priority: int = 3
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
-    result: Optional[str] = None  # JSON string
-    error: Optional[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
+    result: str | None = None  # JSON string
+    error: str | None = None
 
 
 @dataclass
 class Dokument:
     """Representation of a harvested document."""
 
-    id: Optional[int] = None
+    id: int | None = None
     kommun_kod: str = ""
     kalla_url: str = ""  # källa_url
-    titel: Optional[str] = None
-    dokument_datum: Optional[str] = None
-    filtyp: Optional[str] = None
-    storlek_bytes: Optional[int] = None
-    sha256: Optional[str] = None
-    relevans_tagg: Optional[str] = None  # protokoll|beslut|policy|rapport|upphandling
+    titel: str | None = None
+    dokument_datum: str | None = None
+    filtyp: str | None = None
+    storlek_bytes: int | None = None
+    sha256: str | None = None
+    relevans_tagg: str | None = None  # protokoll|beslut|policy|rapport|upphandling
     kraver_maskning: bool = False  # kräver_maskning
-    kvalitet_score: Optional[int] = None  # 1-5
-    hamtat: Optional[str] = None  # hämtat timestamp
-    lokal_sokvag: Optional[str] = None  # lokal_sökväg
+    kvalitet_score: int | None = None  # 1-5
+    hamtat: str | None = None  # hämtat timestamp
+    lokal_sokvag: str | None = None  # lokal_sökväg
     indexerad: bool = False
 
 
@@ -136,7 +135,7 @@ def load_manifest(manifest_path: str):
     print(f"Loaded {len(manifest['tasks'])} kommuner")
 
 
-def claim_next_task(batch_id: int) -> Optional[KommunTask]:
+def claim_next_task(batch_id: int) -> KommunTask | None:
     """
     Atomically claim next pending task for a batch.
     Returns None if no pending tasks remain.

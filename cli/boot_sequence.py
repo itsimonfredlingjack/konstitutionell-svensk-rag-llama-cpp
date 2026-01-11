@@ -2,25 +2,25 @@
 THE NEURAL IGNITION - Epic Boot Sequence
 A 5-second animation simulating the awakening of a digital consciousness.
 """
+
 import asyncio
 import random
+
+from rich.align import Align
+from rich.console import Console
 from rich.live import Live
 from rich.text import Text
-from rich.align import Align
-from rich.panel import Panel
-from rich.console import Console
-from rich import box
-
 
 # === FRAME DEFINITIONS ===
+
 
 def generate_void_frame(width: int = 60, height: int = 15) -> Text:
     """Generate a frame of dormant data points in darkness."""
     text = Text()
     random.seed(42)  # Consistent pattern
-    for y in range(height):
+    for _y in range(height):
         line = ""
-        for x in range(width):
+        for _x in range(width):
             if random.random() < 0.03:
                 line += "·"
             else:
@@ -159,9 +159,7 @@ def generate_convergence_frame(width: int = 60, height: int = 15, intensity: int
                 # Inside the converging box
                 rel_y = y - box_y
 
-                if rel_y == 0:
-                    text.append("═", style="bright_cyan")
-                elif rel_y == box_h - 1:
+                if rel_y == 0 or rel_y == box_h - 1:
                     text.append("═", style="bright_cyan")
                 elif rel_y == box_h // 2:
                     # Center text
@@ -172,7 +170,7 @@ def generate_convergence_frame(width: int = 60, height: int = 15, intensity: int
                         if intensity > 3:
                             text.append(center_text[char_idx], style="bold bright_white")
                         else:
-                            text.append(chars[min(intensity, len(chars)-1)], style="cyan")
+                            text.append(chars[min(intensity, len(chars) - 1)], style="cyan")
                     else:
                         idx = min(intensity, len(chars) - 1)
                         text.append(chars[idx], style="bright_cyan")
@@ -227,6 +225,7 @@ def generate_online_frame(width: int = 60, height: int = 15, pulse: bool = False
 
 
 # === ANIMATION RUNNER ===
+
 
 async def run_neural_ignition(console: Console) -> None:
     """Run the complete Neural Ignition boot sequence."""

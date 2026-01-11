@@ -3,31 +3,25 @@ SIMONS AI - COMMAND CENTER v3.0 (AUTO-SCROLL)
 Dynamic Chat Rendering with Height-Aware Auto-Scroll.
 GPT-OSS 20B (Arkitekt) + Devstral 24B (Kodare)
 """
-import asyncio
-import sys
-import random
-import time
-import re
-from datetime import datetime
-from typing import List, Literal
-from dataclasses import dataclass, field
 
+import asyncio
+import random
+import re
+import sys
+from dataclasses import dataclass, field
+from typing import Literal
+
+from rich import box
+from rich.align import Align
 from rich.console import Console, Group
 from rich.layout import Layout
-from rich.panel import Panel
 from rich.live import Live
-from rich.text import Text
+from rich.panel import Panel
 from rich.table import Table
-from rich.align import Align
-from rich.syntax import Syntax
-from rich.markdown import Markdown
-from rich import box
+from rich.text import Text
 
 # Import model config
-from cli.config import (
-    MODEL_ARCHITECT, MODEL_CODER,
-    MODEL_ARCHITECT_NAME, MODEL_CODER_NAME
-)
+from cli.config import MODEL_ARCHITECT, MODEL_ARCHITECT_NAME, MODEL_CODER, MODEL_CODER_NAME
 
 # Import client
 try:
@@ -35,25 +29,35 @@ try:
 except ImportError:
     # Mock for standalone testing
     class NERDYAIClient:
-        async def connect(self): pass
-        async def send_message(self, text, profile): pass
+        async def connect(self):
+            pass
+
+        async def send_message(self, text, profile):
+            pass
+
         async def receive_stream(self):
             yield "Hello", None
             yield " World", {"speed": 99.9}
-        async def close(self): pass
-        def get_mode(self): return MODEL_ARCHITECT
+
+        async def close(self):
+            pass
+
+        def get_mode(self):
+            return MODEL_ARCHITECT
 
 # --- ASSETS & CONFIG ---
 
+
 class Colors:
     # Command Center Palette
-    PRIMARY = "bright_cyan"    # Default border / text
-    ACTIVE = "bright_green"    # Success / Active Input
-    WARNING = "gold1"          # Thinking / Processing
-    ERROR = "red"              # Error
-    DIM = "grey42"            # Inactive / Borders
-    HIGHLIGHT = "white"        # Important text
+    PRIMARY = "bright_cyan"  # Default border / text
+    ACTIVE = "bright_green"  # Success / Active Input
+    WARNING = "gold1"  # Thinking / Processing
+    ERROR = "red"  # Error
+    DIM = "grey42"  # Inactive / Borders
+    HIGHLIGHT = "white"  # Important text
     BACKGROUND = "black"
+
 
 # The "Server Helmet" Avatar (Cyber-Visor)
 AVATAR_IDLE = r"""
@@ -85,9 +89,10 @@ AVATAR_SPEAKING = r"""
 
 # --- HELPER FUNCTIONS ---
 
+
 def count_lines(text: str, width: int = 80) -> int:
     """Count how many terminal lines a text will occupy."""
-    lines = text.split('\n')
+    lines = text.split("\n")
     total = 0
     for line in lines:
         # Account for line wrapping
@@ -109,49 +114,50 @@ def format_ai_response(text: str) -> Text:
     formatted = Text()
 
     # Split into sections
-    lines = text.split('\n')
-    current_section = "normal"
+    lines = text.split("\n")
     code_block = False
 
     for line in lines:
         # Detect code blocks
-        if '```' in line:
+        if "```" in line:
             code_block = not code_block
             if code_block:
-                formatted.append(line + '\n', style="orange1 bold")
+                formatted.append(line + "\n", style="orange1 bold")
             else:
-                formatted.append(line + '\n', style="orange1")
+                formatted.append(line + "\n", style="orange1")
             continue
 
         if code_block:
             # Inside code block - orange
-            formatted.append(line + '\n', style="orange1")
+            formatted.append(line + "\n", style="orange1")
             continue
 
         # Detect section headers
         line_lower = line.lower()
 
-        if any(kw in line_lower for kw in ['uppgift:', 'plan:', 'tanke:', 'tänker:', 'analyserar:']):
-            formatted.append(line + '\n', style="cyan bold")
-        elif any(kw in line_lower for kw in ['kod:', 'script:', 'python:', 'executing:']):
-            formatted.append(line + '\n', style="orange1 bold")
-        elif any(kw in line_lower for kw in ['resultat:', 'output:', 'svar:', 'result:']):
-            formatted.append(line + '\n', style="bright_green bold")
-        elif any(kw in line_lower for kw in ['error:', 'fel:', 'traceback:', 'exception:']):
-            formatted.append(line + '\n', style="red bold")
-        elif line.startswith('>>>') or line.startswith('...'):
+        if any(
+            kw in line_lower for kw in ["uppgift:", "plan:", "tanke:", "tänker:", "analyserar:"]
+        ):
+            formatted.append(line + "\n", style="cyan bold")
+        elif any(kw in line_lower for kw in ["kod:", "script:", "python:", "executing:"]):
+            formatted.append(line + "\n", style="orange1 bold")
+        elif any(kw in line_lower for kw in ["resultat:", "output:", "svar:", "result:"]):
+            formatted.append(line + "\n", style="bright_green bold")
+        elif any(kw in line_lower for kw in ["error:", "fel:", "traceback:", "exception:"]):
+            formatted.append(line + "\n", style="red bold")
+        elif line.startswith(">>>") or line.startswith("..."):
             # Python REPL output
-            formatted.append(line + '\n', style="orange1")
-        elif re.match(r'^\d+\.?\s', line):
+            formatted.append(line + "\n", style="orange1")
+        elif re.match(r"^\d+\.?\s", line):
             # Numbered list - likely plan
-            formatted.append(line + '\n', style="cyan")
+            formatted.append(line + "\n", style="cyan")
         else:
-            formatted.append(line + '\n', style="white")
+            formatted.append(line + "\n", style="white")
 
     return formatted
 
 
-def render_chat_compact(messages: List[dict], available_height: int, chat_width: int = 80) -> Group:
+def render_chat_compact(messages: list[dict], available_height: int, chat_width: int = 80) -> Group:
     """
     Render chat messages with auto-scroll.
     Only shows messages that fit in available_height.
@@ -176,10 +182,10 @@ def render_chat_compact(messages: List[dict], available_height: int, chat_width:
             if len(visible_items) == 0 and text:
                 # Show as much as we can of the latest message
                 lines_to_show = usable_lines - 1
-                text_lines = text.split('\n')
+                text_lines = text.split("\n")
                 # Take last N lines that fit
                 truncated_lines = text_lines[-(lines_to_show):]
-                truncated_text = '\n'.join(truncated_lines)
+                truncated_text = "\n".join(truncated_lines)
 
                 if role == "user":
                     item = Text()
@@ -218,9 +224,10 @@ def render_chat_compact(messages: List[dict], available_height: int, chat_width:
 
 # --- STATE MANAGEMENT ---
 
+
 @dataclass
 class AppState:
-    messages: List[dict] = field(default_factory=list)
+    messages: list[dict] = field(default_factory=list)
     status: str = "STANDBY"
     connected: bool = False
     avatar_state: Literal["idle", "thinking", "speaking"] = "idle"
@@ -237,7 +244,9 @@ class AppState:
         if len(self.messages) > 50:
             self.messages = self.messages[-20:]
 
+
 # --- LAYOUT GENERATOR ---
+
 
 def get_avatar_art(state: AppState) -> str:
     if state.avatar_state == "thinking":
@@ -246,11 +255,12 @@ def get_avatar_art(state: AppState) -> str:
         return AVATAR_SPEAKING
     return AVATAR_IDLE
 
+
 def get_border_color(state: AppState, zone: str) -> str:
     """State-Aware Borders"""
     if zone == "input":
         return Colors.PRIMARY
-    
+
     if zone == "chat":
         if state.avatar_state == "thinking":
             return Colors.WARNING
@@ -259,6 +269,7 @@ def get_border_color(state: AppState, zone: str) -> str:
         return Colors.DIM
 
     return Colors.DIM
+
 
 def render_telemetry(state: AppState) -> Panel:
     """Right-side System Monitor"""
@@ -285,18 +296,19 @@ def render_telemetry(state: AppState) -> Panel:
     # Tips based on current agent
     tips_grid = Table.grid(expand=True)
     if is_coder:
-        tips_grid.add_row(f"[bold green]CODE INTERPRETER[/]")
-        tips_grid.add_row(f"[dim]Kan köra Python![/]")
+        tips_grid.add_row("[bold green]CODE INTERPRETER[/]")
+        tips_grid.add_row("[dim]Kan köra Python![/]")
     else:
-        tips_grid.add_row(f"[bold yellow]TIP: /kod[/]")
-        tips_grid.add_row(f"[dim]för Devstral[/]")
+        tips_grid.add_row("[bold yellow]TIP: /kod[/]")
+        tips_grid.add_row("[dim]för Devstral[/]")
 
     return Panel(
         Group(grid, Text("\n"), tips_grid),
         title="[bold]SYSTEM MONITOR[/]",
         style=Colors.DIM,
-        box=box.ROUNDED
+        box=box.ROUNDED,
     )
+
 
 def make_layout(state: AppState, console_height: int = 40) -> Layout:
     """
@@ -309,14 +321,11 @@ def make_layout(state: AppState, console_height: int = 40) -> Layout:
     HEADER_SIZE = 9
 
     # Split: Header (Top), Middle (Chat+Stats)
-    layout.split_column(
-        Layout(name="header", size=HEADER_SIZE),
-        Layout(name="middle")
-    )
+    layout.split_column(Layout(name="header", size=HEADER_SIZE), Layout(name="middle"))
 
     layout["middle"].split_row(
         Layout(name="chat", ratio=8),  # More space for chat
-        Layout(name="telemetry", ratio=2)  # Less for telemetry
+        Layout(name="telemetry", ratio=2),  # Less for telemetry
     )
 
     # --- HEADER (Compact) ---
@@ -333,14 +342,16 @@ def make_layout(state: AppState, console_height: int = 40) -> Layout:
     if is_coder:
         ci_badge = " [bold green]⚡CI[/]"
 
-    layout["header"].update(Panel(
-        Align.center(avatar_text),
-        title=f"[{status_color}]● {status_text}[/] | [bold cyan]{agent_display}[/]{ci_badge}",
-        subtitle="[dim]SIMONS AI v3.0 | /help | /kod[/]",
-        style=Colors.DIM,
-        box=box.ROUNDED,
-        padding=(0, 1)
-    ))
+    layout["header"].update(
+        Panel(
+            Align.center(avatar_text),
+            title=f"[{status_color}]● {status_text}[/] | [bold cyan]{agent_display}[/]{ci_badge}",
+            subtitle="[dim]SIMONS AI v3.0 | /help | /kod[/]",
+            style=Colors.DIM,
+            box=box.ROUNDED,
+            padding=(0, 1),
+        )
+    )
 
     # --- CHAT (Dynamic Height Auto-Scroll) ---
     # Calculate available height for chat panel
@@ -360,20 +371,24 @@ def make_layout(state: AppState, console_height: int = 40) -> Layout:
     # Use compact rendering with auto-scroll
     chat_content = render_chat_compact(state.messages, chat_height, chat_width)
 
-    layout["chat"].update(Panel(
-        chat_content,
-        title=f"[{chat_border}]{chat_title}[/]",
-        style=chat_border,
-        box=box.ROUNDED,
-        padding=(0, 1)
-    ))
+    layout["chat"].update(
+        Panel(
+            chat_content,
+            title=f"[{chat_border}]{chat_title}[/]",
+            style=chat_border,
+            box=box.ROUNDED,
+            padding=(0, 1),
+        )
+    )
 
     # --- TELEMETRY ---
     layout["telemetry"].update(render_telemetry(state))
 
     return layout
 
+
 # --- MAIN APPLICATION ---
+
 
 async def main():
     console = Console()
@@ -385,7 +400,7 @@ async def main():
         await client.connect()
         state.connected = True
         state.status = "ONLINE"
-    except:
+    except Exception:
         state.status = "OFFLINE"
 
     while True:
@@ -395,7 +410,6 @@ async def main():
 
             # Get terminal dimensions for dynamic layout
             term_height = console.size.height
-            term_width = console.size.width
 
             # 1. Render Static Interface (Idle State)
             console.clear()
@@ -403,7 +417,7 @@ async def main():
             console.print(make_layout(state, term_height))
 
             # 2. Safe Input (Blocking)
-            user_input = console.input(f"[{Colors.PRIMARY}]❯[/] ").strip()
+            user_input = console.input(f"[{Colors.PRIMARY}]>[/] ").strip()
 
             if not user_input:
                 continue
@@ -411,6 +425,7 @@ async def main():
             # Handle slash commands
             if user_input.startswith("/"):
                 from cli.commands import handle_slash_command
+
                 should_exit = await handle_slash_command(client, user_input)
                 if should_exit:
                     break
@@ -422,8 +437,9 @@ async def main():
             state.avatar_state = "thinking"
 
             # We use Live context only during active processing/streaming
-            with Live(make_layout(state, term_height), console=console, screen=True, refresh_per_second=12) as live:
-
+            with Live(
+                make_layout(state, term_height), console=console, screen=True, refresh_per_second=12
+            ) as live:
                 await asyncio.sleep(0.2)
 
                 try:
@@ -432,7 +448,7 @@ async def main():
                     state.avatar_state = "speaking"
                     state.add_message("ai", "")
 
-                    async for token, stats in client.receive_stream():
+                    async for token, _stats in client.receive_stream():
                         if token:
                             state.messages[-1]["text"] += token
                             # Update with current terminal height
@@ -454,6 +470,7 @@ async def main():
 
     await client.close()
     console.print("[dim]Session Terminated.[/]")
+
 
 if __name__ == "__main__":
     try:

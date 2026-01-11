@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
     print("-" * 60)
     print(
-        f"  {'TOTAL':25} {total_scraped:>8} / {total_target:>8} ({total_scraped/total_target*100:>5.1f}%)"
+        f"  {'TOTAL':25} {total_scraped:>8} / {total_target:>8} ({total_scraped / total_target * 100:>5.1f}%)"
     )
     print()
     print(FIRECRAWL_WORKFLOW)

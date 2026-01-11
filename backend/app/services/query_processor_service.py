@@ -3,15 +3,15 @@ Query Processor Service - Classification and Decontextualization
 Handles query classification (CHAT/ASSIST/EVIDENCE) and conversation history
 """
 
+import asyncio
+import re
+from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
-import re
-import asyncio
-from dataclasses import dataclass
 
+from ..utils.logging import get_logger
 from .base_service import BaseService
 from .config_service import ConfigService
-from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 

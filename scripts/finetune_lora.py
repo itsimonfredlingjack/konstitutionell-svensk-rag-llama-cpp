@@ -17,12 +17,11 @@ Output:
     ./models/qwen-workflow-lora/ - LoRA adapter att merga med Ollama
 """
 
-import os
 import json
-import torch
-from pathlib import Path
 from dataclasses import dataclass
-from typing import Optional
+from pathlib import Path
+
+import torch
 
 # Check CUDA availability
 print("=" * 60)
@@ -39,6 +38,7 @@ print("=" * 60)
 @dataclass
 class TrainingConfig:
     """Training configuration"""
+
     # Model
     base_model: str = "Qwen/Qwen2.5-Coder-7B-Instruct"  # Mindre för 12GB VRAM
 
@@ -46,7 +46,15 @@ class TrainingConfig:
     lora_r: int = 32  # Rank (högre = mer kapacitet, mer VRAM)
     lora_alpha: int = 64
     lora_dropout: float = 0.05
-    target_modules: tuple = ("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj")
+    target_modules: tuple = (
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj",
+    )
 
     # Training
     num_epochs: int = 3
@@ -65,7 +73,7 @@ class TrainingConfig:
 def load_training_data(path: str) -> list[dict]:
     """Ladda JSONL training data"""
     data = []
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 data.append(json.loads(line))
@@ -135,16 +143,16 @@ def main():
 
     # Import heavy libraries only when needed
     print("\nLoading libraries...")
+    from datasets import Dataset
+    from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
     from transformers import (
         AutoModelForCausalLM,
         AutoTokenizer,
-        TrainingArguments,
-        Trainer,
+        BitsAndBytesConfig,
         DataCollatorForLanguageModeling,
-        BitsAndBytesConfig
+        Trainer,
+        TrainingArguments,
     )
-    from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-    from datasets import Dataset
 
     # BitsAndBytes 4-bit config för att spara VRAM
     bnb_config = BitsAndBytesConfig(
@@ -158,10 +166,7 @@ def main():
     print("This may take a few minutes...")
 
     # Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(
-        config.base_model,
-        trust_remote_code=True
-    )
+    tokenizer = AutoTokenizer.from_pretrained(config.base_model, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
 
     # Load model with 4-bit quantization
@@ -237,7 +242,9 @@ def main():
     print("\n" + "=" * 60)
     print("Starting LoRA training...")
     print(f"Epochs: {config.num_epochs}")
-    print(f"Batch size: {config.batch_size} x {config.gradient_accumulation_steps} = {config.batch_size * config.gradient_accumulation_steps}")
+    print(
+        f"Batch size: {config.batch_size} x {config.gradient_accumulation_steps} = {config.batch_size * config.gradient_accumulation_steps}"
+    )
     print(f"Learning rate: {config.learning_rate}")
     print(f"LoRA rank: {config.lora_r}")
     print("=" * 60 + "\n")

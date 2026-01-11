@@ -86,7 +86,7 @@ def index_from_cache():
             collection.upsert(ids=ids, documents=texts, embeddings=embeddings, metadatas=metadatas)
 
             indexed += len(batch)
-            print(f"  Batch {i//batch_size + 1}: {indexed}/{len(documents)} indexed")
+            print(f"  Batch {i // batch_size + 1}: {indexed}/{len(documents)} indexed")
 
         final_count = collection.count()
         print(f"\n SUCCESS: {final_count:,} total documents in collection")

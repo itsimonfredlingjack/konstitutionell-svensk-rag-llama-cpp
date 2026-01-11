@@ -10,7 +10,6 @@ import json
 import re
 import time
 from datetime import datetime
-from typing import Optional
 
 import chromadb
 import requests
@@ -72,7 +71,7 @@ class FolkhalsomyndighetenScraper:
             )
             print(f"Created new collection: {COLLECTION_NAME}")
 
-    def fetch_page(self, url: str, max_retries: int = 3) -> Optional[BeautifulSoup]:
+    def fetch_page(self, url: str, max_retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse a web page with retry logic"""
         for attempt in range(max_retries):
             try:
@@ -86,7 +85,7 @@ class FolkhalsomyndighetenScraper:
                 time.sleep(2**attempt)  # Exponential backoff
         return None
 
-    def extract_text_from_pdf(self, pdf_url: str) -> Optional[str]:
+    def extract_text_from_pdf(self, pdf_url: str) -> str | None:
         """Download and extract text from PDF (first 50 pages, max 20k chars)"""
         try:
             print(f"  Extracting PDF: {pdf_url}")
@@ -157,7 +156,7 @@ class FolkhalsomyndighetenScraper:
 
         return publications
 
-    def extract_publication_from_listing(self, item) -> Optional[dict]:
+    def extract_publication_from_listing(self, item) -> dict | None:
         """Extract publication metadata from a listing item"""
         try:
             # Find title
@@ -221,7 +220,7 @@ class FolkhalsomyndighetenScraper:
             self.errors.append(f"Error in extract_publication_from_listing: {e!s}")
             return None
 
-    def fetch_publication_content(self, url: str) -> Optional[str]:
+    def fetch_publication_content(self, url: str) -> str | None:
         """Fetch the full text content of a publication"""
         soup = self.fetch_page(url)
         if not soup:

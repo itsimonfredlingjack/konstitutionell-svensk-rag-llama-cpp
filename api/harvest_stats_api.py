@@ -68,7 +68,7 @@ def get_harvest_stats():
                 if throughput_per_hour > 0:
                     eta_hours = remaining / throughput_per_hour
                     eta_timestamp = (datetime.now() + timedelta(hours=eta_hours)).isoformat()
-        except:
+        except Exception:
             pass
 
     # Get recent failures (last 10)

@@ -11,7 +11,6 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import chromadb
@@ -82,7 +81,7 @@ class ESVScraper:
         self.embedding_model = SentenceTransformer(EMBEDDING_MODEL)
         print("✓ Embedding model loaded")
 
-    def fetch_page(self, url: str, retries: int = 3) -> Optional[BeautifulSoup]:
+    def fetch_page(self, url: str, retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse HTML page with retries"""
         for attempt in range(retries):
             try:
@@ -90,7 +89,7 @@ class ESVScraper:
                 response.raise_for_status()
                 return BeautifulSoup(response.content, "html.parser")
             except Exception as e:
-                print(f"  Attempt {attempt+1}/{retries} failed for {url}: {e}")
+                print(f"  Attempt {attempt + 1}/{retries} failed for {url}: {e}")
                 if attempt < retries - 1:
                     time.sleep(2**attempt)
         return None
@@ -145,7 +144,7 @@ class ESVScraper:
 
         return doc_links
 
-    def download_pdf(self, url: str, filename: str) -> Optional[Path]:
+    def download_pdf(self, url: str, filename: str) -> Path | None:
         """Download PDF file"""
         try:
             response = self.session.get(url, timeout=30)

@@ -94,7 +94,7 @@ def import_to_chromadb():
 
         collection.add(ids=batch_ids, metadatas=batch_metadatas, documents=batch_documents)
 
-        print(f"  Importerade batch {i//batch_size + 1}: {len(batch_ids)} dokument")
+        print(f"  Importerade batch {i // batch_size + 1}: {len(batch_ids)} dokument")
 
     # Verifiera import
     final_count = collection.count()
@@ -110,7 +110,7 @@ def import_to_chromadb():
     if results["documents"][0]:
         print(f"Hittade {len(results['documents'][0])} resultat:")
         for i, (doc, meta) in enumerate(zip(results["documents"][0], results["metadatas"][0])):
-            print(f"  {i+1}. {meta['title'][:60]}")
+            print(f"  {i + 1}. {meta['title'][:60]}")
 
     return final_count
 

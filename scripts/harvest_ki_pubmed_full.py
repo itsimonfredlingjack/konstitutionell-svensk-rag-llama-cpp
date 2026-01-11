@@ -428,7 +428,7 @@ def main():
     print("=" * 70)
     print(f"Documents fetched: {len(all_records):,}")
     print(f"Total available: {total_count:,}")
-    print(f"Time elapsed: {elapsed/60:.1f} minutes")
+    print(f"Time elapsed: {elapsed / 60:.1f} minutes")
     print(f"Rate: {rate:.0f} docs/minute")
     print(f"Output: {OUTPUT_FILE}")
     print(f"Status: {'COMPLETE' if len(all_records) >= total_count else 'INTERRUPTED'}")

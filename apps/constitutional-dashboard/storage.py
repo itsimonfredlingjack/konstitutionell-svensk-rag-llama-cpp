@@ -15,7 +15,7 @@ class DashboardState:
     ollama_temperature: float = 0.2
 
     @staticmethod
-    def from_dict(data: dict[str, Any]) -> "DashboardState":
+    def from_dict(data: dict[str, Any]) -> DashboardState:
         silent_mode = bool(data.get("silent_mode", False))
         ollama_model = str(data.get("ollama_model", "gptoss-agent") or "gptoss-agent")
 
@@ -45,7 +45,7 @@ class DashboardState:
 
 def load_state(path: str) -> DashboardState:
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return DashboardState.from_dict(json.load(f))
     except FileNotFoundError:
         return DashboardState()

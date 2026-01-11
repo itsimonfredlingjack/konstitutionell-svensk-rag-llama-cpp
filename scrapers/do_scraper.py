@@ -10,7 +10,6 @@ import json
 import re
 import time
 from datetime import datetime
-from typing import Optional
 
 import chromadb
 import requests
@@ -46,7 +45,7 @@ class DOScraper:
         """Generate unique ID from text"""
         return hashlib.sha256(text.encode()).hexdigest()[:16]
 
-    def fetch_page(self, url: str, retries: int = 3) -> Optional[BeautifulSoup]:
+    def fetch_page(self, url: str, retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse HTML page"""
         for attempt in range(retries):
             try:

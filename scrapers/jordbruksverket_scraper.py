@@ -12,7 +12,6 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import chromadb
 import httpx
@@ -57,7 +56,7 @@ class JordbruksverketScraper:
         content = f"{url}{title}".encode()
         return f"jordbruksverket_{hashlib.md5(content).hexdigest()}"
 
-    async def extract_pdf_text(self, pdf_url: str) -> Optional[str]:
+    async def extract_pdf_text(self, pdf_url: str) -> str | None:
         """Extract text from PDF"""
         try:
             response = await self.http_client.get(pdf_url)

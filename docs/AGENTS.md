@@ -8,9 +8,7 @@ npm run build      # Production build
 npm run lint       # ESLint validation
 
 # Python Testing
-cd juridik-ai && python -m pytest tests/ -v                              # All tests
-cd juridik-ai && python -m pytest tests/test_output_formatter.py -v      # Single test file
-cd juridik-ai && python -m pytest tests/test_output_formatter.py::TestOutputFormatter::test_format_swedish_output -v  # Single test
+cd backend && python -m pytest tests/ -v
 
 # System Commands
 constitutional status                    # System status

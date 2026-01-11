@@ -185,11 +185,11 @@ class DiVAHarvester:
             return [], None
 
     def harvest(self):
-        safe_print(f"\n{'='*60}")
+        safe_print(f"\n{'=' * 60}")
         safe_print(f"[{self.code}] STARTING: {self.name}")
         safe_print(f"[{self.code}] Endpoint: {self.endpoint}")
         safe_print(f"[{self.code}] Expected: ~{self.expected:,} documents")
-        safe_print(f"{'='*60}")
+        safe_print(f"{'=' * 60}")
 
         self.load_checkpoint()
         batch_count = 0
@@ -329,7 +329,7 @@ def main():
 
     print("-" * 70)
     print(f"TOTAL DOCUMENTS: {total_docs:,}")
-    print(f"TOTAL TIME: {total_elapsed/60:.1f} minutes")
+    print(f"TOTAL TIME: {total_elapsed / 60:.1f} minutes")
     print("=" * 70)
 
     summary_file = OUTPUT_DIR / "myndigheter_diva_summary.json"

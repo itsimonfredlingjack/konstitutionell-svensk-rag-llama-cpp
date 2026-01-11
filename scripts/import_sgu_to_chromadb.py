@@ -83,7 +83,7 @@ def main():
             batch_num = i // batch_size + 1
             logger.info(f"✓ Batch {batch_num}/{total_batches} ({len(batch_ids)} docs)")
         except Exception as e:
-            logger.error(f"✗ Error in batch {i//batch_size + 1}: {e}")
+            logger.error(f"✗ Error in batch {i // batch_size + 1}: {e}")
 
     # Verify
     final_count = collection.count()

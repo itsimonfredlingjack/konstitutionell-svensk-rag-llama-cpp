@@ -3,18 +3,19 @@ Retrieval Service - ChromaDB Wrapper with Advanced Features
 Wraps RetrievalOrchestrator (Phase 1-4) and provides clean interface
 """
 
-from typing import List, Dict, Any, Optional
 import asyncio
+import os
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-import time
-import os
+from functools import lru_cache
+from typing import Any, Dict, List, Optional
 
+from ..core.exceptions import RetrievalError, ServiceNotInitializedError
+from ..utils.logging import get_logger
 from .base_service import BaseService
 from .config_service import ConfigService, get_config_service
 from .embedding_service import get_embedding_service
-from ..core.exceptions import RetrievalError, ServiceNotInitializedError
-from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -29,8 +30,8 @@ SCORE_THRESHOLD = float(os.getenv("RAG_SIMILARITY_THRESHOLD", "0.5"))
 try:
     from .retrieval_orchestrator import (
         RetrievalOrchestrator,
-        RetrievalStrategy as ORStrategy,
         RetrievalResult as ORResult,
+        RetrievalStrategy as ORStrategy,
     )
 
     RETRIEVAL_ORCHESTRATOR_AVAILABLE = True
@@ -282,8 +283,25 @@ class RetrievalService(BaseService):
         # Initialize embedding service
         self._embedding_service = get_embedding_service(self.config)
 
-        # Warn early if we switched embedding dimensions but collections are not re-indexed yet
+        # CRITICAL: Verify query embedding dimension matches collection expectations
         try:
+            # Test embedding dimension
+            test_query = "ping"
+            test_embedding = self._embedding_service.embed_single(test_query)
+            actual_dim = len(test_embedding)
+            expected_dim = self.config.expected_embedding_dim
+
+            if actual_dim != expected_dim:
+                raise RuntimeError(
+                    f"FATAL: Query embedder dimension mismatch! "
+                    f"Expected {expected_dim} (BGE-M3), got {actual_dim}. "
+                    f"Query embedder must match collection embedding dimension. "
+                    f"Fix: Update embedding_model in config to match migrated collections."
+                )
+
+            logger.info(f"✅ Query embedder verified: {actual_dim}-dim (matches collections)")
+
+            # Verify collections exist and have correct dimension
             if self.config.expected_embedding_dim == 1024:
                 existing = {c.name for c in self._chromadb_client.list_collections()}
                 expected = set(self.config.effective_default_collections)
@@ -294,8 +312,35 @@ class RetrievalService(BaseService):
                         "Search will return empty results until re-indexing is completed. "
                         f"Missing collections: {missing}"
                     )
+                else:
+                    # Verify collection dimensions by querying one
+                    for coll_name in self.config.effective_default_collections:
+                        try:
+                            collection = self._chromadb_client.get_collection(name=coll_name)
+                            # Try a test query to verify dimension compatibility
+                            test_results = collection.query(
+                                query_embeddings=[test_embedding],
+                                n_results=1,
+                            )
+                            logger.info(
+                                f"✅ Collection {coll_name} verified: accepts {actual_dim}-dim queries"
+                            )
+                        except Exception as e:
+                            error_msg = str(e).lower()
+                            if "dimension" in error_msg or "expecting embedding" in error_msg:
+                                raise RuntimeError(
+                                    f"FATAL: Collection {coll_name} dimension mismatch! "
+                                    f"Collection expects different dimension than query embedder ({actual_dim}). "
+                                    f"Error: {e}"
+                                )
+                            else:
+                                logger.warning(f"Could not verify collection {coll_name}: {e}")
+
+        except RuntimeError:
+            # Re-raise dimension mismatch errors
+            raise
         except Exception as e:
-            logger.warning(f"Unable to validate 1024-dim collections: {e}")
+            logger.warning(f"Unable to validate embedding dimensions: {e}")
 
         # Initialize RetrievalOrchestrator if available
         if self.RETRIEVAL_ORCHESTRATOR_AVAILABLE:
@@ -375,8 +420,6 @@ class RetrievalService(BaseService):
         """
         await self.ensure_initialized()
 
-        start_time = time.perf_counter()
-
         try:
             # Use provided collections or default
             collections_to_search = collections or self.config.effective_default_collections
@@ -417,60 +460,58 @@ class RetrievalService(BaseService):
                     for r in or_result.results[:k]
                 ]
 
-                # Convert metrics
+                # Convert metrics - optimized: cache nested dictionaries
                 metrics_dict = (
                     or_result.metrics.to_dict() if hasattr(or_result.metrics, "to_dict") else {}
                 )
+
+                # Cache nested dictionaries to avoid repeated .get() calls
+                latency_dict = metrics_dict.get("latency", {})
+                results_dict = metrics_dict.get("results", {})
+                scores_dict = metrics_dict.get("scores", {})
+                timeouts_dict = metrics_dict.get("timeouts", {})
+                rewrite_dict = metrics_dict.get("rewrite", {})
+                fusion_dict = metrics_dict.get("fusion", {})
+                adaptive_dict = metrics_dict.get("adaptive", {})
+
                 metrics = RetrievalMetrics(
-                    total_latency_ms=metrics_dict.get("latency", {}).get("total_ms", 0.0),
-                    dense_latency_ms=metrics_dict.get("latency", {}).get("dense_ms", 0.0),
-                    bm25_latency_ms=metrics_dict.get("latency", {}).get("bm25_ms", 0.0),
-                    dense_result_count=metrics_dict.get("results", {}).get("dense_count", 0),
-                    bm25_result_count=metrics_dict.get("results", {}).get("bm25_count", 0),
-                    doc_overlap_count=metrics_dict.get("results", {}).get("overlap", 0),
-                    unique_docs_total=metrics_dict.get("results", {}).get("unique_total", 0),
-                    top_score=metrics_dict.get("scores", {}).get("top", 0.0),
-                    mean_score=metrics_dict.get("scores", {}).get("mean", 0.0),
-                    score_std=metrics_dict.get("scores", {}).get("std", 0.0),
-                    score_entropy=metrics_dict.get("scores", {}).get("entropy", 0.0),
-                    dense_timeout=metrics_dict.get("timeouts", {}).get("dense", False),
-                    bm25_timeout=metrics_dict.get("timeouts", {}).get("bm25", False),
+                    total_latency_ms=latency_dict.get("total_ms", 0.0),
+                    dense_latency_ms=latency_dict.get("dense_ms", 0.0),
+                    bm25_latency_ms=latency_dict.get("bm25_ms", 0.0),
+                    dense_result_count=results_dict.get("dense_count", 0),
+                    bm25_result_count=results_dict.get("bm25_count", 0),
+                    doc_overlap_count=results_dict.get("overlap", 0),
+                    unique_docs_total=results_dict.get("unique_total", 0),
+                    top_score=scores_dict.get("top", 0.0),
+                    mean_score=scores_dict.get("mean", 0.0),
+                    score_std=scores_dict.get("std", 0.0),
+                    score_entropy=scores_dict.get("entropy", 0.0),
+                    dense_timeout=timeouts_dict.get("dense", False),
+                    bm25_timeout=timeouts_dict.get("bm25", False),
                     strategy=metrics_dict.get(
                         "strategy", strategy if isinstance(strategy, str) else strategy.value
                     ),
-                    rewrite_used=metrics_dict.get("rewrite", {}).get("used", False),
-                    rewrite_latency_ms=metrics_dict.get("rewrite", {}).get("latency_ms", 0.0),
-                    original_query=metrics_dict.get("rewrite", {}).get("original_query", ""),
-                    rewritten_query=metrics_dict.get("rewrite", {}).get("rewritten_query", ""),
-                    delta_topk_overlap=metrics_dict.get("rewrite", {}).get(
-                        "delta_topk_overlap", 0.0
-                    ),
-                    fusion_used=metrics_dict.get("fusion", {}).get("used", False),
-                    num_queries=metrics_dict.get("fusion", {}).get("num_queries", 1),
-                    query_variants=metrics_dict.get("fusion", {}).get("query_variants", []),
-                    per_query_result_counts=metrics_dict.get("fusion", {}).get(
-                        "per_query_result_counts", []
-                    ),
-                    unique_docs_before_fusion=metrics_dict.get("fusion", {}).get(
-                        "unique_docs_before", 0
-                    ),
-                    unique_docs_after_fusion=metrics_dict.get("fusion", {}).get(
-                        "unique_docs_after", 0
-                    ),
-                    overlap_ratio=metrics_dict.get("fusion", {}).get("overlap_ratio", 0.0),
-                    fusion_gain=metrics_dict.get("fusion", {}).get("fusion_gain", 0.0),
-                    rrf_latency_ms=metrics_dict.get("fusion", {}).get("rrf_latency_ms", 0.0),
-                    expansion_latency_ms=metrics_dict.get("fusion", {}).get(
-                        "expansion_latency_ms", 0.0
-                    ),
-                    adaptive_used=metrics_dict.get("adaptive", {}).get("used", False),
-                    confidence_signals=metrics_dict.get("adaptive", {}).get("signals"),
-                    escalation_path=metrics_dict.get("adaptive", {}).get("escalation_path", []),
-                    final_step=metrics_dict.get("adaptive", {}).get("final_step", ""),
-                    fallback_triggered=metrics_dict.get("adaptive", {}).get(
-                        "fallback_triggered", False
-                    ),
-                    reason_codes=metrics_dict.get("adaptive", {}).get("reason_codes", []),
+                    rewrite_used=rewrite_dict.get("used", False),
+                    rewrite_latency_ms=rewrite_dict.get("latency_ms", 0.0),
+                    original_query=rewrite_dict.get("original_query", ""),
+                    rewritten_query=rewrite_dict.get("rewritten_query", ""),
+                    delta_topk_overlap=rewrite_dict.get("delta_topk_overlap", 0.0),
+                    fusion_used=fusion_dict.get("used", False),
+                    num_queries=fusion_dict.get("num_queries", 1),
+                    query_variants=fusion_dict.get("query_variants", []),
+                    per_query_result_counts=fusion_dict.get("per_query_result_counts", []),
+                    unique_docs_before_fusion=fusion_dict.get("unique_docs_before", 0),
+                    unique_docs_after_fusion=fusion_dict.get("unique_docs_after", 0),
+                    overlap_ratio=fusion_dict.get("overlap_ratio", 0.0),
+                    fusion_gain=fusion_dict.get("fusion_gain", 0.0),
+                    rrf_latency_ms=fusion_dict.get("rrf_latency_ms", 0.0),
+                    expansion_latency_ms=fusion_dict.get("expansion_latency_ms", 0.0),
+                    adaptive_used=adaptive_dict.get("used", False),
+                    confidence_signals=adaptive_dict.get("signals"),
+                    escalation_path=adaptive_dict.get("escalation_path", []),
+                    final_step=adaptive_dict.get("final_step", ""),
+                    fallback_triggered=adaptive_dict.get("fallback_triggered", False),
+                    reason_codes=adaptive_dict.get("reason_codes", []),
                 )
 
                 logger.info(
@@ -528,11 +569,12 @@ class RetrievalService(BaseService):
 
             all_results = []
 
-            # Search each collection
-            for collection_name in collections:
+            # OPTIMIZED: Parallel collection queries to fix N+1 problem
+            # Use run_in_executor since ChromaDB queries are synchronous
+            def query_single_collection(collection_name: str):
+                """Query a single collection and return results (synchronous)."""
                 try:
                     collection = self._chromadb_client.get_collection(name=collection_name)
-
                     query_results = collection.query(
                         query_embeddings=[query_embedding],
                         n_results=k,
@@ -540,17 +582,24 @@ class RetrievalService(BaseService):
                         include=["metadatas", "documents", "distances"],
                     )
 
+                    results = []
                     if query_results and query_results.get("ids") and len(query_results["ids"]) > 0:
-                        for i in range(len(query_results["ids"][0])):
-                            doc_id = query_results["ids"][0][i]
-                            metadata = query_results.get("metadatas", [{}])[0][i]
-                            document = query_results.get("documents", [{}])[0][i]
-                            distance = query_results.get("distances", [{}])[0][i]
+                        # Cache repeated dictionary access
+                        ids_list = query_results["ids"][0]
+                        metadatas_list = query_results.get("metadatas", [{}])[0]
+                        documents_list = query_results.get("documents", [{}])[0]
+                        distances_list = query_results.get("distances", [{}])[0]
+
+                        for i in range(len(ids_list)):
+                            doc_id = ids_list[i]
+                            metadata = metadatas_list[i] if i < len(metadatas_list) else {}
+                            document = documents_list[i] if i < len(documents_list) else ""
+                            distance = distances_list[i] if i < len(distances_list) else 1.0
 
                             score = 1.0 / (1.0 + distance)
                             snippet = document[:200] + "..." if len(document) > 200 else document
 
-                            all_results.append(
+                            results.append(
                                 SearchResult(
                                     id=doc_id,
                                     title=str(metadata.get("title", "Untitled")),
@@ -562,14 +611,29 @@ class RetrievalService(BaseService):
                                     retriever="dense",
                                 )
                             )
-
+                    return results
                 except Exception as e:
                     logger.warning(f"Error searching {collection_name}: {e}")
+                    return []
+
+            # Execute all collection queries in parallel using executor
+            import asyncio
+
+            loop = asyncio.get_event_loop()
+            tasks = [
+                loop.run_in_executor(None, query_single_collection, name) for name in collections
+            ]
+            results_list = await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Flatten results
+            for results in results_list:
+                if isinstance(results, Exception):
                     continue
+                all_results.extend(results)
 
             # Sort by score
             all_results.sort(key=lambda x: -x.score)
-            
+
             # Apply similarity threshold filtering (BEFORE trimming to k)
             qualified_results = [r for r in all_results if r.score >= SCORE_THRESHOLD]
 
@@ -648,7 +712,6 @@ class RetrievalService(BaseService):
 
 
 # Dependency injection function for FastAPI
-from functools import lru_cache
 
 
 @lru_cache()

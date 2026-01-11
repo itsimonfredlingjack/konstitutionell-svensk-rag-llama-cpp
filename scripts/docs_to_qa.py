@@ -8,16 +8,15 @@ Konverterar markdown-dokumentation till Q&A träningsexempel.
 import json
 import re
 from pathlib import Path
-from typing import List, Dict, Tuple
 
 
-def extract_sections(content: str) -> List[Tuple[str, str]]:
+def extract_sections(content: str) -> list[tuple[str, str]]:
     """Extrahera sektioner från markdown."""
     sections = []
 
     # Split på headers
-    header_pattern = r'^(#{1,3})\s+(.+)$'
-    lines = content.split('\n')
+    header_pattern = r"^(#{1,3})\s+(.+)$"
+    lines = content.split("\n")
 
     current_header = None
     current_content = []
@@ -27,7 +26,7 @@ def extract_sections(content: str) -> List[Tuple[str, str]]:
         if match:
             # Spara föregående sektion
             if current_header and current_content:
-                text = '\n'.join(current_content).strip()
+                text = "\n".join(current_content).strip()
                 if len(text) > 50:  # Min längd
                     sections.append((current_header, text))
 
@@ -38,14 +37,14 @@ def extract_sections(content: str) -> List[Tuple[str, str]]:
 
     # Sista sektionen
     if current_header and current_content:
-        text = '\n'.join(current_content).strip()
+        text = "\n".join(current_content).strip()
         if len(text) > 50:
             sections.append((current_header, text))
 
     return sections
 
 
-def generate_qa_from_section(header: str, content: str, source_file: str) -> List[Dict]:
+def generate_qa_from_section(header: str, content: str, source_file: str) -> list[dict]:
     """Generera Q&A-par från en sektion."""
     examples = []
 
@@ -58,53 +57,36 @@ def generate_qa_from_section(header: str, content: str, source_file: str) -> Lis
     header_lower = header.lower()
 
     # Arkitektur-frågor
-    if any(word in header_lower for word in ['arkitektur', 'architecture', 'struktur', 'structure']):
-        examples.append({
-            "instruction": f"Förklara arkitekturen för {header} i Simon's AI",
-            "output": content
-        })
+    if any(
+        word in header_lower for word in ["arkitektur", "architecture", "struktur", "structure"]
+    ):
+        examples.append(
+            {"instruction": f"Förklara arkitekturen för {header} i Simon's AI", "output": content}
+        )
 
     # API/Endpoint-frågor
-    elif any(word in header_lower for word in ['api', 'endpoint', 'route']):
-        examples.append({
-            "instruction": f"Hur fungerar {header}?",
-            "output": content
-        })
+    elif any(word in header_lower for word in ["api", "endpoint", "route"]):
+        examples.append({"instruction": f"Hur fungerar {header}?", "output": content})
 
     # Workflow-frågor
-    elif any(word in header_lower for word in ['workflow', 'flöde', 'process']):
-        examples.append({
-            "instruction": f"Beskriv {header} processen",
-            "output": content
-        })
+    elif any(word in header_lower for word in ["workflow", "flöde", "process"]):
+        examples.append({"instruction": f"Beskriv {header} processen", "output": content})
 
     # Konfiguration-frågor
-    elif any(word in header_lower for word in ['config', 'konfig', 'setting', 'parameter']):
-        examples.append({
-            "instruction": f"Hur konfigurerar jag {header}?",
-            "output": content
-        })
+    elif any(word in header_lower for word in ["config", "konfig", "setting", "parameter"]):
+        examples.append({"instruction": f"Hur konfigurerar jag {header}?", "output": content})
 
     # Felsökning-frågor
-    elif any(word in header_lower for word in ['felsök', 'debug', 'troubleshoot', 'problem']):
-        examples.append({
-            "instruction": f"Hur felsöker jag {header}?",
-            "output": content
-        })
+    elif any(word in header_lower for word in ["felsök", "debug", "troubleshoot", "problem"]):
+        examples.append({"instruction": f"Hur felsöker jag {header}?", "output": content})
 
     # Installation/Setup-frågor
-    elif any(word in header_lower for word in ['install', 'setup', 'start', 'börja']):
-        examples.append({
-            "instruction": f"Hur sätter jag upp {header}?",
-            "output": content
-        })
+    elif any(word in header_lower for word in ["install", "setup", "start", "börja"]):
+        examples.append({"instruction": f"Hur sätter jag upp {header}?", "output": content})
 
     # Generisk fråga för övriga
     else:
-        examples.append({
-            "instruction": f"Vad är {header}?",
-            "output": content
-        })
+        examples.append({"instruction": f"Vad är {header}?", "output": content})
 
     # Lägg till källa
     for ex in examples:
@@ -113,12 +95,12 @@ def generate_qa_from_section(header: str, content: str, source_file: str) -> Lis
     return examples
 
 
-def extract_code_examples(content: str) -> List[Dict]:
+def extract_code_examples(content: str) -> list[dict]:
     """Extrahera kodexempel från markdown."""
     examples = []
 
     # Hitta kodblock med kontext
-    pattern = r'([^\n]+)\n\n```(\w+)\n([\s\S]+?)\n```'
+    pattern = r"([^\n]+)\n\n```(\w+)\n([\s\S]+?)\n```"
 
     for match in re.finditer(pattern, content):
         context = match.group(1).strip()
@@ -130,24 +112,26 @@ def extract_code_examples(content: str) -> List[Dict]:
             continue
 
         # Generera instruktion från kontext
-        if ':' in context:
-            instruction = context.split(':')[-1].strip()
+        if ":" in context:
+            instruction = context.split(":")[-1].strip()
         else:
             instruction = context
 
         if instruction:
-            examples.append({
-                "instruction": f"Visa hur man {instruction.lower()}",
-                "output": f"```{lang}\n{code}\n```"
-            })
+            examples.append(
+                {
+                    "instruction": f"Visa hur man {instruction.lower()}",
+                    "output": f"```{lang}\n{code}\n```",
+                }
+            )
 
     return examples
 
 
-def process_markdown_file(filepath: Path, base_dir: Path) -> List[Dict]:
+def process_markdown_file(filepath: Path, base_dir: Path) -> list[dict]:
     """Processa en markdown-fil."""
     try:
-        content = filepath.read_text(encoding='utf-8')
+        content = filepath.read_text(encoding="utf-8")
     except Exception as e:
         print(f"  Skip: {filepath} ({e})")
         return []
@@ -212,9 +196,9 @@ def main():
 
     # Spara
     print(f"\nSaving {len(unique_examples)} examples to {output_file}")
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         for ex in unique_examples:
-            f.write(json.dumps(ex, ensure_ascii=False) + '\n')
+            f.write(json.dumps(ex, ensure_ascii=False) + "\n")
 
     print("Done!")
 

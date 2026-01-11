@@ -13,7 +13,6 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import chromadb
@@ -89,7 +88,7 @@ class BolagsverketScraper:
         stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
         reraise=True,
     )
-    async def _fetch_content(self, url: str) -> Optional[bytes]:
+    async def _fetch_content(self, url: str) -> bytes | None:
         """Hämta innehåll från URL med retry"""
         try:
             response = await self.client.get(url)

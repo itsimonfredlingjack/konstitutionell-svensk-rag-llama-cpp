@@ -4,16 +4,16 @@ Refactored with Service Layer Architecture
 """
 
 import asyncio
-from fastapi import APIRouter, Header, Depends, WebSocket
+from datetime import datetime
+from typing import Dict, List, Optional
+
+from fastapi import APIRouter, Depends, Header, WebSocket
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
-from datetime import datetime
 
 # Import services
-from ..services.orchestrator_service import OrchestratorService, get_orchestrator_service, RAGResult
-from ..services.retrieval_service import get_retrieval_service, RetrievalStrategy
-
+from ..services.orchestrator_service import OrchestratorService, RAGResult, get_orchestrator_service
+from ..services.retrieval_service import RetrievalStrategy, get_retrieval_service
 
 router = APIRouter(prefix="/api/constitutional", tags=["constitutional"])
 
@@ -103,6 +103,9 @@ class AgentQueryRequest(BaseModel):
     mode: str = Field(default="auto", description="Query mode: auto, chat, assist, evidence")
     history: Optional[List[ConversationMessage]] = Field(
         default=None, description="Conversation history for context (max 10 messages)"
+    )
+    use_agent: bool = Field(
+        default=False, description="Use LangGraph agentic flow instead of linear pipeline"
     )
 
 
@@ -255,6 +258,7 @@ async def agent_query(
             k=10,
             retrieval_strategy=retrieval_strategy,
             history=history,
+            use_agent=request.use_agent,  # NEW: Pass agent flag
         )
 
         mode_value = result.mode.value if hasattr(result.mode, "value") else str(result.mode)

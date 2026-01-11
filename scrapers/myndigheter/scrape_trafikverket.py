@@ -12,7 +12,6 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import chromadb
 from chromadb.config import Settings
@@ -36,12 +35,12 @@ class Publication:
     url: str
     doc_id: str
     authors: list[str]
-    year: Optional[str]
-    pub_type: Optional[str]
-    abstract: Optional[str]
-    pdf_url: Optional[str]
-    isbn: Optional[str]
-    issn: Optional[str]
+    year: str | None
+    pub_type: str | None
+    abstract: str | None
+    pdf_url: str | None
+    isbn: str | None
+    issn: str | None
     source: str = "trafikverket"
     scraped_at: str = datetime.now().isoformat()
 
@@ -93,7 +92,7 @@ class TrafikverketScraper:
         )
         logger.info(f"ChromaDB collection ready. Current count: {self.collection.count()}")
 
-    def get_total_results(self) -> Optional[int]:
+    def get_total_results(self) -> int | None:
         """Extract total number of results from search page"""
         try:
             # Try to find result count element
@@ -177,7 +176,7 @@ class TrafikverketScraper:
         except Exception as e:
             logger.error(f"Error extracting publications from page: {e}")
 
-    def extract_publication(self, row_element) -> Optional[Publication]:
+    def extract_publication(self, row_element) -> Publication | None:
         """Extract publication data from a result row"""
         try:
             # Title and URL

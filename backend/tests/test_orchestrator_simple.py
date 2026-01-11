@@ -144,7 +144,7 @@ def test_tf5_invalid_json_parsing():
     invalid_json = '{"mode": "ASSIST", invalid json'
 
     try:
-        result = service.parse_llm_json(invalid_json)
+        service.parse_llm_json(invalid_json)
         assert False, "Should have raised JSONDecodeError"
     except json.JSONDecodeError:
         pass  # Expected

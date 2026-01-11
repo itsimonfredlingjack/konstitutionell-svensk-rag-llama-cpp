@@ -6,8 +6,8 @@ Provides common interface and utilities for service implementations
 from abc import ABC, abstractmethod
 
 from ..core.exceptions import ServiceNotInitializedError
-from .config_service import ConfigService
 from ..utils.logging import get_logger
+from .config_service import ConfigService
 
 logger = get_logger(__name__)
 
@@ -73,7 +73,7 @@ class BaseService(ABC):
         """
         if not self._initialized:
             raise ServiceNotInitializedError(
-                f"{self.__class__.__name__} is not initialized. " f"Call initialize() first."
+                f"{self.__class__.__name__} is not initialized. Call initialize() first."
             )
 
     def _mark_initialized(self) -> None:

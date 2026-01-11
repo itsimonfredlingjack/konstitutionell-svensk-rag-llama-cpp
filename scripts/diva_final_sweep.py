@@ -259,11 +259,11 @@ class DiVAHarvester:
 
     def harvest(self):
         """Run the full harvest for this institution."""
-        safe_print(f"\n{'='*60}")
+        safe_print(f"\n{'=' * 60}")
         safe_print(f"[{self.code}] STARTING HARVEST: {self.name}")
         safe_print(f"[{self.code}] Endpoint: {self.endpoint}")
         safe_print(f"[{self.code}] Expected: ~{self.expected} documents")
-        safe_print(f"{'='*60}")
+        safe_print(f"{'=' * 60}")
 
         self.load_checkpoint()
         batch_count = 0
@@ -419,9 +419,9 @@ def main():
 
     print("-" * 70)
     print(f"TOTAL DOCUMENTS: {total_docs:,}")
-    print(f"TOTAL TIME: {total_elapsed/60:.1f} minutes")
+    print(f"TOTAL TIME: {total_elapsed / 60:.1f} minutes")
     if total_elapsed > 0:
-        print(f"AVERAGE RATE: {total_docs/total_elapsed:.1f} docs/sec")
+        print(f"AVERAGE RATE: {total_docs / total_elapsed:.1f} docs/sec")
     print("=" * 70)
 
     # Save summary report

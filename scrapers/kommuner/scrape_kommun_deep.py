@@ -16,7 +16,6 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 from playwright.sync_api import Browser, Page, sync_playwright
@@ -140,8 +139,8 @@ class DeepKommunScraper:
         self.pdf_dir = PDF_CACHE_DIR / f"{kommun_kod}_{safe_name}"
         self.pdf_dir.mkdir(parents=True, exist_ok=True)
 
-        self.browser: Optional[Browser] = None
-        self.page: Optional[Page] = None
+        self.browser: Browser | None = None
+        self.page: Page | None = None
 
     def _safe_name(self, name: str) -> str:
         """Create filesystem-safe name."""
@@ -335,7 +334,7 @@ class DeepKommunScraper:
         else:
             return "ovrigt"
 
-    def download_document(self, url: str, doc_type: str, text: str) -> Optional[dict]:
+    def download_document(self, url: str, doc_type: str, text: str) -> dict | None:
         """Download a document using requests."""
         import requests
 
@@ -393,7 +392,7 @@ class DeepKommunScraper:
         pnr_pattern = r"\b(19|20)\d{6}[-]?\d{4}\b"
         return bool(re.search(pnr_pattern, text))
 
-    def extract_date(self, url: str, text: str) -> Optional[str]:
+    def extract_date(self, url: str, text: str) -> str | None:
         """Extract date from URL or text."""
         patterns = [r"(\d{4})-(\d{2})-(\d{2})", r"(\d{4})(\d{2})(\d{2})"]
         for pattern in patterns:
@@ -408,9 +407,8 @@ class DeepKommunScraper:
     def run(self) -> ScraperResult:
         """Run the deep-crawl scraper."""
         start_time = time.time()
-        doc_type_counts = {
-            t: 0
-            for t in [
+        doc_type_counts = dict.fromkeys(
+            [
                 "protokoll",
                 "beslut",
                 "styrdokument",
@@ -419,8 +417,9 @@ class DeepKommunScraper:
                 "ekonomi",
                 "taxa",
                 "ovrigt",
-            ]
-        }
+            ],
+            0,
+        )
         flagged_count = 0
         total_bytes = 0
 

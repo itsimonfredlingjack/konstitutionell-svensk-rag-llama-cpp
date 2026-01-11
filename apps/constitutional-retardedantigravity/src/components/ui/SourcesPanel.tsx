@@ -6,8 +6,8 @@ import { useMemo, useState } from 'react';
 import { useAppStore } from '../../stores/useAppStore';
 
 // Load thresholds from env vars (default: 0.7, 0.5)
-const SCORE_THRESHOLD_GOOD = Number(import.meta.env.NEXT_PUBLIC_SCORE_THRESHOLD_GOOD) || 0.7;
-const SCORE_THRESHOLD_OK = Number(import.meta.env.NEXT_PUBLIC_SCORE_THRESHOLD_OK) || 0.5;
+const SCORE_THRESHOLD_GOOD = Number(import.meta.env.VITE_SCORE_THRESHOLD_GOOD) || 0.7;
+const SCORE_THRESHOLD_OK = Number(import.meta.env.VITE_SCORE_THRESHOLD_OK) || 0.5;
 
 const getScoreColor = (score: number): string => {
     if (score >= SCORE_THRESHOLD_GOOD) return 'bg-emerald-500';
@@ -137,12 +137,12 @@ export function SourcesPanel({ className, citedSourceIds }: SourcesPanelProps) {
                                         <div className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${scoreBadgeColor}`}>
                                             {scoreLabel}
                                         </div>
-                                        
+
                                         {/* Numeriskt Score */}
                                         <div className="text-[10px] font-mono text-stone-500">
                                             {source.score.toFixed(3)}
                                         </div>
-                                        
+
                                         {/* Color-coded Indicator Bar */}
                                         <div className="h-1.5 w-12 rounded-full bg-stone-200 overflow-hidden">
                                             <div
@@ -150,7 +150,7 @@ export function SourcesPanel({ className, citedSourceIds }: SourcesPanelProps) {
                                                 style={{ width: `${scoreWidth}px` }}
                                             />
                                         </div>
-                                        
+
                                         {/* Lock Indicator */}
                                         {isLocked && (
                                             <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">

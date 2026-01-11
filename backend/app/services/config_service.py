@@ -3,10 +3,11 @@ Config Service - Centralized Configuration for Constitutional AI
 Wraps pydantic-settings with environment variable support
 """
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from ..utils.logging import get_logger
 

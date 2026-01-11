@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+import chromadb
+import requests
 from boverket_scraper import BoverketScraper
+from chromadb.config import Settings
 
 scraper = BoverketScraper()
 
@@ -21,7 +24,6 @@ for doc in bfs_2025_docs:
     scraper.scrape_pdf_document(doc["url"], doc["title"], doc["metadata"])
 
 # Search for more BFS 2024 documents
-import requests
 
 # Try to find all available BFS documents
 bfs_nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -38,14 +40,12 @@ for num in bfs_nums:
                 f"BFS 2024:{num}",
                 {"year": "2024", "type": "Föreskrift", "bfs": f"BFS 2024:{num}"},
             )
-    except:
+    except Exception:
         pass
 
 scraper.generate_report()
 
 # Count final total
-import chromadb
-from chromadb.config import Settings
 
 client = chromadb.PersistentClient(
     path="/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/chromadb_data",

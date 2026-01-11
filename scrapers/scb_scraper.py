@@ -10,7 +10,6 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import chromadb
 import httpx
@@ -64,7 +63,7 @@ class SCBScraper:
         logger.info("ChromaDB collection: %s", COLLECTION_NAME)
 
     @retry(wait=wait_exponential(min=2, max=120), stop=stop_after_attempt(5), reraise=True)
-    async def _fetch_json(self, url: str, params: Optional[dict] = None) -> dict:
+    async def _fetch_json(self, url: str, params: dict | None = None) -> dict:
         """Hämta JSON från API med retry och rate limiting"""
         try:
             response = await self.client.get(url, params=params)
@@ -140,7 +139,7 @@ class SCBScraper:
         logger.info("Totalt antal tabeller funna: %d", len(all_tables))
         return all_tables
 
-    async def fetch_table_metadata(self, table_id: str) -> Optional[dict]:
+    async def fetch_table_metadata(self, table_id: str) -> dict | None:
         """Hämta detaljerad metadata för en tabell"""
         url = f"{SCB_API_BASE}/tables/{table_id}/metadata"
 
@@ -152,7 +151,7 @@ class SCBScraper:
             self.stats["errors"].append(f"Metadata fetch {table_id}: {e!s}")
             return None
 
-    def extract_text_content(self, table: dict, metadata: Optional[dict]) -> str:
+    def extract_text_content(self, table: dict, metadata: dict | None) -> str:
         """Extrahera textinnehåll från tabell och metadata för indexering"""
         parts = []
 
@@ -188,7 +187,7 @@ class SCBScraper:
         """Generera unikt dokument-ID"""
         return f"scb_{table_id}_{hashlib.sha256(table_id.encode()).hexdigest()[:8]}"
 
-    async def index_table(self, table: dict, metadata: Optional[dict]):
+    async def index_table(self, table: dict, metadata: dict | None):
         """Indexera en tabell till ChromaDB"""
         try:
             table_id = table.get("id", str(hash(str(table))))

@@ -72,11 +72,11 @@ with open(output_file, "w", encoding="utf-8") as out:
         except Exception as e:
             print(f"  ⚠️  {diva_file.name}: {e}")
 
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 print("✅ SUCCESS!")
 print(f"  Files processed: {processed_files}")
 print(f"  Total Q&A pairs: {total_pairs:,}")
 print(f"  Skipped (no abstract): {skipped_no_abstract:,}")
 print(f"  Output: {output_file.name}")
 print(f"  Size: {output_file.stat().st_size / 1024 / 1024:.1f} MB")
-print(f"{'='*60}")
+print(f"{'=' * 60}")

@@ -5,19 +5,21 @@ FastAPI server for Swedish legal document RAG system
 Run with: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 """
 
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from fastapi import Request
 import asyncio
 import json
+from contextlib import asynccontextmanager
 
-from .api.constitutional_routes import router as constitutional_router, harvest_websocket
-from .services.orchestrator_service import get_orchestrator_service
-from .core.error_handlers import register_exception_handlers
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+
+from .api.constitutional_routes import harvest_websocket
+from .api.constitutional_routes import router as constitutional_router
+from .api.document_routes import router as document_router
 from .config import settings
-from .utils.logging import setup_logging, get_logger
+from .core.error_handlers import register_exception_handlers
+from .services.orchestrator_service import get_orchestrator_service
+from .utils.logging import get_logger, setup_logging
 
 # Setup logging
 setup_logging(
@@ -89,6 +91,7 @@ app.add_middleware(
 
 # Include REST API routes
 app.include_router(constitutional_router)
+app.include_router(document_router)
 
 # WebSocket endpoints
 app.websocket("/ws/harvest")(harvest_websocket)  # Constitutional AI: Live Harvest Progress

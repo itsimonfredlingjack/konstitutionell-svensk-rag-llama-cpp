@@ -1,0 +1,20 @@
+{
+  "collection_name": "swedish_gov_docs",
+  "total_docs": 304871,
+  "migrated_docs": 304871,
+  "last_offset": 304871,
+  "errors": 0,
+  "skipped": 0,
+  "started_at": "2026-01-09T20:49:39.358034",
+  "updated_at": "2026-01-10T18:12:16.634213",
+  "batch_size": 20,
+  "status": "completed",
+  "error_ids": [],
+  "completed_at": "2026-01-10T22:37:14.291058",
+  "verification": {
+    "sqlite_source_count": 304871,
+    "sqlite_target_count": 304871,
+    "chromadb_count": 304871,
+    "match": true
+  }
+}

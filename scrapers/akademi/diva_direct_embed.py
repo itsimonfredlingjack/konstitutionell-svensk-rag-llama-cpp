@@ -22,7 +22,6 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import requests
 
@@ -81,7 +80,7 @@ class DiVADocument:
     title: str
     abstract: str
     university: str
-    year: Optional[str]
+    year: str | None
     language: str
     doc_type: str
     metadata: dict
@@ -255,7 +254,7 @@ class DiVAEmbedder:
             # Format 2: identifiers dict/list (older format)
             ids = record.get("identifiers", {})
             if isinstance(ids, dict):
-                for key, val in ids.items():
+                for _key, val in ids.items():
                     indexed[str(val)] = record
             elif isinstance(ids, list):
                 for id_val in ids:
@@ -302,7 +301,7 @@ class DiVAEmbedder:
                     if str(id_val) in indexed:
                         record = indexed[str(id_val)]
                         break
-            except:
+            except Exception:
                 pass
 
         # Direct lookup
@@ -342,7 +341,7 @@ class DiVAEmbedder:
 
         return str(title) if title else "", str(abstract) if abstract else ""
 
-    def get_triggered_docs(self, limit: Optional[int] = None) -> Generator[dict, None, None]:
+    def get_triggered_docs(self, limit: int | None = None) -> Generator[dict, None, None]:
         """Yield triggered documents from corpus_bridge.db."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
@@ -410,9 +409,9 @@ class DiVAEmbedder:
                 metadata = {}
 
             try:
-                payload = json.loads(doc.get("payload_json", "{}"))
+                json.loads(doc.get("payload_json", "{}"))
             except (json.JSONDecodeError, TypeError):
-                payload = {}
+                pass
 
             source = doc.get("source", "")
             source_file = doc.get("source_file", "")
@@ -508,7 +507,7 @@ class DiVAEmbedder:
 
         self.stats["chunks_embedded"] += len(chunks)
 
-    def run(self, limit: Optional[int] = None, batch_size: int = 100):
+    def run(self, limit: int | None = None, batch_size: int = 100):
         """Run the embedding pipeline."""
         self.stats["start_time"] = time.time()
 
@@ -567,7 +566,7 @@ class DiVAEmbedder:
             batch_db_ids = []
             last_report = time.time()
 
-            for i, doc in enumerate(docs_generator):
+            for _i, doc in enumerate(docs_generator):
                 chunks = self.process_document(doc)
 
                 if chunks:
@@ -591,7 +590,7 @@ class DiVAEmbedder:
                     rate = self.stats["docs_processed"] / elapsed if elapsed > 0 else 0
                     print(
                         f"Progress: {self.stats['docs_processed']:,}/{total:,} "
-                        f"({100*self.stats['docs_processed']/total:.1f}%) "
+                        f"({100 * self.stats['docs_processed'] / total:.1f}%) "
                         f"| Rate: {rate:.1f} docs/sec "
                         f"| Chunks: {self.stats['chunks_embedded']:,}"
                     )
@@ -616,8 +615,8 @@ class DiVAEmbedder:
         print(f"Chunks created:      {self.stats['chunks_created']:,}")
         print(f"Chunks embedded:     {self.stats['chunks_embedded']:,}")
         print(f"Errors:              {self.stats['errors']:,}")
-        print(f"Time:                {elapsed/60:.1f} minutes")
-        print(f"Rate:                {self.stats['docs_processed']/elapsed:.1f} docs/sec")
+        print(f"Time:                {elapsed / 60:.1f} minutes")
+        print(f"Rate:                {self.stats['docs_processed'] / elapsed:.1f} docs/sec")
 
         # Qdrant final count
         info = self.qdrant.get_collection(self.config["collection_name"])

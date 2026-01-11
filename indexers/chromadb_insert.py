@@ -63,7 +63,7 @@ def load_and_insert(json_file: str):
         batch_metas = metadatas[i : i + BATCH_SIZE]
 
         collection.upsert(ids=batch_ids, documents=batch_contents, metadatas=batch_metas)
-        print(f"  Inserted batch {i//BATCH_SIZE + 1}/{(len(ids)-1)//BATCH_SIZE + 1}")
+        print(f"  Inserted batch {i // BATCH_SIZE + 1}/{(len(ids) - 1) // BATCH_SIZE + 1}")
 
     final_count = collection.count()
     print(f"\nDone! Collection now has {final_count} documents")

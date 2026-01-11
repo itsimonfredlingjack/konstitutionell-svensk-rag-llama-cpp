@@ -15,7 +15,6 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import chromadb
@@ -62,7 +61,7 @@ class SMHIScraper:
             name=COLLECTION_NAME, metadata={"description": "Swedish government documents"}
         )
 
-    def fetch_url(self, url: str) -> Optional[BeautifulSoup]:
+    def fetch_url(self, url: str) -> BeautifulSoup | None:
         """Fetch and parse a URL."""
         if url in self.visited_urls:
             return None

@@ -14,7 +14,6 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -93,7 +92,7 @@ def get_all_report_links(session: requests.Session) -> list[dict]:
         return []
 
 
-def get_pdf_from_report_page(session: requests.Session, report_url: str) -> Optional[str]:
+def get_pdf_from_report_page(session: requests.Session, report_url: str) -> str | None:
     """Get PDF URL from a report page."""
     try:
         time.sleep(DELAY_BETWEEN_REQUESTS)
@@ -117,7 +116,7 @@ def get_pdf_from_report_page(session: requests.Session, report_url: str) -> Opti
         return None
 
 
-def download_pdf(session: requests.Session, url: str, year: str) -> Optional[dict]:
+def download_pdf(session: requests.Session, url: str, year: str) -> dict | None:
     """Download a PDF and return metadata."""
     try:
         time.sleep(DELAY_BETWEEN_REQUESTS)
@@ -188,7 +187,7 @@ def scrape_statskontoret(max_downloads: int = None, years: list[int] = None) -> 
 
     pdf_infos = []
     for i, report in enumerate(all_reports[:discovery_limit]):
-        logger.info(f"[{i+1}/{discovery_limit}] Getting PDF from: {report['title'][:40]}...")
+        logger.info(f"[{i + 1}/{discovery_limit}] Getting PDF from: {report['title'][:40]}...")
         pdf_url = get_pdf_from_report_page(session, report["report_page"])
 
         if pdf_url:
@@ -212,7 +211,7 @@ def scrape_statskontoret(max_downloads: int = None, years: list[int] = None) -> 
     )
 
     for i, pdf_info in enumerate(pdf_infos[:total_to_download]):
-        logger.info(f"[{i+1}/{total_to_download}] Downloading: {pdf_info['title'][:40]}...")
+        logger.info(f"[{i + 1}/{total_to_download}] Downloading: {pdf_info['title'][:40]}...")
 
         result = download_pdf(session, pdf_info["pdf_url"], pdf_info["year"])
 

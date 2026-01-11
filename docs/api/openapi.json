@@ -1,0 +1,168 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Constitutional AI Backend API",
+    "description": "FastAPI backend for Swedish legal document RAG system",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Constitutional AI",
+      "email": "constitutional@example.com"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8900",
+      "description": "Local development"
+    },
+    {
+      "url": "http://192.168.86.32:8900",
+      "description": "Local network"
+    }
+  ],
+  "tags": [
+    {
+      "name": "constitutional",
+      "description": "Constitutional AI RAG endpoints"
+    },
+    {
+      "name": "health",
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "agent",
+      "description": "Agentic RAG query endpoints"
+    }
+  ],
+  "paths": {
+    "/api/constitutional/health": {
+      "get": {
+        "summary": "Health check",
+        "operationId": "healthCheck",
+        "tags": [
+          "constitutional",
+          "health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/constitutional/agent/query": {
+      "post": {
+        "summary": "Agentic RAG query",
+        "operationId": "agentQuery",
+        "tags": [
+          "constitutional",
+          "agent"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentQueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentQueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded",
+              "unhealthy"
+            ]
+          },
+          "services": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AgentQueryRequest": {
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "chat",
+              "assist",
+              "evidence"
+            ],
+            "default": "auto"
+          }
+        }
+      },
+      "AgentQueryResponse": {
+        "type": "object",
+        "properties": {
+          "answer": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "mode": {
+            "type": "string"
+          },
+          "saknas_underlag": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

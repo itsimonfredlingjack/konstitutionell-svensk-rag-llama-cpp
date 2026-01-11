@@ -3,14 +3,15 @@ Reranking Service - BGE Cross-Encoder Wrapper
 Wrapper for BGE reranker-v2-m3 cross-encoder model
 """
 
-from typing import List, Optional, Tuple
-from dataclasses import dataclass
 import asyncio
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import List, Optional, Tuple
 
-from .base_service import BaseService
-from .config_service import ConfigService, get_config_service
 from ..core.exceptions import RerankingError
 from ..utils.logging import get_logger
+from .base_service import BaseService
+from .config_service import ConfigService, get_config_service
 
 logger = get_logger(__name__)
 
@@ -91,8 +92,8 @@ class RerankingService(BaseService):
             return
 
         try:
-            from sentence_transformers import CrossEncoder
             import torch
+            from sentence_transformers import CrossEncoder
 
             self.logger.info(f"Loading BGE reranker model: {self.config.reranking_model}")
 
@@ -225,7 +226,6 @@ class RerankingService(BaseService):
 
         try:
             # Extract document IDs and texts
-            doc_ids = [doc.get("id", "") for doc in documents]
             doc_texts = [f"{doc.get('title', '')}\n{doc.get('snippet', '')}" for doc in documents]
             original_scores = [doc.get("score", 0.0) for doc in documents]
 
@@ -337,7 +337,6 @@ class RerankingService(BaseService):
 
 
 # Dependency injection function for FastAPI
-from functools import lru_cache
 
 
 @lru_cache()

@@ -19,7 +19,6 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import chromadb
 from chromadb.config import Settings
@@ -66,7 +65,7 @@ class SFSManifest:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
         logger.info(f"Manifest saved to {self.manifest_path}")
 
-    def get_doc(self, sfs_nummer: str) -> Optional[dict]:
+    def get_doc(self, sfs_nummer: str) -> dict | None:
         """Hämta dokument från manifest"""
         return self.data["documents"].get(sfs_nummer)
 

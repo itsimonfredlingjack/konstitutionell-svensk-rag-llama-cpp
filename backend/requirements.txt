@@ -39,3 +39,7 @@ psutil>=5.9.0
 
 # NumPy for embeddings
 numpy>=1.24.0
+
+# LangGraph for state machine architecture
+langgraph>=1.0.0
+langchain-core>=1.2.0

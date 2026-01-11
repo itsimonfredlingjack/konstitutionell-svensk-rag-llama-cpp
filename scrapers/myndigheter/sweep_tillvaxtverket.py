@@ -142,11 +142,11 @@ def main():
                         ],
                     )
                     inserted += len(batch)
-                    print(f"Inserted batch {i//batch_size + 1} ({inserted} total)")
+                    print(f"Inserted batch {i // batch_size + 1} ({inserted} total)")
                     time.sleep(0.5)  # Give ChromaDB time to write
 
                 except Exception as e:
-                    print(f"Error inserting batch {i//batch_size + 1}: {e}")
+                    print(f"Error inserting batch {i // batch_size + 1}: {e}")
 
             # Final count
             try:

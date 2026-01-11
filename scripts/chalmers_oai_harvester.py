@@ -207,9 +207,9 @@ def main():
     output_dir = "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/data"
     max_records = 1000  # Test with 1000 records
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("HARVESTING: Chalmers tekniska hogskola")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     records = harvest_chalmers(max_records)
 
@@ -217,11 +217,11 @@ def main():
     save_records(records, output_path)
 
     # Print summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("HARVEST SUMMARY - CHALMERS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Chalmers tekniska hogskola            | {len(records):6} docs")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Output: {output_path}")
 
     return {"chalmers": {"records": len(records), "file": output_path}}

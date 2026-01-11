@@ -9,7 +9,6 @@ import json
 import re
 import time
 from datetime import datetime
-from typing import Optional
 from urllib.parse import urljoin
 
 import chromadb
@@ -286,7 +285,7 @@ class PTSScraper:
 
         return docs
 
-    def _fetch_page_content(self, url: str) -> Optional[str]:
+    def _fetch_page_content(self, url: str) -> str | None:
         """Fetch and extract text content from a webpage"""
         try:
             resp = self.session.get(url, timeout=30)
@@ -371,14 +370,14 @@ def main():
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("PTS SCRAPE COMPLETE")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Documents scraped: {report['documents_scraped']}")
     print(f"Categories: {report['categories']}")
     print(f"Errors: {len(report['errors'])}")
     print(f"Report saved: {report_path}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Output JSON for parsing
     print(json.dumps(report, indent=2, ensure_ascii=False))

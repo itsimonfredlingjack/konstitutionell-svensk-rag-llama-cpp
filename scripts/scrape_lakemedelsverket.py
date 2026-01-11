@@ -18,7 +18,6 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import aiohttp
@@ -57,7 +56,7 @@ class LakemedelsverketScraper:
     """Scraper for Läkemedelsverket documents"""
 
     def __init__(self):
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.client = chromadb.PersistentClient(path=CHROMADB_PATH)
         self.collection = self.client.get_or_create_collection(
             name=COLLECTION_NAME,
@@ -83,7 +82,7 @@ class LakemedelsverketScraper:
         content = f"{url}|{title}".encode()
         return hashlib.sha256(content).hexdigest()[:16]
 
-    async def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> str | None:
         """Fetch page content with error handling"""
         try:
             async with self.session.get(url) as response:
@@ -152,7 +151,7 @@ class LakemedelsverketScraper:
 
         return metadata
 
-    async def scrape_document_page(self, url: str, category: str) -> Optional[dict]:
+    async def scrape_document_page(self, url: str, category: str) -> dict | None:
         """Scrape a single document page"""
         if url in self.scraped_urls:
             return None
@@ -367,7 +366,7 @@ class LakemedelsverketScraper:
 
             try:
                 self.collection.add(ids=batch_ids, documents=batch_docs, metadatas=batch_meta)
-                logger.info(f"Stored batch {i//batch_size + 1} ({len(batch_ids)} docs)")
+                logger.info(f"Stored batch {i // batch_size + 1} ({len(batch_ids)} docs)")
             except Exception as e:
                 logger.error(f"Error storing batch: {e}")
 

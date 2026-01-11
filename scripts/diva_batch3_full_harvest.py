@@ -28,7 +28,6 @@ import time
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import requests
 
@@ -74,7 +73,7 @@ def get_endpoint(code: str) -> str:
     return f"https://{code}.diva-portal.org/dice/oai"
 
 
-def parse_mods_record(record_elem) -> Optional[dict]:
+def parse_mods_record(record_elem) -> dict | None:
     """Extract key fields from a MODS record."""
     try:
         header = record_elem.find("oai:header", NAMESPACES)
@@ -165,13 +164,13 @@ def harvest_institution(code: str, name: str, expected_count: int) -> tuple[int,
     output_file = OUTPUT_DIR / f"diva_full_{code}.json"
     checkpoint_file = OUTPUT_DIR / f"diva_{code}_checkpoint.json"
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"HARVESTING: {name} ({code})")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"Endpoint: {endpoint}")
     print(f"Expected: ~{expected_count:,} records")
     print(f"Output: {output_file}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     # Check for existing partial harvest
     all_records = []
@@ -320,7 +319,7 @@ def harvest_institution(code: str, name: str, expected_count: int) -> tuple[int,
         checkpoint_file.unlink()
 
     elapsed = time.time() - start_time
-    print(f"\n[{code.upper()}] COMPLETE: {len(all_records):,} records in {elapsed/60:.1f} min")
+    print(f"\n[{code.upper()}] COMPLETE: {len(all_records):,} records in {elapsed / 60:.1f} min")
 
     return len(all_records), str(output_file)
 
@@ -331,7 +330,7 @@ def save_output(
     code: str,
     name: str,
     start_time: float,
-    resumption_token: Optional[str],
+    resumption_token: str | None,
     in_progress: bool,
 ):
     """Save records to JSON file."""
@@ -462,8 +461,8 @@ def main():
 
     print("=" * 70)
     print(f"  TOTAL: {total_harvested:,} / {expected_total:,} documents")
-    print(f"  Time elapsed: {elapsed/60:.1f} minutes ({elapsed/3600:.2f} hours)")
-    print(f"  Average rate: {total_harvested/elapsed:.1f} docs/sec")
+    print(f"  Time elapsed: {elapsed / 60:.1f} minutes ({elapsed / 3600:.2f} hours)")
+    print(f"  Average rate: {total_harvested / elapsed:.1f} docs/sec")
     print("=" * 70)
 
     # Save summary

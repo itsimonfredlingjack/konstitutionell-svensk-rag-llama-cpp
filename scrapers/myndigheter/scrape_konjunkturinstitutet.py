@@ -14,7 +14,6 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -52,7 +51,7 @@ class Document:
     url: str
     title: str
     category: str
-    year: Optional[str]
+    year: str | None
     filename: str
     filepath: str
     sha256: str
@@ -60,7 +59,7 @@ class Document:
     scraped_at: str
 
 
-def extract_year(url: str, title: str) -> Optional[str]:
+def extract_year(url: str, title: str) -> str | None:
     """Extract year from URL or title."""
     # Try title first (e.g., "september 2025", "mars 2024")
     match = re.search(r"(20\d{2})", title)
@@ -126,7 +125,7 @@ def get_pdf_links(session: requests.Session) -> list[dict]:
     return all_pdfs
 
 
-def download_pdf(session: requests.Session, url: str, category: str) -> Optional[dict]:
+def download_pdf(session: requests.Session, url: str, category: str) -> dict | None:
     """Download a PDF and return metadata."""
     try:
         time.sleep(DELAY_BETWEEN_REQUESTS)
@@ -184,7 +183,7 @@ def scrape_konjunkturinstitutet(max_downloads: int = None) -> dict:
     )
 
     for i, pdf_info in enumerate(pdf_links[:total_to_download]):
-        logger.info(f"[{i+1}/{total_to_download}] {pdf_info['title'][:50]}...")
+        logger.info(f"[{i + 1}/{total_to_download}] {pdf_info['title'][:50]}...")
 
         result = download_pdf(session, pdf_info["url"], pdf_info["category"])
 

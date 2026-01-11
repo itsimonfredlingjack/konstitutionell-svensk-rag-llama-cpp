@@ -125,7 +125,7 @@ class NewsEmbedder:
 
         # Create points
         points = []
-        for i, (article, embedding) in enumerate(zip(articles, embeddings)):
+        for _i, (article, embedding) in enumerate(zip(articles, embeddings)):
             point_id = str(uuid.uuid4())
             points.append(
                 PointStruct(
@@ -153,7 +153,7 @@ class NewsEmbedder:
             batch = articles[i : i + BATCH_SIZE]
             embedded = self.embed_articles(batch)
             total += embedded
-            print(f"  Embedded batch {i//BATCH_SIZE + 1}: {embedded} articles")
+            print(f"  Embedded batch {i // BATCH_SIZE + 1}: {embedded} articles")
 
         return total
 

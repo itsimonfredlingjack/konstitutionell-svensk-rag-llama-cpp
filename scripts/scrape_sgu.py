@@ -16,7 +16,6 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import aiohttp
 import chromadb
@@ -58,7 +57,7 @@ class SGUScraper:
     """Scraper for Sveriges geologiska undersökning (SGU)"""
 
     def __init__(self):
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.client = chromadb.PersistentClient(path=CHROMADB_PATH)
         self.collection = self.client.get_or_create_collection(
             name=COLLECTION_NAME,
@@ -85,7 +84,7 @@ class SGUScraper:
         content = f"{url}|{title}".encode()
         return hashlib.sha256(content).hexdigest()[:16]
 
-    async def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> str | None:
         """Fetch page content"""
         async with self.semaphore:
             try:
@@ -126,7 +125,7 @@ class SGUScraper:
 
         return links
 
-    def extract_document_metadata(self, soup: BeautifulSoup, url: str) -> Optional[dict]:
+    def extract_document_metadata(self, soup: BeautifulSoup, url: str) -> dict | None:
         """Extract document metadata from page"""
 
         # Try to find title
@@ -217,7 +216,7 @@ class SGUScraper:
             "scraped_at": datetime.now().isoformat(),
         }
 
-    async def scrape_url(self, url: str) -> Optional[dict]:
+    async def scrape_url(self, url: str) -> dict | None:
         """Scrape a single URL"""
         if url in self.scraped_urls:
             return None
@@ -344,7 +343,9 @@ class SGUScraper:
 
                 try:
                     self.collection.add(ids=batch_ids, documents=batch_docs, metadatas=batch_meta)
-                    logger.info(f"Stored batch {i//batch_size + 1}/{(len(ids)-1)//batch_size + 1}")
+                    logger.info(
+                        f"Stored batch {i // batch_size + 1}/{(len(ids) - 1) // batch_size + 1}"
+                    )
                 except Exception as e:
                     logger.error(f"Error storing batch: {e}")
 
@@ -405,10 +406,10 @@ async def main():
 
         # Print warning if below threshold
         if report["total_documents"] < MIN_DOCS_THRESHOLD:
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"⚠  WARNING: Only {report['total_documents']} documents scraped!")
             print(f"   Threshold: {MIN_DOCS_THRESHOLD}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
 
 if __name__ == "__main__":

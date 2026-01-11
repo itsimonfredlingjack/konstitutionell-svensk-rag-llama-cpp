@@ -16,7 +16,6 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 from playwright.sync_api import Browser, Page, sync_playwright
@@ -104,8 +103,8 @@ class PlaywrightKommunScraper:
         self.pdf_dir = PDF_CACHE_DIR / f"{kommun_kod}_{safe_name}"
         self.pdf_dir.mkdir(parents=True, exist_ok=True)
 
-        self.browser: Optional[Browser] = None
-        self.page: Optional[Page] = None
+        self.browser: Browser | None = None
+        self.page: Page | None = None
 
     def __enter__(self):
         self.playwright = sync_playwright().start()
@@ -206,7 +205,7 @@ class PlaywrightKommunScraper:
         else:
             return "ovrigt"
 
-    def download_document(self, url: str, doc_type: str) -> Optional[dict]:
+    def download_document(self, url: str, doc_type: str) -> dict | None:
         """Download a document."""
         if url in self.doc_urls_found:
             return None
@@ -259,7 +258,7 @@ class PlaywrightKommunScraper:
             # Try alternative download method
             return self._download_via_request(url, doc_type)
 
-    def _download_via_request(self, url: str, doc_type: str) -> Optional[dict]:
+    def _download_via_request(self, url: str, doc_type: str) -> dict | None:
         """Fallback download using requests."""
         import requests
 
@@ -313,7 +312,7 @@ class PlaywrightKommunScraper:
         pnr_pattern = r"\b(19|20)\d{6}[-]?\d{4}\b"
         return bool(re.search(pnr_pattern, text))
 
-    def extract_date(self, url: str, text: str) -> Optional[str]:
+    def extract_date(self, url: str, text: str) -> str | None:
         """Extract date from URL or text."""
         patterns = [r"(\d{4})-(\d{2})-(\d{2})", r"(\d{4})(\d{2})(\d{2})"]
         for pattern in patterns:
@@ -330,18 +329,10 @@ class PlaywrightKommunScraper:
     def run(self, start_urls: list[str] = None) -> ScraperResult:
         """Run the scraper."""
         start_time = time.time()
-        doc_type_counts = {
-            t: 0
-            for t in [
-                "protokoll",
-                "beslut",
-                "styrdokument",
-                "rapport",
-                "upphandling",
-                "ekonomi",
-                "ovrigt",
-            ]
-        }
+        doc_type_counts = dict.fromkeys(
+            ["protokoll", "beslut", "styrdokument", "rapport", "upphandling", "ekonomi", "ovrigt"],
+            0,
+        )
         flagged_count = 0
         total_bytes = 0
 

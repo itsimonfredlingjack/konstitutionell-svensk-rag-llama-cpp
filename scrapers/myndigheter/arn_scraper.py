@@ -11,7 +11,6 @@ import logging
 import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Optional
 from urllib.parse import urljoin
 
 import aiohttp
@@ -67,7 +66,7 @@ class Document:
 
 class ARNScraper:
     def __init__(self):
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.documents: list[Document] = []
         self.errors: list[dict] = []
         self.stats = {
@@ -89,7 +88,7 @@ class ARNScraper:
         if self.session:
             await self.session.close()
 
-    async def fetch_page(self, url: str, retries: int = 3) -> Optional[str]:
+    async def fetch_page(self, url: str, retries: int = 3) -> str | None:
         """Fetch a page with retry logic"""
         for attempt in range(retries):
             try:
@@ -101,7 +100,7 @@ class ARNScraper:
                         return None
                     logger.warning(f"HTTP {response.status} for {url}")
             except asyncio.TimeoutError:
-                logger.warning(f"Timeout on {url} (attempt {attempt+1}/{retries})")
+                logger.warning(f"Timeout on {url} (attempt {attempt + 1}/{retries})")
             except Exception as e:
                 logger.error(f"Error fetching {url}: {e}")
 

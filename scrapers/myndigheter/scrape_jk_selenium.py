@@ -10,7 +10,6 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import chromadb
 from bs4 import BeautifulSoup
@@ -139,7 +138,7 @@ class JKSeleniumScraper:
             self.stats["errors"].append(f"Decision links error: {e!s}")
             return []
 
-    def scrape_decision(self, url: str) -> Optional[dict]:
+    def scrape_decision(self, url: str) -> dict | None:
         """Scrape a single decision page"""
         try:
             self.driver.get(url)

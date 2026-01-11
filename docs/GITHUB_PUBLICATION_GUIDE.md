@@ -14,7 +14,7 @@ Denna guide beskriver hur man strukturerar projektet för GitHub-publicering med
 - `scrapers/` - Scraper-kod
 - `indexers/` - Indexeringsskript
 - `scripts/` - Utility-skript
-- `juridik-ai/` - Juridik AI pipelines
+
 
 **2. Konfigurationsfiler**
 - `requirements.txt`, `pyproject.toml` - Python dependencies

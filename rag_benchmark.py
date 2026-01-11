@@ -307,16 +307,18 @@ class RAGBenchmark:
 
         return result
 
-    async def run_benchmark(self, queries: list[dict] = None, progress_callback=None) -> dict:
+    async def run_benchmark(
+        self, queries: list[dict] | None = None, progress_callback=None
+    ) -> dict:
         """Run full benchmark suite."""
         queries = queries or TEST_QUERIES
         self.results = []
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"  RAG BENCHMARK - {len(queries)} queries")
         print(f"  API: {self.api_url}")
         print(f"  Answers: {'Yes' if self.generate_answers else 'No'}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # Check health
         health = await self.check_health()
@@ -464,9 +466,9 @@ class RAGBenchmark:
 
 def print_report(report: dict):
     """Pretty print benchmark report."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  BENCHMARK RESULTS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     info = report["benchmark_info"]
     print(f"\nQueries: {info['successful']}/{info['total_queries']} successful")
@@ -491,7 +493,7 @@ def print_report(report: dict):
     if "keyword_coverage" in summary:
         kw = summary["keyword_coverage"]
         print("\n🔑 KEYWORD COVERAGE")
-        print(f"   Mean Hit Rate:    {kw['mean_hit_rate']*100:.0f}%")
+        print(f"   Mean Hit Rate:    {kw['mean_hit_rate'] * 100:.0f}%")
         print(f"   Queries w/ Hits:  {kw['queries_with_hits']}")
         print(f"   Perfect Coverage: {kw['perfect_coverage']}")
 
@@ -514,7 +516,7 @@ def print_report(report: dict):
                 f"latency={stats['mean_latency_ms']:.0f}ms"
             )
 
-    print(f"\n{'='*60}\n")
+    print(f"\n{'=' * 60}\n")
 
 
 async def main():

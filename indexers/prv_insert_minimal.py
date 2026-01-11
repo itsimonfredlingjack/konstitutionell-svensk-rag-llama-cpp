@@ -41,7 +41,7 @@ async def main():
         collection.upsert(
             ids=ids[i : i + 50], documents=contents[i : i + 50], metadatas=metas[i : i + 50]
         )
-        print(f"Batch {i//50 + 1}/{(len(ids)-1)//50 + 1}")
+        print(f"Batch {i // 50 + 1}/{(len(ids) - 1) // 50 + 1}")
 
     print(f"Final count: {collection.count()}")
 

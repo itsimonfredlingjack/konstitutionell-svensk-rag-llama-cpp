@@ -12,7 +12,6 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import aiohttp
@@ -63,7 +62,7 @@ class DirectSkolverketScraper:
         except:
             self.collection = self.client.create_collection(COLLECTION_NAME)
 
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.documents: list[dict] = []
         self.stats = {
             "urls_scraped": 0,
@@ -93,7 +92,7 @@ class DirectSkolverketScraper:
         except:
             return False
 
-    async def fetch(self, url: str) -> Optional[str]:
+    async def fetch(self, url: str) -> str | None:
         try:
             async with self.session.get(url) as response:
                 if response.status == 200:

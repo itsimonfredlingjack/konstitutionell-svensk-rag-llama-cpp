@@ -84,7 +84,7 @@ def index_to_chromadb(
 
         collection.upsert(ids=batch_ids, metadatas=batch_metadatas, documents=batch_documents)
 
-        logger.info(f"Upserted batch {i//batch_size + 1}/{(len(ids)-1)//batch_size + 1}")
+        logger.info(f"Upserted batch {i // batch_size + 1}/{(len(ids) - 1) // batch_size + 1}")
 
     logger.info("Indexing complete!")
 
@@ -96,8 +96,8 @@ def index_to_chromadb(
     results = collection.query(query_texts=["föreskrifter"], n_results=3)
 
     logger.info("\nTest query results (top 3 for 'föreskrifter'):")
-    for i, (doc, metadata) in enumerate(zip(results["documents"][0], results["metadatas"][0])):
-        logger.info(f"{i+1}. {metadata.get('title', 'No title')[:80]}")
+    for i, (_doc, metadata) in enumerate(zip(results["documents"][0], results["metadatas"][0])):
+        logger.info(f"{i + 1}. {metadata.get('title', 'No title')[:80]}")
 
     return count
 
@@ -110,6 +110,6 @@ if __name__ == "__main__":
     json_file = sys.argv[1]
     count = index_to_chromadb(json_file)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"INDEXING COMPLETE: {count} documents in ChromaDB")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")

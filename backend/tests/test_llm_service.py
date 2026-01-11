@@ -5,8 +5,11 @@ Integration tests for LLM Service with llama-server (OpenAI-compatible API)
 import pytest
 import pytest_asyncio
 
-from app.services.llm_service import LLMService, get_llm_service
 from app.services.config_service import ConfigService, get_config_service
+from app.services.llm_service import LLMService, get_llm_service
+
+# Import helper from conftest
+from conftest import is_ollama_available
 
 
 @pytest_asyncio.fixture
@@ -24,6 +27,7 @@ async def llm_service(config_service: ConfigService):
     await service.close()
 
 
+@pytest.mark.integration
 class TestLLMServiceLlamaServer:
     """Test LLM Service with llama-server (OpenAI-compatible API)"""
 
@@ -126,7 +130,6 @@ class TestLLMServiceLlamaServer:
             pytest.skip("llama-server not enabled in config")
 
         # Use an invalid URL to simulate connection error
-        original_base_url = llm_service.config.llama_server_base_url
         llm_service._config.primary_model = "nonexistent-model"
 
         messages = [{"role": "user", "content": "Test"}]
@@ -146,10 +149,12 @@ class TestLLMServiceLlamaServer:
             llm_service._config.primary_model = llm_service.config.constitutional_model
 
 
+@pytest.mark.integration
 class TestLLMServiceOllamaFallback:
     """Test LLM Service fallback to default Ollama (port 11434)"""
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(not is_ollama_available(), reason="Ollama service not available")
     async def test_default_ollama_connection(self, config_service: ConfigService):
         """Test that default Ollama connection works when llama-server is disabled"""
         # Temporarily disable llama-server

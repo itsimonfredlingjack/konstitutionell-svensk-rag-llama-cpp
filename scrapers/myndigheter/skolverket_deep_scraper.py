@@ -14,7 +14,6 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import aiohttp
@@ -56,7 +55,7 @@ class DeepSkolverketScraper:
                 name=COLLECTION_NAME, metadata={"description": "Swedish government documents"}
             )
 
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.visited_urls: set[str] = set()
         self.documents: list[dict] = []
         self.stats = {
@@ -101,7 +100,7 @@ class DeepSkolverketScraper:
         """Check if URL belongs to skolverket.se domain"""
         return "skolverket.se" in url or "skolfs.skolverket.se" in url
 
-    async def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> str | None:
         """Fetch page with error handling"""
         try:
             async with self.session.get(url) as response:

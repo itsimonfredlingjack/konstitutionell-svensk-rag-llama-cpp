@@ -64,7 +64,7 @@
 - ✅ `apps/bolagsverket_scraper.py` (separate purpose)
 - ✅ All scraper reports
 - ✅ All n8n workflow docs
-- ✅ All juridik-ai documentation
+- ❌ All juridik-ai documentation (removed - separate project)
 
 ### Phase 3: DOCUMENTATION CONSOLIDATION 📚
 

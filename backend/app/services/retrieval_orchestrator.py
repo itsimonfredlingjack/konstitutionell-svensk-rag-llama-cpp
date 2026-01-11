@@ -23,20 +23,20 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Tuple
 from enum import Enum
-
-# Phase 3: RAG-Fusion imports
-from .rag_fusion import (
-    QueryExpander,
-    reciprocal_rank_fusion,
-    calculate_fusion_metrics,
-)
+from typing import Any, Dict, List, Optional, Tuple
 
 # Phase 4: Confidence signals for adaptive retrieval
 from .confidence_signals import (
     ConfidenceCalculator,
     EscalationPolicy,
+)
+
+# Phase 3: RAG-Fusion imports
+from .rag_fusion import (
+    QueryExpander,
+    calculate_fusion_metrics,
+    reciprocal_rank_fusion,
 )
 
 logger = logging.getLogger("constitutional.retrieval")
@@ -224,6 +224,8 @@ async def search_single_collection(
         loop = asyncio.get_event_loop()
 
         def _query():
+            # OPTIMIZED: Fetch all fields (documents needed for snippets)
+            # Future optimization: Make this configurable to skip documents when only IDs needed
             return collection.query(
                 query_embeddings=[query_embedding],
                 n_results=n_results,
@@ -253,11 +255,16 @@ async def search_single_collection(
                 # Convert distance to score (0-1, higher is better)
                 score = 1.0 / (1.0 + distance)
 
+                # Use page_content from metadata if available (for contextual retrieval),
+                # otherwise fallback to document field
+                display_text = metadata.get("page_content", document)
+                snippet = display_text[:200] + "..." if len(display_text) > 200 else display_text
+
                 results.append(
                     {
                         "id": doc_id,
                         "title": metadata.get("title", "Untitled"),
-                        "snippet": document[:200] + "..." if len(document) > 200 else document,
+                        "snippet": snippet,
                         "score": score,
                         "source": metadata.get("source", collection.name),
                         "doc_type": metadata.get("doc_type"),
@@ -351,11 +358,15 @@ async def parallel_collection_search(
     # Calculate total latency (should be ~max, not sum, due to parallelism)
     metrics.total_latency_ms = (time.perf_counter() - start_total) * 1000
 
-    # Deduplicate by doc ID, keeping highest score
-    seen_ids = {}
+    # OPTIMIZED: Deduplicate by doc ID using set for O(1) lookup
+    seen_ids = {}  # Keep dict to track highest score
+    seen_set = set()  # Fast O(1) membership check
     for r in all_results:
         doc_id = r["id"]
-        if doc_id not in seen_ids or r["score"] > seen_ids[doc_id]["score"]:
+        if doc_id not in seen_set:
+            seen_set.add(doc_id)
+            seen_ids[doc_id] = r
+        elif r["score"] > seen_ids[doc_id]["score"]:
             seen_ids[doc_id] = r
 
     unique_results = list(seen_ids.values())
@@ -650,7 +661,6 @@ class RetrievalOrchestrator:
                 return results
 
         # Execute all searches in parallel
-        search_start = time.perf_counter()
         tasks = [search_single_embedding(emb) for emb in query_embeddings]
         result_sets = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -664,7 +674,6 @@ class RetrievalOrchestrator:
                 valid_result_sets.append(result)
 
         metrics.per_query_result_counts = [len(rs) for rs in valid_result_sets]
-        search_latency = (time.perf_counter() - search_start) * 1000
 
         # Step 5: Merge with RRF
         rrf_start = time.perf_counter()

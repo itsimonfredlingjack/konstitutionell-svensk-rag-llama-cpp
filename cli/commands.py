@@ -2,13 +2,17 @@
 Slash command handlers for Simons AI CLI
 /sven, /kod, /clear, /quit, /agent, /agents
 """
+
 from .client import NERDYAIClient
-from .ui import show_status, clear_screen
 from .config import (
-    MODEL_ARCHITECT, MODEL_CODER,
-    MODEL_ARCHITECT_NAME, MODEL_CODER_NAME,
-    MODEL_ARCHITECT_DESC, MODEL_CODER_DESC
+    MODEL_ARCHITECT,
+    MODEL_ARCHITECT_DESC,
+    MODEL_ARCHITECT_NAME,
+    MODEL_CODER,
+    MODEL_CODER_DESC,
+    MODEL_CODER_NAME,
 )
+from .ui import clear_screen, show_status
 
 # Available agents (synced with backend)
 AVAILABLE_AGENTS = {
@@ -46,19 +50,19 @@ async def handle_juridik_command(client: NERDYAIClient, args: str) -> None:
     client.set_mode("juridik")
     show_status(
         "[bold bright_cyan]⚖️  IF-THEN MODE ACTIVATED[/] | Focus: Logic chains & Evidence evaluation",
-        "success"
+        "success",
     )
-    
+
     # Skicka instruktion till backend som system message
     # Detta kan implementeras genom att lägga till instruktioner i nästa meddelande
-    instruction = (
-        "Du ska nu fokusera på juridisk analys med:\n"
-        "- If-Then resonemangskedjor\n"
-        "- Bevisvärdering\n"
-        "- Strukturerad juridisk analys\n"
-        "- Logisk progression i argumentation"
-    )
-    
+    # (
+    #     "Du ska nu fokusera på juridisk analys med:\n"
+    #     "- If-Then resonemangskedjor\n"
+    #     "- Bevisvärdering\n"
+    #     "- Strukturerad juridisk analys\n"
+    #     "- Logisk progression i argumentation"
+    # )
+
     # Lägg till instruktionen som en del av kontexten
     # För nu sätter vi bara läget, instruktionen kan skickas med nästa meddelande
     # eller implementeras i backend som en system prompt modifierare
@@ -72,16 +76,16 @@ async def handle_diarie_command(client: NERDYAIClient, args: str) -> None:
     client.set_mode("diarie")
     show_status(
         "[bold bright_cyan]📋  GAP ANALYSIS MODE ACTIVATED[/] | Focus: Missing documentation analysis",
-        "success"
+        "success",
     )
-    
-    instruction = (
-        "Du ska nu fokusera på diariekontroll och gap analysis:\n"
-        "- Identifiera saknade dokument\n"
-        "- Identifiera saknade uppgifter\n"
-        "- Analysera dokumentationskomplettering\n"
-        "- Föreslå åtgärder för att komplettera"
-    )
+
+    # (
+    #     "Du ska nu fokusera på diariekontroll och gap analysis:\n"
+    #     "- Identifiera saknade dokument\n"
+    #     "- Identifiera saknade uppgifter\n"
+    #     "- Analysera dokumentationskomplettering\n"
+    #     "- Föreslå åtgärder för att komplettera"
+    # )
 
 
 def handle_clear_command() -> None:
@@ -102,7 +106,9 @@ async def handle_quit_command(client: NERDYAIClient) -> None:
     """
     show_status("[bold bright_cyan]Terminating session...[/]", "info")
     await client.close()
-    show_status("[bold bright_green]Session terminated. Thank you for using NERDY AI![/]", "success")
+    show_status(
+        "[bold bright_green]Session terminated. Thank you for using NERDY AI![/]", "success"
+    )
 
 
 def handle_agents_command(client: NERDYAIClient) -> None:
@@ -113,7 +119,7 @@ def handle_agents_command(client: NERDYAIClient) -> None:
         marker = "→ " if agent_id == current else "  "
         features = ""
         if "features" in info:
-            features = f" [code_interpreter]"
+            features = " [code_interpreter]"
         output += f"{marker}[bold]{agent_id}[/]: {info['description']}{features}\n"
     show_status(output, "info")
 
@@ -127,7 +133,9 @@ def handle_agent_command(client: NERDYAIClient, args: str) -> None:
         return
 
     if agent_id not in AVAILABLE_AGENTS:
-        show_status(f"[bold red]Unknown agent: {agent_id}[/]\nUse /agents to see available options", "error")
+        show_status(
+            f"[bold red]Unknown agent: {agent_id}[/]\nUse /agents to see available options", "error"
+        )
         return
 
     agent_info = AVAILABLE_AGENTS[agent_id]
@@ -140,7 +148,7 @@ def handle_agent_command(client: NERDYAIClient, args: str) -> None:
     show_status(
         f"[bold bright_green]AGENT SWITCHED[/] → {agent_info['name']}\n"
         f"Model: {agent_info['model']}{features}",
-        "success"
+        "success",
     )
 
 
@@ -191,9 +199,11 @@ async def handle_slash_command(client: NERDYAIClient, command: str) -> None:
             "/diarie       - Aktivera gap-analysläge\n"
             "/clear        - Rensa skärmen\n"
             "/quit         - Avsluta CLI",
-            "info"
+            "info",
         )
     else:
-        show_status(f"Okänt kommando: {cmd}. Använd /help för att se tillgängliga kommandon", "warning")
+        show_status(
+            f"Okänt kommando: {cmd}. Använd /help för att se tillgängliga kommandon", "warning"
+        )
 
     return False  # Continue REPL loop

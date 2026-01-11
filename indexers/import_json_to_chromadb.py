@@ -33,7 +33,7 @@ def import_to_chromadb(json_file: str):
     try:
         collection = client.get_collection("swedish_gov_docs")
         print("✅ Connected to existing collection: swedish_gov_docs")
-    except:
+    except Exception:
         collection = client.create_collection("swedish_gov_docs")
         print("✅ Created new collection: swedish_gov_docs")
 
@@ -52,7 +52,7 @@ def import_to_chromadb(json_file: str):
                 print(f"  ⏭️  Skipping duplicate: {doc['title'][:60]}...")
                 skipped += 1
                 continue
-        except:
+        except Exception:
             pass
 
         # Add document

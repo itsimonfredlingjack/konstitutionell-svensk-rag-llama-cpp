@@ -22,37 +22,33 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-def load_training_data(path: str) -> List[Dict[str, Any]]:
+def load_training_data(path: str) -> list[dict[str, Any]]:
     """Ladda training data från JSONL (stödjer flera format)"""
     tasks = []
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 data = json.loads(line)
                 # Stöd för olika fältnamn
                 question = (
-                    data.get("prompt") or
-                    data.get("instruction") or
-                    data.get("question") or
-                    ""
+                    data.get("prompt") or data.get("instruction") or data.get("question") or ""
                 )
                 expected = (
-                    data.get("completion") or
-                    data.get("output") or
-                    data.get("expected") or
-                    ""
+                    data.get("completion") or data.get("output") or data.get("expected") or ""
                 )
                 if question:
-                    tasks.append({
-                        "question": question,
-                        "expected_answer": expected,
-                    })
+                    tasks.append(
+                        {
+                            "question": question,
+                            "expected_answer": expected,
+                        }
+                    )
     return tasks
 
 
@@ -74,9 +70,7 @@ async def test_single_rollout():
 
     start = time.time()
     reward = await cascade_lit_agent.training_rollout_async(
-        task=task,
-        rollout_id="test-001",
-        resources=None
+        task=task, rollout_id="test-001", resources=None
     )
     duration = time.time() - start
 
@@ -89,10 +83,8 @@ async def test_single_rollout():
 
 
 async def run_training_epoch(
-    tasks: List[Dict],
-    epoch: int,
-    verbose: bool = True
-) -> Dict[str, float]:
+    tasks: list[dict], epoch: int, verbose: bool = True
+) -> dict[str, float]:
     """Kör en träningsepoch"""
     from app.services.cascade_lit_agent import cascade_lit_agent
 
@@ -103,13 +95,11 @@ async def run_training_epoch(
         rollout_id = f"epoch{epoch}-task{i}"
 
         if verbose:
-            print(f"\n[{i+1}/{len(tasks)}] {task['question'][:60]}...")
+            print(f"\n[{i + 1}/{len(tasks)}] {task['question'][:60]}...")
 
         try:
             reward = await cascade_lit_agent.training_rollout_async(
-                task=task,
-                rollout_id=rollout_id,
-                resources=None
+                task=task, rollout_id=rollout_id, resources=None
             )
             rewards.append(reward)
 
@@ -132,10 +122,7 @@ async def run_training_epoch(
 
 
 async def main_training_loop(
-    data_path: str,
-    epochs: int,
-    sample_size: int = 0,
-    verbose: bool = True
+    data_path: str, epochs: int, sample_size: int = 0, verbose: bool = True
 ):
     """Huvudträningsloop"""
     print("\n" + "=" * 60)
@@ -148,6 +135,7 @@ async def main_training_loop(
 
     if sample_size > 0 and sample_size < len(tasks):
         import random
+
         tasks = random.sample(tasks, sample_size)
         print(f"Sampled {sample_size} tasks for training")
 
@@ -170,7 +158,7 @@ async def main_training_loop(
         all_results.append(results)
 
         # Logga resultat
-        with open(log_path, 'a') as f:
+        with open(log_path, "a") as f:
             f.write(json.dumps(results) + "\n")
 
         print(f"\nEpoch {epoch} Summary:")
@@ -186,16 +174,16 @@ async def main_training_loop(
     print("=" * 60)
 
     if all_results:
-        avg_rewards = [r['avg_reward'] for r in all_results]
+        avg_rewards = [r["avg_reward"] for r in all_results]
         print(f"Epochs: {len(all_results)}")
-        print(f"Overall avg reward: {sum(avg_rewards)/len(avg_rewards):.2f}")
+        print(f"Overall avg reward: {sum(avg_rewards) / len(avg_rewards):.2f}")
         print(f"Best epoch reward: {max(avg_rewards):.2f}")
         print(f"Training log: {log_path}")
 
     return all_results
 
 
-def create_sample_tasks() -> List[Dict]:
+def create_sample_tasks() -> list[dict]:
     """Skapa sample tasks för test"""
     return [
         {
@@ -216,7 +204,9 @@ def create_sample_tasks() -> List[Dict]:
 async def main():
     parser = argparse.ArgumentParser(description="Train Cascade Agent with Agent Lightning")
     parser.add_argument("--test", action="store_true", help="Run single test rollout")
-    parser.add_argument("--data", type=str, default="data/training_data.jsonl", help="Training data path")
+    parser.add_argument(
+        "--data", type=str, default="data/training_data.jsonl", help="Training data path"
+    )
     parser.add_argument("--epochs", type=int, default=3, help="Number of epochs")
     parser.add_argument("--sample", type=int, default=0, help="Sample N tasks (0=all)")
     parser.add_argument("--quiet", action="store_true", help="Less verbose output")
@@ -235,20 +225,17 @@ async def main():
         # Spara sample tasks
         sample = create_sample_tasks()
         Path(args.data).parent.mkdir(exist_ok=True)
-        with open(args.data, 'w') as f:
+        with open(args.data, "w") as f:
             for task in sample:
-                f.write(json.dumps({
-                    "instruction": task["question"],
-                    "output": task["expected_answer"]
-                }) + "\n")
+                f.write(
+                    json.dumps({"instruction": task["question"], "output": task["expected_answer"]})
+                    + "\n"
+                )
         print(f"Created {len(sample)} sample tasks at {args.data}")
 
     # Kör träning
     await main_training_loop(
-        data_path=args.data,
-        epochs=args.epochs,
-        sample_size=args.sample,
-        verbose=not args.quiet
+        data_path=args.data, epochs=args.epochs, sample_size=args.sample, verbose=not args.quiet
     )
 
     return 0

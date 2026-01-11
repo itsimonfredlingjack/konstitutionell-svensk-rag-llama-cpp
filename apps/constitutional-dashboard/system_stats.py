@@ -3,9 +3,8 @@ from __future__ import annotations
 import os
 import socket
 import subprocess
-import time
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 
 def _iso_now() -> str:
@@ -21,13 +20,13 @@ def _try_import_psutil():
         return None
 
 
-def _bytes_to_gib(value: Optional[int]) -> Optional[float]:
+def _bytes_to_gib(value: int | None) -> float | None:
     if value is None:
         return None
     return round(value / (1024**3), 2)
 
 
-def _get_vram_used_gb() -> Optional[float]:
+def _get_vram_used_gb() -> float | None:
     """Get VRAM usage in GB from nvidia-smi."""
     try:
         result = subprocess.run(
@@ -46,7 +45,7 @@ def _get_vram_used_gb() -> Optional[float]:
     return None
 
 
-def _get_tps_current() -> Optional[float]:
+def _get_tps_current() -> float | None:
     """
     Get current TPS (tokens per second) from last LLM call in logs/llama_server.log.
     Reads the last 10 lines and searches for "tokens/s" pattern.
@@ -60,8 +59,9 @@ def _get_tps_current() -> Optional[float]:
 
     try:
         import re
+
         # Read last 10 lines of log file
-        with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+        with open(log_file, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
             # Search backwards through last 10 lines
             for line in reversed(lines[-10:]):
@@ -86,7 +86,7 @@ def _get_tps_current() -> Optional[float]:
     return None
 
 
-def _get_context_usage_percent() -> Optional[float]:
+def _get_context_usage_percent() -> float | None:
     """
     Estimate context window usage percentage (0-100) based on token count vs 16k window.
     Reads from logs/backend.log or logs/llama_server.log to find token count.
@@ -106,8 +106,9 @@ def _get_context_usage_percent() -> Optional[float]:
 
         try:
             import re
+
             # Read last 20 lines to find token count
-            with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+            with open(log_file, encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
                 # Search backwards for token count patterns
                 for line in reversed(lines[-20:]):
@@ -133,7 +134,7 @@ def _get_context_usage_percent() -> Optional[float]:
     return None
 
 
-def _read_rag_status() -> Optional[str]:
+def _read_rag_status() -> str | None:
     """
     Read RAG backend status from /tmp/rag_status.txt.
     Returns: "searching", "thinking", "generating", "idle", or None if file doesn't exist.
@@ -141,7 +142,7 @@ def _read_rag_status() -> Optional[str]:
     status_file = "/tmp/rag_status.txt"
     try:
         if os.path.exists(status_file):
-            with open(status_file, "r", encoding="utf-8") as f:
+            with open(status_file, encoding="utf-8") as f:
                 status = f.read().strip().upper()
                 # Normalize status values
                 if status in ("SEARCHING", "SEARCH"):
@@ -189,7 +190,7 @@ def _get_system_status_state() -> str:
 def _load_meminfo() -> dict[str, int]:
     info: dict[str, int] = {}
     try:
-        with open("/proc/meminfo", "r", encoding="utf-8") as f:
+        with open("/proc/meminfo", encoding="utf-8") as f:
             for line in f:
                 parts = line.split(":")
                 if len(parts) != 2:
@@ -208,15 +209,15 @@ def _load_meminfo() -> dict[str, int]:
     return info
 
 
-def _read_uptime_seconds() -> Optional[float]:
+def _read_uptime_seconds() -> float | None:
     try:
-        with open("/proc/uptime", "r", encoding="utf-8") as f:
+        with open("/proc/uptime", encoding="utf-8") as f:
             return float(f.read().split()[0])
     except Exception:
         return None
 
 
-def _get_primary_ip() -> Optional[str]:
+def _get_primary_ip() -> str | None:
     # Best-effort: connect UDP socket to a public IP without sending data.
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -243,6 +244,7 @@ def _get_recent_logs(count: int = 3) -> list[str]:
 
     try:
         import re
+
         # Patterns to filter out debug/trace messages
         debug_patterns = [
             r"DEBUG",
@@ -253,7 +255,7 @@ def _get_recent_logs(count: int = 3) -> list[str]:
             r"level=TRACE",
         ]
 
-        with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+        with open(log_file, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
             # Filter out debug lines and empty lines
             filtered_lines = []
@@ -262,7 +264,9 @@ def _get_recent_logs(count: int = 3) -> list[str]:
                 if not line:
                     continue
                 # Skip debug lines
-                is_debug = any(re.search(pattern, line, re.IGNORECASE) for pattern in debug_patterns)
+                is_debug = any(
+                    re.search(pattern, line, re.IGNORECASE) for pattern in debug_patterns
+                )
                 if not is_debug:
                     filtered_lines.append(line)
                     if len(filtered_lines) >= count:
@@ -291,18 +295,18 @@ def get_system_status() -> dict[str, Any]:
 
     ip = _get_primary_ip()
 
-    cpu_percent: Optional[float] = None
-    cpu_cores: Optional[int] = None
-    load_1m: Optional[float] = None
+    cpu_percent: float | None = None
+    cpu_cores: int | None = None
+    load_1m: float | None = None
     try:
         load_1m = os.getloadavg()[0]
     except Exception:
         load_1m = None
 
-    mem_total: Optional[int] = None
-    mem_used: Optional[int] = None
-    mem_available: Optional[int] = None
-    mem_percent: Optional[float] = None
+    mem_total: int | None = None
+    mem_used: int | None = None
+    mem_available: int | None = None
+    mem_percent: float | None = None
 
     uptime_s = _read_uptime_seconds()
 

@@ -208,12 +208,12 @@ def harvest_all():
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("HARVEST COMPLETE")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Total documents: {len(documents):,}")
-    print(f"Time elapsed: {elapsed/60:.1f} minutes")
-    print(f"Average rate: {len(documents)/elapsed:.1f} docs/sec")
+    print(f"Time elapsed: {elapsed / 60:.1f} minutes")
+    print(f"Average rate: {len(documents) / elapsed:.1f} docs/sec")
     print(f"Output file: {OUTPUT_FILE}")
     print(f"File size: {OUTPUT_FILE.stat().st_size / 1024 / 1024:.1f} MB")
 

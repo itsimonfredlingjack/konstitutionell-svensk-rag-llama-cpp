@@ -3,15 +3,16 @@ Guardrail Service - Jail Warden v2
 Post-processing service for legal term corrections and security validation
 """
 
-from typing import List, Tuple, Optional
+import re
 from dataclasses import dataclass
 from enum import Enum
-import re
+from functools import lru_cache
+from typing import List, Optional, Tuple
 
-from .base_service import BaseService
-from .config_service import ConfigService, get_config_service
 from ..core.exceptions import SecurityViolationError
 from ..utils.logging import get_logger
+from .base_service import BaseService
+from .config_service import ConfigService, get_config_service
 
 logger = get_logger(__name__)
 
@@ -587,7 +588,6 @@ class GuardrailService(BaseService):
 
 
 # Dependency injection function for FastAPI
-from functools import lru_cache
 
 
 @lru_cache()

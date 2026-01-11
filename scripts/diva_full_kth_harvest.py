@@ -348,8 +348,8 @@ def main():
     print("HARVEST COMPLETE")
     print("=" * 60)
     print(f"Total records: {len(all_records):,}")
-    print(f"Duration: {duration/60:.1f} minutes")
-    print(f"Rate: {len(all_records)/duration:.1f} docs/second")
+    print(f"Duration: {duration / 60:.1f} minutes")
+    print(f"Rate: {len(all_records) / duration:.1f} docs/second")
     print(f"Output: {OUTPUT_FILE}")
     print("=" * 60)
 

@@ -1,0 +1,13 @@
+{
+  "collection_name": "riksdag_documents_p1",
+  "total_docs": 230143,
+  "migrated_docs": 230143,
+  "last_offset": 230143,
+  "errors": 0,
+  "skipped": 0,
+  "started_at": "2026-01-09T12:12:34.968688",
+  "updated_at": "2026-01-09T20:49:34.221797",
+  "batch_size": 16,
+  "status": "completed",
+  "error_ids": []
+}

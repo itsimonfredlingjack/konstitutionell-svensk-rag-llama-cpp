@@ -20,7 +20,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(
-            f'socialstyrelsen_scrape_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
+            f"socialstyrelsen_scrape_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         ),
         logging.StreamHandler(),
     ],

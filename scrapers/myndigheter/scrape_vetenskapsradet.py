@@ -253,7 +253,7 @@ class VetenskapsradetScraper:
 
             try:
                 self.collection.add(ids=batch_ids, documents=batch_docs, metadatas=batch_meta)
-                print(f"  ✓ Saved batch {i//batch_size + 1} ({len(batch_ids)} docs)")
+                print(f"  ✓ Saved batch {i // batch_size + 1} ({len(batch_ids)} docs)")
             except Exception as e:
                 print(f"  ⚠️  Error saving batch: {e}")
 

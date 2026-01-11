@@ -141,7 +141,7 @@ def main():
     # Send start notification
     insert_outbox_message(
         "🔔 Embedding Monitor Started",
-        f"Monitoring corpus_bridge.py\nPoll: {CONFIG['poll_interval']}s\nThreshold: {CONFIG['failure_threshold']*100:.0f}%",
+        f"Monitoring corpus_bridge.py\nPoll: {CONFIG['poll_interval']}s\nThreshold: {CONFIG['failure_threshold'] * 100:.0f}%",
         priority=3,
     )
 
@@ -174,7 +174,7 @@ def main():
             if progress["failure_rate"] > CONFIG["failure_threshold"] and not notified_failure:
                 insert_outbox_message(
                     "⚠️ HIGH FAILURE RATE",
-                    f"Rate: {progress['failure_rate']*100:.1f}%\nFailed: {progress['failed']:,}/{progress['current']:,}",
+                    f"Rate: {progress['failure_rate'] * 100:.1f}%\nFailed: {progress['failed']:,}/{progress['current']:,}",
                     priority=8,
                 )
                 notified_failure = True
@@ -199,7 +199,7 @@ def main():
             if progress and progress["progress"] < 0.99:
                 insert_outbox_message(
                     "❌ Embedding Process Died",
-                    f"Stopped at: {progress['current']:,}/{progress['total']:,} ({progress['progress']*100:.1f}%)",
+                    f"Stopped at: {progress['current']:,}/{progress['total']:,} ({progress['progress'] * 100:.1f}%)",
                     priority=10,
                 )
             break

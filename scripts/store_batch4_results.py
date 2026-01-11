@@ -182,7 +182,7 @@ def store_and_report():
     print("=" * 60)
     print("KOMMUN SWARM PROGRESS REPORT")
     print("=" * 60)
-    print(f"Total: {done}/{total} ({done/total*100:.1f}%)")
+    print(f"Total: {done}/{total} ({done / total * 100:.1f}%)")
     print(f"Failed: {failed}")
     print(f"Pending: {pending}")
     print("\nCMS Distribution:")

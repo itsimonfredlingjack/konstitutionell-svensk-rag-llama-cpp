@@ -27,14 +27,25 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import torch
 
-# Add juridik-ai to path for pdf_processor
-sys.path.insert(0, str(Path(__file__).parent / "juridik-ai" / "pipelines"))
+# PDF text extraction (kept self-contained; no juridik-ai dependency)
+try:
+    import pdfplumber
 
-from pdf_processor import PDFProcessor
+    _PDF_EXTRACTOR = "pdfplumber"
+except ImportError:  # pragma: no cover
+    pdfplumber = None
+    _PDF_EXTRACTOR = ""
+
+try:
+    from PyPDF2 import PdfReader
+
+    _HAS_PYPDF2 = True
+except ImportError:  # pragma: no cover
+    PdfReader = None
+    _HAS_PYPDF2 = False
 
 # Sentence transformers
 try:
@@ -213,8 +224,9 @@ class DocumentEmbedder:
         self.model = SentenceTransformer(EMBEDDING_MODEL, device=self.device)
         logger.info(f"Model loaded on {self.device}")
 
-        # Initialize PDF processor with optimal chunking
-        self.pdf_processor = PDFProcessor(max_tokens=CHUNK_TOKENS, chunk_overlap=CHUNK_OVERLAP)
+        # Chunking configuration for PDF processing
+        self.chunk_tokens = CHUNK_TOKENS
+        self.chunk_overlap_chars = CHUNK_OVERLAP
 
         # State tracking
         self.state_db = EmbeddingStateDB(STATE_DB)
@@ -284,30 +296,88 @@ class DocumentEmbedder:
         return [emb.tolist() for emb in embeddings]
 
     def process_pdf(self, pdf_path: Path) -> list[dict]:
-        """Process a single PDF and return chunks with metadata"""
+        """Process a single PDF and return chunks with metadata."""
         try:
-            # Extract chunks
-            chunks = self.pdf_processor.process_pdf(str(pdf_path))
-
-            if not chunks:
+            pages = self._extract_pdf_pages(pdf_path)
+            if not pages:
                 return []
 
             # Get metadata from path
             metadata = self._extract_source_metadata(pdf_path)
 
-            # Build chunk dicts
-            result = []
-            for chunk in chunks:
-                chunk_dict = chunk.to_dict()
-                chunk_dict.update(metadata)
-                chunk_dict["chunk_id"] = str(uuid.uuid4())
-                result.append(chunk_dict)
+            # Chunk per page to preserve rough source_page attribution
+            results: list[dict] = []
+            for page_num, page_text in pages:
+                for chunk_index, chunk_text in enumerate(
+                    self._chunk_text(
+                        page_text,
+                        max_tokens=self.chunk_tokens,
+                        overlap_chars=self.chunk_overlap_chars,
+                    ),
+                    start=0,
+                ):
+                    results.append(
+                        {
+                            "content": chunk_text,
+                            "chunk_index": chunk_index,
+                            "source_page": page_num,
+                            "token_estimate": self._estimate_tokens(chunk_text),
+                            **metadata,
+                            "chunk_id": str(uuid.uuid4()),
+                        }
+                    )
 
-            return result
+            return results
 
         except Exception as e:
             logger.warning(f"Failed to process {pdf_path}: {e}")
             return []
+
+    def _estimate_tokens(self, text: str) -> int:
+        # Rough heuristic: ~4 chars/token for Latin scripts.
+        return max(1, int(len(text) / 4))
+
+    def _chunk_text(self, text: str, max_tokens: int, overlap_chars: int) -> list[str]:
+        # Convert token budget to approximate char budget.
+        max_chars = max(200, max_tokens * 4)
+        if not text:
+            return []
+
+        chunks: list[str] = []
+        step = max(1, max_chars - overlap_chars)
+        start = 0
+        text_len = len(text)
+
+        while start < text_len:
+            end = min(text_len, start + max_chars)
+            chunk = text[start:end].strip()
+            if chunk:
+                chunks.append(chunk)
+            if end >= text_len:
+                break
+            start += step
+
+        return chunks
+
+    def _extract_pdf_pages(self, pdf_path: Path) -> list[tuple[int, str]]:
+        """Return list of (1-based page_number, text)."""
+        if pdfplumber is not None and _PDF_EXTRACTOR == "pdfplumber":
+            pages: list[tuple[int, str]] = []
+            with pdfplumber.open(str(pdf_path)) as pdf:
+                for idx, page in enumerate(pdf.pages, start=1):
+                    pages.append((idx, (page.extract_text() or "")))
+            return pages
+
+        if _HAS_PYPDF2 and PdfReader is not None:
+            pages = []
+            reader = PdfReader(str(pdf_path))
+            for idx, page in enumerate(reader.pages, start=1):
+                pages.append((idx, (page.extract_text() or "")))
+            return pages
+
+        raise RuntimeError(
+            "No PDF extractor available. Install 'pdfplumber' or 'PyPDF2' to process PDFs."
+        )
 
     def find_pdfs(
         self, source_dir: Path, skip_processed: bool = True
@@ -350,7 +420,7 @@ class DocumentEmbedder:
             self.qdrant.upsert(collection_name=self.collection_name, points=batch)
 
     def process_directory(
-        self, source_dir: Path, max_files: Optional[int] = None, skip_processed: bool = True
+        self, source_dir: Path, max_files: int | None = None, skip_processed: bool = True
     ):
         """Process all PDFs in a directory"""
         self.stats = ProcessingStats()
@@ -400,7 +470,7 @@ class DocumentEmbedder:
                     pct = (i + 1) / len(pdfs) * 100
                     rate = self.stats.pdfs_per_minute
                     logger.info(
-                        f"Progress: {i+1}/{len(pdfs)} ({pct:.1f}%) | "
+                        f"Progress: {i + 1}/{len(pdfs)} ({pct:.1f}%) | "
                         f"Chunks: {self.stats.chunks_embedded} | "
                         f"Rate: {rate:.1f} PDFs/min"
                     )

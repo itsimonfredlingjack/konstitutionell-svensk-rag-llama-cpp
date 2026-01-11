@@ -7,11 +7,11 @@ import asyncio
 import logging
 import os
 import re
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
+import aiohttp
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -67,21 +67,21 @@ class ServiceStatus(BaseModel):
     name: str
     type: str  # systemd, docker, port
     status: str  # running, stopped, error, unhealthy
-    port: Optional[int] = None
-    pid: Optional[int] = None
-    uptime: Optional[int] = None  # seconds
+    port: int | None = None
+    pid: int | None = None
+    uptime: int | None = None  # seconds
 
 
 class OllamaModel(BaseModel):
     name: str
     size: int  # bytes
     loaded: bool
-    vram: Optional[int] = None  # MiB
+    vram: int | None = None  # MiB
 
 
 class OllamaStatus(BaseModel):
     models: list[OllamaModel]
-    running: Optional[str] = None
+    running: str | None = None
 
 
 class SystemMetrics(BaseModel):
@@ -101,8 +101,8 @@ class ComponentHealth(BaseModel):
 
     name: str
     status: str  # "ok", "degraded", "error", "offline"
-    latency_ms: Optional[int] = None
-    message: Optional[str] = None
+    latency_ms: int | None = None
+    message: str | None = None
     last_check: int  # timestamp ms
 
 
@@ -112,7 +112,7 @@ class ModelStatus(BaseModel):
     name: str
     loaded: bool
     responsive: bool
-    latency_ms: Optional[int] = None
+    latency_ms: int | None = None
 
 
 class AgentLoopStatus(BaseModel):
@@ -133,7 +133,7 @@ class AgentLoopStatus(BaseModel):
 
     # Models
     models: list[ModelStatus]
-    active_model: Optional[str] = None
+    active_model: str | None = None
 
     # Recent activity (last 5 events)
     recent_events: list[dict] = []
@@ -161,7 +161,7 @@ async def run_command(cmd: list[str], timeout: float = 5.0) -> tuple[str, str, i
 async def get_gpu_stats() -> GpuStats:
     """Get NVIDIA GPU stats using nvidia-smi."""
     # Get basic GPU info
-    stdout, stderr, rc = await run_command(
+    stdout, _stderr, rc = await run_command(
         [
             "nvidia-smi",
             "--query-gpu=name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw",
@@ -203,7 +203,7 @@ async def get_gpu_stats() -> GpuStats:
             if line.strip():
                 proc_parts = [p.strip() for p in line.split(",")]
                 if len(proc_parts) >= 3:
-                    try:
+                    with suppress(ValueError, IndexError):
                         processes.append(
                             GpuProcess(
                                 pid=int(proc_parts[0]),
@@ -211,8 +211,6 @@ async def get_gpu_stats() -> GpuStats:
                                 memory=int(proc_parts[2]),
                             )
                         )
-                    except (ValueError, IndexError):
-                        pass
 
     return GpuStats(
         name=name,
@@ -226,7 +224,7 @@ async def get_gpu_stats() -> GpuStats:
 
 
 async def get_service_status(
-    name: str, service_type: str, port: Optional[int] = None
+    name: str, service_type: str, port: int | None = None
 ) -> ServiceStatus:
     """Get status of a service."""
 
@@ -249,7 +247,7 @@ async def get_service_status(
 
                         start_time = parse(timestamp_str)
                         uptime = int((datetime.now(start_time.tzinfo) - start_time).total_seconds())
-                    except:
+                    except Exception:
                         pass
 
         return ServiceStatus(name=name, type=service_type, status=status, port=port, uptime=uptime)
@@ -411,14 +409,12 @@ async def get_system_metrics() -> SystemMetrics:
 # Agent Loop Health Checks
 # ============================================================================
 
-import aiohttp
-
 # Required models for Constitutional AI
 REQUIRED_MODELS = ["ministral-3:14b", "nomic-embed-text:latest"]
 VOICE_MODELS = ["fcole90/ai-sweden-gpt-sw3:6.7b", "gpt-sw3:6.7b"]  # Optional
 
 
-async def check_ollama_health() -> tuple[ComponentHealth, list[ModelStatus], Optional[str]]:
+async def check_ollama_health() -> tuple[ComponentHealth, list[ModelStatus], str | None]:
     """Check Ollama service and model availability."""
     now = int(datetime.now().timestamp() * 1000)
     models_status = []
@@ -841,7 +837,7 @@ async def get_agent_loop():
 async def load_ollama_model(model_name: str):
     """Load an Ollama model."""
     # Use a simple prompt to load the model
-    stdout, stderr, rc = await run_command(["ollama", "run", model_name, "hello"], timeout=120.0)
+    _stdout, stderr, rc = await run_command(["ollama", "run", model_name, "hello"], timeout=120.0)
     if rc == 0:
         return {"status": "ok", "model": model_name, "loaded": True}
     return {"status": "error", "model": model_name, "error": stderr}

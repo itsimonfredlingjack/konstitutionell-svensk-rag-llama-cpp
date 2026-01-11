@@ -15,7 +15,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import chromadb
@@ -79,7 +78,7 @@ class ForsakringskassanScraper:
             logger.error(f"Failed to initialize ChromaDB: {e}")
             raise
 
-    def fetch_page(self, url: str, retries: int = 3) -> Optional[BeautifulSoup]:
+    def fetch_page(self, url: str, retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse a webpage with retries"""
         for attempt in range(retries):
             try:
@@ -87,14 +86,14 @@ class ForsakringskassanScraper:
                 response.raise_for_status()
                 return BeautifulSoup(response.content, "html.parser")
             except Exception as e:
-                logger.warning(f"Attempt {attempt+1}/{retries} failed for {url}: {e}")
+                logger.warning(f"Attempt {attempt + 1}/{retries} failed for {url}: {e}")
                 if attempt < retries - 1:
                     time.sleep(2**attempt)  # Exponential backoff
                 else:
                     logger.error(f"Failed to fetch {url} after {retries} attempts")
                     return None
 
-    def download_pdf(self, url: str, filename: str) -> Optional[str]:
+    def download_pdf(self, url: str, filename: str) -> str | None:
         """Download PDF and return local path"""
         try:
             response = self.session.get(url, timeout=60, stream=True)

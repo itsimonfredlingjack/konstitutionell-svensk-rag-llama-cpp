@@ -371,7 +371,7 @@ def main():
     print("OPERATION STATUS")
     print("=" * 60)
     print(f"Documents fetched: {len(all_records)}")
-    print(f"Time elapsed: {elapsed/60:.1f} minutes")
+    print(f"Time elapsed: {elapsed / 60:.1f} minutes")
     print(f"Rate: {rate:.0f} docs/minute")
     print(f"Output: {OUTPUT_FILE}")
     print(f"Status: {'COMPLETE' if not resumption_token else 'INTERRUPTED'}")

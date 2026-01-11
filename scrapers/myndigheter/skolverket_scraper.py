@@ -19,7 +19,6 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import aiohttp
@@ -59,7 +58,7 @@ class SkolverketScraper:
                 name=COLLECTION_NAME, metadata={"description": "Swedish government documents"}
             )
 
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.stats = {
             "total_found": 0,
             "new_added": 0,
@@ -92,7 +91,7 @@ class SkolverketScraper:
         except:
             return False
 
-    async def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> str | None:
         """Fetch page HTML with error handling"""
         try:
             async with self.session.get(url) as response:
@@ -303,7 +302,7 @@ class SkolverketScraper:
 
         return documents
 
-    async def fetch_document_content(self, doc: dict) -> Optional[str]:
+    async def fetch_document_content(self, doc: dict) -> str | None:
         """Fetch actual document content (for PDFs and webpages)"""
         if doc.get("content"):
             return doc["content"]

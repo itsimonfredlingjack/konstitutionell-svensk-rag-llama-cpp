@@ -18,7 +18,6 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import aiohttp
 import chromadb
@@ -66,7 +65,7 @@ class SGUScraperV3:
     """PDF-enabled scraper for SGU"""
 
     def __init__(self):
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.client = chromadb.PersistentClient(path=CHROMADB_PATH)
         self.collection = self.client.get_or_create_collection(
             name=COLLECTION_NAME,
@@ -94,7 +93,7 @@ class SGUScraperV3:
         content = f"{url}|{title}".encode()
         return hashlib.sha256(content).hexdigest()[:16]
 
-    async def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> str | None:
         """Fetch page content"""
         async with self.semaphore:
             try:
@@ -106,7 +105,7 @@ class SGUScraperV3:
                 logger.debug(f"Error fetching {url}: {e}")
                 return None
 
-    async def fetch_pdf(self, url: str) -> Optional[bytes]:
+    async def fetch_pdf(self, url: str) -> bytes | None:
         """Fetch PDF content"""
         async with self.pdf_semaphore:
             try:
@@ -125,7 +124,7 @@ class SGUScraperV3:
                 logger.debug(f"Error fetching PDF {url}: {e}")
                 return None
 
-    def extract_text_from_pdf(self, pdf_bytes: bytes) -> Optional[str]:
+    def extract_text_from_pdf(self, pdf_bytes: bytes) -> str | None:
         """Extract text from PDF bytes"""
         if not HAS_PYPDF:
             return None
@@ -160,7 +159,7 @@ class SGUScraperV3:
             logger.debug(f"Error processing PDF: {e}")
             return None
 
-    async def process_pdf_link(self, url: str, title: str, year: str = "unknown") -> Optional[dict]:
+    async def process_pdf_link(self, url: str, title: str, year: str = "unknown") -> dict | None:
         """Download and process a PDF document"""
         if url in self.scraped_urls:
             return None
@@ -383,14 +382,14 @@ async def main():
 
         # Print warning if below threshold
         if report["total_documents"] < MIN_DOCS_THRESHOLD:
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"⚠  WARNING: Only {report['total_documents']} documents scraped!")
             print(f"   Threshold: {MIN_DOCS_THRESHOLD}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
         else:
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"✓ SUCCESS: {report['total_documents']} documents scraped!")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
 
 if __name__ == "__main__":

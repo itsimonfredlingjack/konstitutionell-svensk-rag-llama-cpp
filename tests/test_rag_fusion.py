@@ -12,21 +12,21 @@ Tests cover:
 
 import pytest
 from app.services.rag_fusion import (
-    QueryExpander,
+    LEGAL_CONTEXT_WORDS,
+    QUESTION_PATTERNS,
     ExpandedQueries,
     FusionMetrics,
-    reciprocal_rank_fusion,
+    QueryExpander,
     calculate_fusion_metrics,
-    validate_no_hallucinated_entities,
+    reciprocal_rank_fusion,
     should_use_fusion_results,
-    QUESTION_PATTERNS,
-    LEGAL_CONTEXT_WORDS,
+    validate_no_hallucinated_entities,
 )
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FIXTURES
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def expander():
@@ -47,9 +47,7 @@ def mock_rewrite_result():
 
         def __post_init__(self):
             if self.detected_entities is None:
-                self.detected_entities = [
-                    {"type": "lag", "value": "GDPR", "confidence": 1.0}
-                ]
+                self.detected_entities = [{"type": "lag", "value": "GDPR", "confidence": 1.0}]
 
     return MockRewriteResult()
 
@@ -57,6 +55,7 @@ def mock_rewrite_result():
 # ═══════════════════════════════════════════════════════════════════════════
 # RRF ALGORITHM TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestReciprocalRankFusion:
     """Tests for RRF algorithm correctness."""
@@ -137,6 +136,7 @@ class TestReciprocalRankFusion:
 # ═══════════════════════════════════════════════════════════════════════════
 # QUERY EXPANDER TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestQueryExpander:
     """Tests for query expansion logic."""
@@ -229,8 +229,7 @@ class TestParaphraseGeneration:
         """'Vad säger X om Y?' → 'X Y'"""
         # Test the pattern directly
         paraphrase = expander._generate_paraphrase(
-            "Vad säger GDPR om samtycke?",
-            [{"type": "lag", "value": "GDPR"}]
+            "Vad säger GDPR om samtycke?", [{"type": "lag", "value": "GDPR"}]
         )
 
         assert paraphrase is not None
@@ -238,19 +237,13 @@ class TestParaphraseGeneration:
 
     def test_question_pattern_hur_fungerar(self, expander):
         """'Hur fungerar X?' → 'X funktioner egenskaper'"""
-        paraphrase = expander._generate_paraphrase(
-            "Hur fungerar Riksdagen?",
-            []
-        )
+        paraphrase = expander._generate_paraphrase("Hur fungerar Riksdagen?", [])
 
         assert paraphrase is not None
 
     def test_legal_context_words(self, expander):
         """Known legal terms get context words added."""
-        paraphrase = expander._generate_paraphrase(
-            "GDPR",
-            [{"type": "lag", "value": "GDPR"}]
-        )
+        paraphrase = expander._generate_paraphrase("GDPR", [{"type": "lag", "value": "GDPR"}])
 
         # Should add context words for GDPR
         if paraphrase:
@@ -266,12 +259,13 @@ class TestParaphraseGeneration:
 
         assert "lagen" in keywords or "gdpr" in keywords
         assert "vad" not in keywords  # Stopword
-        assert "om" not in keywords   # Stopword
+        assert "om" not in keywords  # Stopword
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FUSION METRICS TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestFusionMetrics:
     """Tests for fusion metrics calculation."""
@@ -330,6 +324,7 @@ class TestFusionMetrics:
 # GUARDRAIL TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestGuardrails:
     """Tests for guardrail validation functions."""
 
@@ -383,6 +378,7 @@ class TestGuardrails:
 # EXPANDED QUERIES TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestExpandedQueries:
     """Tests for ExpandedQueries dataclass."""
 
@@ -405,6 +401,7 @@ class TestExpandedQueries:
 # ═══════════════════════════════════════════════════════════════════════════
 # CONSTANTS VALIDATION
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestConstants:
     """Verify constants are properly configured."""

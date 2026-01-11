@@ -14,11 +14,11 @@ Research background:
 - Key insight: Pronouns reference earlier context, embeddings can't resolve them
 """
 
+import logging
 import re
 import time
-import logging
-from dataclasses import dataclass, field, asdict
-from typing import List, Dict, Optional, Any
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("constitutional.rewriter")
 

@@ -21,7 +21,6 @@ import re
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import aiohttp
@@ -95,7 +94,7 @@ class KronofogdenScraper:
     """Scraper for Kronofogden documents"""
 
     def __init__(self):
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.chroma_client = chromadb.PersistentClient(
             path=CHROMADB_PATH, settings=Settings(allow_reset=False, anonymized_telemetry=False)
         )
@@ -120,7 +119,7 @@ class KronofogdenScraper:
         content = f"{SOURCE_NAME}:{url}:{title}"
         return hashlib.sha256(content.encode()).hexdigest()[:16]
 
-    async def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> str | None:
         """Fetch page content with error handling"""
         try:
             async with self.session.get(url) as response:
@@ -133,7 +132,7 @@ class KronofogdenScraper:
             self.errors.append(f"Fetch error for {url}: {e!s}")
             return None
 
-    async def fetch_pdf(self, url: str) -> Optional[bytes]:
+    async def fetch_pdf(self, url: str) -> bytes | None:
         """Fetch PDF content"""
         try:
             async with self.session.get(url) as response:
@@ -211,7 +210,7 @@ class KronofogdenScraper:
         else:
             return "Informationsmaterial"
 
-    def extract_year(self, text: str) -> Optional[str]:
+    def extract_year(self, text: str) -> str | None:
         """Extract year from text (e.g., KFMFS 2024:1 -> 2024)"""
         year_match = re.search(r"\b(20\d{2})\b", text)
         return year_match.group(1) if year_match else None

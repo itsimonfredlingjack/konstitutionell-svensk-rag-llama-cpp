@@ -13,7 +13,6 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -49,7 +48,7 @@ class SGUScraperFinal:
     """Simple PDF scraper"""
 
     def __init__(self):
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.scraped_urls: set[str] = set()
         self.documents: list[dict] = []
         self.semaphore = asyncio.Semaphore(MAX_CONCURRENT)
@@ -64,7 +63,7 @@ class SGUScraperFinal:
         if self.session:
             await self.session.close()
 
-    async def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> str | None:
         async with self.semaphore:
             try:
                 async with self.session.get(url) as response:
@@ -74,7 +73,7 @@ class SGUScraperFinal:
                 pass
         return None
 
-    async def fetch_pdf(self, url: str) -> Optional[bytes]:
+    async def fetch_pdf(self, url: str) -> bytes | None:
         async with self.pdf_semaphore:
             try:
                 async with self.session.get(url) as response:
@@ -88,7 +87,7 @@ class SGUScraperFinal:
                 pass
         return None
 
-    def extract_text_from_pdf(self, pdf_bytes: bytes) -> Optional[str]:
+    def extract_text_from_pdf(self, pdf_bytes: bytes) -> str | None:
         if not HAS_PYPDF:
             return None
 
@@ -114,7 +113,7 @@ class SGUScraperFinal:
         except:
             return None
 
-    async def process_pdf_link(self, url: str, title: str, year: str = "unknown") -> Optional[dict]:
+    async def process_pdf_link(self, url: str, title: str, year: str = "unknown") -> dict | None:
         if url in self.scraped_urls:
             return None
 

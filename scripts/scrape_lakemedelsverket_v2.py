@@ -15,7 +15,6 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import aiohttp
 import chromadb
@@ -51,7 +50,7 @@ class LakemedelsverketScraperV2:
     """Scraper using embedded JSON extraction"""
 
     def __init__(self):
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.client = chromadb.PersistentClient(path=CHROMADB_PATH)
         self.collection = self.client.get_or_create_collection(
             name=COLLECTION_NAME,
@@ -77,7 +76,7 @@ class LakemedelsverketScraperV2:
         content = f"{url}|{title}".encode()
         return hashlib.sha256(content).hexdigest()[:16]
 
-    async def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> str | None:
         """Fetch page content"""
         try:
             async with self.session.get(url) as response:
@@ -95,7 +94,7 @@ class LakemedelsverketScraperV2:
             logger.debug(f"Error fetching {url}: {e}")
             return None
 
-    def extract_json_data(self, html: str) -> Optional[dict]:
+    def extract_json_data(self, html: str) -> dict | None:
         """Extract embedded JSON data from <app-root> tag"""
         # Find the app-root content attribute
         pattern = r'<app-root content="({[^"]*})"'
@@ -168,7 +167,7 @@ class LakemedelsverketScraperV2:
 
         return "\n\n".join(texts)
 
-    async def scrape_document_page(self, url: str) -> Optional[dict]:
+    async def scrape_document_page(self, url: str) -> dict | None:
         """Scrape a föreskrift page"""
         if url in self.scraped_urls:
             return None
@@ -252,7 +251,7 @@ class LakemedelsverketScraperV2:
             self.documents.extend(docs)
 
             logger.info(
-                f"Batch {i//batch_size + 1}/{(len(GENERATED_URLS) + batch_size - 1)//batch_size}: {len(docs)} documents found"
+                f"Batch {i // batch_size + 1}/{(len(GENERATED_URLS) + batch_size - 1) // batch_size}: {len(docs)} documents found"
             )
 
             # Small delay between batches
@@ -279,7 +278,7 @@ class LakemedelsverketScraperV2:
 
             try:
                 self.collection.add(ids=batch_ids, documents=batch_docs, metadatas=batch_meta)
-                logger.info(f"Stored batch {i//batch_size + 1} ({len(batch_ids)} docs)")
+                logger.info(f"Stored batch {i // batch_size + 1} ({len(batch_ids)} docs)")
             except Exception as e:
                 logger.error(f"Error storing batch: {e}")
 

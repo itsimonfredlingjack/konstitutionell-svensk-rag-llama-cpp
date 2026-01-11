@@ -6,10 +6,8 @@ import re
 import signal
 import subprocess
 from dataclasses import dataclass
-from typing import Optional
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
-
 
 try:
     from storage import load_state, set_ollama_model, set_ollama_temperature
@@ -28,7 +26,7 @@ logger = logging.getLogger(__name__)
 class ActionResult:
     ok: bool
     message: str
-    spoken_text: Optional[str] = None
+    spoken_text: str | None = None
 
 
 def _run_cmd(argv: list[str], timeout_s: float = 8.0) -> tuple[int, str, str]:
@@ -61,7 +59,7 @@ def _get_installed_models(ollama_url: str) -> list[str]:
         with urlopen(req, timeout=3) as resp:
             data = resp.read().decode("utf-8")
 
-        import json  # noqa: PLC0415
+        import json
 
         payload = json.loads(data)
         models = payload.get("models") or []
@@ -86,7 +84,7 @@ def _get_installed_models(ollama_url: str) -> list[str]:
         return names
 
 
-def _require_confirm(confirm: bool, label: str) -> Optional[ActionResult]:
+def _require_confirm(confirm: bool, label: str) -> ActionResult | None:
     if confirm:
         return None
     return ActionResult(
@@ -175,8 +173,7 @@ def clear_ollama_cache() -> ActionResult:
         return ActionResult(
             ok=False,
             message=(
-                f"Rensade delvis. Stoppade: {', '.join(stopped)}. "
-                f"Misslyckades: {', '.join(failed)}"
+                f"Rensade delvis. Stoppade: {', '.join(stopped)}. Misslyckades: {', '.join(failed)}"
             ),
         )
 
@@ -248,8 +245,7 @@ def stop_heavy_processes(*, confirm: bool) -> ActionResult:
         return ActionResult(
             ok=False,
             message=(
-                f"Skickade SIGTERM till: {', '.join(killed)}. "
-                f"Misslyckades: {', '.join(failed)}"
+                f"Skickade SIGTERM till: {', '.join(killed)}. Misslyckades: {', '.join(failed)}"
             ),
         )
 
@@ -355,6 +351,7 @@ def restart_system(*, confirm: bool) -> ActionResult:
 
         # Wait 2 seconds before restart (as specified)
         import time
+
         time.sleep(2.0)
 
         # Run start_system.sh (non-blocking, in background using Popen)
@@ -368,10 +365,12 @@ def restart_system(*, confirm: bool) -> ActionResult:
 
         return ActionResult(ok=True, message="System restart initierad (körs i bakgrunden).")
     except Exception as e:
-        return ActionResult(ok=False, message=f"System restart misslyckades: {type(e).__name__}: {e}")
+        return ActionResult(
+            ok=False, message=f"System restart misslyckades: {type(e).__name__}: {e}"
+        )
 
 
-def flush_memory(*, rag_status_url: Optional[str] = None) -> ActionResult:
+def flush_memory(*, rag_status_url: str | None = None) -> ActionResult:
     """Flush memory (clear conversation history) via RAG backend."""
     # Use RAG backend endpoint for context reset
     flush_url = "http://localhost:8900/api/constitutional/agent/context/reset"
@@ -409,7 +408,9 @@ def wake_ping(*, ollama_url: str) -> ActionResult:
             if 200 <= resp.status < 300:
                 return ActionResult(ok=True, message="Modell pingad (försöker hålla i VRAM).")
             else:
-                return ActionResult(ok=False, message=f"Llama server returnerade status {resp.status}")
+                return ActionResult(
+                    ok=False, message=f"Llama server returnerade status {resp.status}"
+                )
     except Exception as e:
         return ActionResult(ok=False, message=f"Kunde inte pinga modell: {type(e).__name__}: {e}")
 
@@ -418,13 +419,13 @@ def dispatch_action(
     action: str,
     *,
     confirm: bool,
-    silent_mode: bool,  # noqa: ARG001 - unused (legacy)
-    speaker_name: str,  # noqa: ARG001 - unused (legacy)
+    silent_mode: bool,
+    speaker_name: str,
     state_file: str,
     ollama_url: str,
-    briefing_model: str,  # noqa: ARG001 - unused (legacy)
-    system_reset_commands: list[list[str]],  # noqa: ARG001 - unused (legacy)
-    rag_status_url: Optional[str] = None,  # For flush_memory
+    briefing_model: str,
+    system_reset_commands: list[list[str]],
+    rag_status_url: str | None = None,  # For flush_memory
 ) -> ActionResult:
     """Dispatch an action by ID."""
     match action:

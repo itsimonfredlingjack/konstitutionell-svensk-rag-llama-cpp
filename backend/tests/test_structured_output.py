@@ -2,15 +2,10 @@
 Tests for Structured Output Service
 """
 
-import pytest
 import json
 from unittest.mock import Mock, patch
-import sys
-from pathlib import Path
 
-# Add backend to path
-backend_path = Path(__file__).parent.parent
-sys.path.insert(0, str(backend_path))
+import pytest
 
 from app.services.structured_output_service import StructuredOutputService
 
@@ -143,14 +138,6 @@ class TestStructuredOutputService:
 
     def test_strip_internal_note_security(self):
         """TF5: Test that arbetsanteckning is stripped"""
-        data_with_note = {
-            "mode": "ASSIST",
-            "saknas_underlag": False,
-            "svar": "Test response",
-            "kallor": [],
-            "fakta_utan_kalla": [],
-            "arbetsanteckning": "This internal note should be stripped",
-        }
 
         # Create a mock schema object
         mock_schema = Mock()

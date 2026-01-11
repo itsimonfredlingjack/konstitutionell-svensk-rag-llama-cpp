@@ -23,12 +23,14 @@ exclude = [
     ".mypy_cache",
     ".pytest_cache",
     "node_modules",
+
     "chromadb_data",
     "pdf_cache",
     "data",
     "backups",
     "archive",
 ]
+
 
 [tool.ruff.lint]
 # Enable common rule sets
@@ -60,7 +62,7 @@ unfixable = []
 
 [tool.ruff.lint.isort]
 # Import sorting configuration
-known-first-party = ["scrapers", "indexers", "utils", "juridik-ai"]
+known-first-party = ["scrapers", "indexers", "utils"]
 known-third-party = ["requests", "bs4", "chromadb", "qdrant_client", "fastapi", "typer", "rich"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
@@ -98,11 +100,19 @@ exclude = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "juridik-ai/tests"]
+testpaths = ["tests", "backend/tests"]
+norecursedirs = []
 python_files = ["test_*.py", "*_test.py"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
+]
+markers = [
+    "integration: marks tests as integration tests (requires real services)",
+    "unit: marks tests as unit tests (uses mocks)",
+    "slow: marks tests as slow (skip by default)",
+    "ollama: tests that require a running Ollama instance (skipped by default)",
 ]

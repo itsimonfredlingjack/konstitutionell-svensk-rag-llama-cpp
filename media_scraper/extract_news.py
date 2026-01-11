@@ -12,7 +12,6 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -23,10 +22,10 @@ class NewsArticle:
     source: str
     title: str
     description: str  # Summary/ingress - usually available
-    author: Optional[str] = None
-    published_date: Optional[str] = None
-    section: Optional[str] = None
-    image_url: Optional[str] = None
+    author: str | None = None
+    published_date: str | None = None
+    section: str | None = None
+    image_url: str | None = None
     tags: list[str] = field(default_factory=list)
     scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
@@ -158,10 +157,7 @@ ARTICLE_PATTERNS = {
 
 def is_article_url(url: str) -> bool:
     """Check if URL is likely an article"""
-    for pattern in ARTICLE_PATTERNS.values():
-        if pattern.search(url):
-            return True
-    return False
+    return any(pattern.search(url) for pattern in ARTICLE_PATTERNS.values())
 
 
 def filter_article_urls(urls: list[dict]) -> list[str]:

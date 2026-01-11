@@ -19,7 +19,6 @@ import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 
 class ChromaDBProgress:
@@ -35,7 +34,7 @@ class ChromaDBProgress:
         self.total_documents = 0
         self.collection_counts: dict[str, int] = {}
         self.timestamp = datetime.now()
-        self.error: Optional[str] = None
+        self.error: str | None = None
 
     def query_database(self) -> bool:
         """Query ChromaDB SQLite database for document counts."""

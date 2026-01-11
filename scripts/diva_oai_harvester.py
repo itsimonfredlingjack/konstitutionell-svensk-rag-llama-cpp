@@ -226,9 +226,9 @@ def main():
     results = {}
 
     for set_code, short_code, name in institutions:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"HARVESTING: {name} ({set_code})")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         records = harvest_diva(set_code, max_records)
 
@@ -247,16 +247,16 @@ def main():
         time.sleep(3)
 
     # Print summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("HARVEST SUMMARY - DiVA BATCH 2")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     total = 0
     for code, data in results.items():
         print(f"{data['name']:40} | {data['records']:6} docs")
         total += data["records"]
 
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"{'TOTAL':40} | {total:6} docs")
     print("\nNote: Chalmers not included - uses separate repository system")
 

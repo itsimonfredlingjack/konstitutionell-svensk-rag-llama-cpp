@@ -116,3 +116,6 @@ node_modules/
 !app/data/combined_training.jsonl
 !app/data/docs_qa_training.jsonl
 !app/data/eval_after_*.json
+
+# Felaktig frontend-mapp (använd /apps/constitutional-retardedantigravity/ istället)
+frontend/

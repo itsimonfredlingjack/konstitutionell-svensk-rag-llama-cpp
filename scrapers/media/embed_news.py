@@ -153,7 +153,7 @@ class NewsEmbedder:
             batch = articles[i : i + BATCH_SIZE]
             embedded = self.embed_articles(batch)
             total += embedded
-            print(f"  Embedded batch {i//BATCH_SIZE + 1}: {embedded} articles")
+            print(f"  Embedded batch {i // BATCH_SIZE + 1}: {embedded} articles")
 
         return total
 

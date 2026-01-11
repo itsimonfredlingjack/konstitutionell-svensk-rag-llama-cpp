@@ -5,23 +5,23 @@ Maps business logic exceptions to appropriate HTTP responses
 
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
-from .exceptions import (
-    ConstitutionalAIError,
-    ResourceNotFoundError,
-    ConfigurationError,
-    LLMTimeoutError,
-    LLMConnectionError,
-    LLMModelNotFoundError,
-    EmbeddingError,
-    RetrievalError,
-    QueryClassificationError,
-    SecurityViolationError,
-    ValidationError,
-    RerankingError,
-    ServiceNotInitializedError,
-)
 
 from ..utils.logging import get_logger
+from .exceptions import (
+    ConfigurationError,
+    ConstitutionalAIError,
+    EmbeddingError,
+    LLMConnectionError,
+    LLMModelNotFoundError,
+    LLMTimeoutError,
+    QueryClassificationError,
+    RerankingError,
+    ResourceNotFoundError,
+    RetrievalError,
+    SecurityViolationError,
+    ServiceNotInitializedError,
+    ValidationError,
+)
 
 logger = get_logger(__name__)
 

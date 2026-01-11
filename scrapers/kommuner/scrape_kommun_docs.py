@@ -16,7 +16,6 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 from urllib.robotparser import RobotFileParser
 
@@ -162,7 +161,7 @@ class KommunDocumentScraper:
         except Exception:
             return True  # Default to allowing if robots.txt failed
 
-    def fetch_page(self, url: str, timeout: int = 30) -> Optional[str]:
+    def fetch_page(self, url: str, timeout: int = 30) -> str | None:
         """Fetch a page with rate limiting and robots.txt respect."""
         if self.request_count >= self.max_requests:
             logger.warning(f"Max requests ({self.max_requests}) reached for {self.namn}")
@@ -197,7 +196,7 @@ class KommunDocumentScraper:
             log_fel(self.kommun_kod, url, "other", str(e))
             return None
 
-    def download_document(self, url: str, doc_type: str) -> Optional[dict]:
+    def download_document(self, url: str, doc_type: str) -> dict | None:
         """Download a document (PDF, etc.) and return metadata."""
         if self.request_count >= self.max_requests:
             return None
@@ -367,7 +366,7 @@ class KommunDocumentScraper:
         text_lower = text.lower()
         return any(kw in text_lower for kw in sensitive_keywords)
 
-    def extract_document_date(self, url: str, title: str) -> Optional[str]:
+    def extract_document_date(self, url: str, title: str) -> str | None:
         """Try to extract document date from URL or title."""
         # Pattern: YYYY-MM-DD
         date_pattern = r"(\d{4})-(\d{2})-(\d{2})"
@@ -406,7 +405,7 @@ class KommunDocumentScraper:
     def run(self) -> ScraperResult:
         """Main scraping loop."""
         start_time = time.time()
-        doc_type_counts = {dtype: 0 for dtype in SECTION_PATTERNS}
+        doc_type_counts = dict.fromkeys(SECTION_PATTERNS, 0)
         flagged_count = 0
         total_bytes = 0
 
@@ -489,7 +488,7 @@ class KommunDocumentScraper:
         )
 
         logger.info(
-            f"Completed {self.namn}: {len(self.documents)} docs, {total_bytes/1024:.1f}KB, {elapsed:.1f}s"
+            f"Completed {self.namn}: {len(self.documents)} docs, {total_bytes / 1024:.1f}KB, {elapsed:.1f}s"
         )
 
         return result

@@ -3,40 +3,60 @@ Orchestrator Service - High-Level RAG Orchestration
 The "Brain" that binds together all services for the complete RAG pipeline
 """
 
-from typing import List, Dict, Any, Optional, AsyncGenerator
-from dataclasses import dataclass
-from functools import lru_cache
-import time
 import asyncio
 import json
+import time
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
+from ..core.exceptions import SecurityViolationError
+from ..utils.logging import get_logger
 from .base_service import BaseService
 from .config_service import ConfigService, get_config_service
+from .critic_service import CriticService, get_critic_service
+from .embedding_service import get_embedding_service
+from .grader_service import GraderService, get_grader_service
+from .graph_service import build_graph, GraphState
+from .guardrail_service import GuardrailService, WardenStatus, get_guardrail_service
 from .llm_service import LLMService, get_llm_service
 from .query_processor_service import (
     QueryProcessorService,
-    get_query_processor_service,
     ResponseMode,
-)
-from .guardrail_service import GuardrailService, get_guardrail_service, WardenStatus
-from .retrieval_service import (
-    RetrievalService,
-    get_retrieval_service,
-    RetrievalStrategy,
-    SearchResult,
+    get_query_processor_service,
 )
 from .reranking_service import RerankingService, get_reranking_service
+from .retrieval_service import (
+    RetrievalService,
+    RetrievalStrategy,
+    SearchResult,
+    get_retrieval_service,
+)
 from .structured_output_service import (
+    StructuredOutputSchema,
     StructuredOutputService,
     get_structured_output_service,
-    StructuredOutputSchema,
 )
-from .critic_service import CriticService, get_critic_service
-from .grader_service import GraderService, get_grader_service
-from ..core.exceptions import SecurityViolationError
-from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+# Constants for refusal templates and fallbacks
+class ResponseTemplates:
+    """Constants for response templates to avoid magic strings."""
+
+    EVIDENCE_REFUSAL = (
+        "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats i den här sökningen. "
+        "Underlag saknas för att ge ett rättssäkert svar, och jag kan därför inte spekulera. "
+        "Om du vill kan du omformulera frågan eller ange vilka dokument/avsnitt du vill att jag ska söker i."
+    )
+
+    SAFE_FALLBACK = "Jag kunde inte tolka modellens strukturerade svar. Försök igen."
+
+    STRUCTURED_OUTPUT_RETRY_INSTRUCTION = (
+        "Du returnerade ogiltig JSON. Returnera endast giltig JSON enligt schema, "
+        "inga backticks, ingen extra text."
+    )
 
 
 @dataclass
@@ -233,6 +253,9 @@ class OrchestratorService(BaseService):
         # Only create grader service if explicitly provided (for backwards compatibility)
         self.grader = grader or get_grader_service(config)
 
+        # Initialize LangGraph agentic flow (lazy initialization)
+        self.agent_app = None
+
         critic_status = "ENABLED" if config.critic_revise_effective_enabled else "DISABLED"
         grader_status = "ENABLED" if config.settings.crag_enabled else "DISABLED"
         self.logger.info(
@@ -258,6 +281,174 @@ class OrchestratorService(BaseService):
 
         self._mark_initialized()
         logger.info("Orchestrator Service initialized (all child services ready)")
+
+    async def run_agentic_flow(
+        self,
+        question: str,
+        mode: Optional[str] = "auto",
+    ) -> RAGResult:
+        """
+        Run query through LangGraph agentic flow.
+
+        Uses the state machine architecture with loops for self-correction.
+        This is the new agentic approach replacing the linear pipeline.
+
+        Args:
+            question: User's question
+            mode: Response mode (auto/chat/assist/evidence)
+
+        Returns:
+            RAGResult with answer and metrics
+        """
+        start_time = time.perf_counter()
+        reasoning_steps: List[str] = []
+
+        self.logger.info(
+            f"🚀 OrchestratorService: Running Agentic Flow for query: '{question[:50]}...'"
+        )
+
+        try:
+            # Initialize graph if needed
+            if self.agent_app is None:
+                self.agent_app = build_graph()
+                self.logger.info("LangGraph agentic flow initialized")
+
+            # Classify query to determine mode
+            classification = self.query_processor.classify_query(question)
+            resolved_mode = self._resolve_query_mode(mode, classification.mode)
+
+            if resolved_mode == ResponseMode.CHAT:
+                # CHAT mode: Direct LLM response (no graph)
+                messages = [
+                    {
+                        "role": "system",
+                        "content": "Avslappnad AI-assistent. Svara kort på svenska.",
+                    },
+                    {"role": "user", "content": question},
+                ]
+
+                full_answer = ""
+                async for token, stats in self.llm_service.chat_stream(
+                    messages=messages,
+                    config_override={"temperature": 0.7, "num_predict": 512},
+                ):
+                    if token:
+                        full_answer += token
+
+                return RAGResult(
+                    answer=full_answer,
+                    sources=[],
+                    reasoning_steps=["CHAT mode: Direct response"],
+                    metrics=RAGPipelineMetrics(
+                        total_pipeline_ms=(time.perf_counter() - start_time) * 1000,
+                        mode="chat",
+                    ),
+                    mode=resolved_mode,
+                    guardrail_status=WardenStatus.UNCHANGED,
+                    evidence_level="NONE",
+                )
+
+            # Initialize graph state
+            initial_state: GraphState = {
+                "question": question,
+                "documents": [],
+                "generation": "",
+                "web_search": False,
+                "loop_count": 0,
+                "retrieval_loop_count": 0,
+                "constitutional_feedback": "",
+            }
+
+            reasoning_steps.append(f"Starting agentic flow with mode={resolved_mode.value}")
+
+            self.logger.info(
+                f"📊 Graph State initialized: question='{question[:50]}...', mode={resolved_mode.value}"
+            )
+
+            # Run graph
+            self.logger.info("🔄 Executing LangGraph state machine...")
+            final_state = await self.agent_app.ainvoke(initial_state)
+            self.logger.info(
+                f"✅ Graph execution complete: loop_count={final_state.get('loop_count', 0)}, retrieval_loops={final_state.get('retrieval_loop_count', 0)}"
+            )
+
+            # Extract results
+            final_answer = final_state.get("generation", "")
+            constitutional_feedback = final_state.get("constitutional_feedback", "")
+            loop_count = final_state.get("loop_count", 0)
+            retrieval_loop_count = final_state.get("retrieval_loop_count", 0)
+
+            # Convert documents back to SearchResult format
+            documents = final_state.get("documents", [])
+            sources = []
+            for doc in documents:
+                metadata = doc.metadata or {}
+                sources.append(
+                    SearchResult(
+                        id=metadata.get("id", "unknown"),
+                        title=metadata.get("title", "Untitled"),
+                        snippet=doc.page_content,
+                        score=metadata.get("score", 0.0),
+                        source=metadata.get("source", "unknown"),
+                        doc_type=metadata.get("doc_type"),
+                        date=metadata.get("date"),
+                        retriever=metadata.get("retriever", "graph"),
+                    )
+                )
+
+            reasoning_steps.append(
+                f"Agentic flow complete: loops={loop_count}, retrieval_loops={retrieval_loop_count}"
+            )
+            if constitutional_feedback:
+                reasoning_steps.append(
+                    f"Constitutional feedback: {constitutional_feedback[:100]}..."
+                )
+
+            # Apply guardrail
+            guardrail_result = self.guardrail.validate_response(
+                text=final_answer,
+                query=question,
+                mode=resolved_mode.value,
+            )
+
+            corrected_answer = (
+                guardrail_result.corrected_text if guardrail_result.corrections else final_answer
+            )
+
+            return RAGResult(
+                answer=corrected_answer,
+                sources=sources,
+                reasoning_steps=reasoning_steps,
+                metrics=RAGPipelineMetrics(
+                    total_pipeline_ms=(time.perf_counter() - start_time) * 1000,
+                    mode=resolved_mode.value,
+                    sources_count=len(sources),
+                    corrections_count=len(guardrail_result.corrections)
+                    if guardrail_result.corrections
+                    else 0,
+                    guardrail_status=guardrail_result.status.value,
+                ),
+                mode=resolved_mode,
+                guardrail_status=guardrail_result.status,
+                evidence_level="HIGH" if sources else "NONE",
+            )
+
+        except Exception as e:
+            self.logger.error(f"Agentic flow failed: {e}")
+            return RAGResult(
+                answer="Ett fel uppstod vid bearbetning av din fråga. Försök igen.",
+                sources=[],
+                reasoning_steps=reasoning_steps + [f"Error: {str(e)}"],
+                metrics=RAGPipelineMetrics(
+                    total_pipeline_ms=(time.perf_counter() - start_time) * 1000,
+                    mode="error",
+                ),
+                mode=ResponseMode.ASSIST,
+                guardrail_status=WardenStatus.UNCHANGED,
+                evidence_level="NONE",
+                success=False,
+                error=str(e),
+            )
 
     async def health_check(self) -> bool:
         """
@@ -313,6 +504,7 @@ class OrchestratorService(BaseService):
         history: Optional[List[dict]] = None,
         enable_reranking: bool = True,
         enable_adaptive: bool = True,
+        use_agent: bool = False,  # NEW: Flag to use agentic flow
     ) -> RAGResult:
         """
         Execute full RAG pipeline.
@@ -333,10 +525,17 @@ class OrchestratorService(BaseService):
             history: Conversation history for decontextualization
             enable_reranking: Whether to use BGE reranking
             enable_adaptive: Whether to use adaptive retrieval
+            use_agent: If True, use LangGraph agentic flow instead of linear pipeline
 
         Returns:
             RAGResult with answer, sources, metrics, etc.
         """
+        # NEW: Route to agentic flow if flag is set
+        if use_agent:
+            self.logger.info("Using agentic LangGraph flow")
+            return await self.run_agentic_flow(question=question, mode=mode)
+
+        # Original linear pipeline
         start_time = time.perf_counter()
         reasoning_steps = []
 
@@ -352,20 +551,7 @@ class OrchestratorService(BaseService):
             # STEP 1: Query classification
             class_start = time.perf_counter()
             classification = self.query_processor.classify_query(question)
-            resolved_mode = classification.mode
-            if mode is None:
-                resolved_mode = classification.mode
-            elif isinstance(mode, ResponseMode):
-                resolved_mode = mode
-            elif isinstance(mode, str):
-                if mode != "auto":
-                    try:
-                        resolved_mode = ResponseMode(mode)
-                    except ValueError:
-                        resolved_mode = classification.mode
-            else:
-                resolved_mode = classification.mode
-
+            resolved_mode = self._resolve_query_mode(mode, classification.mode)
             mode = resolved_mode
 
             query_classification_ms = (time.perf_counter() - class_start) * 1000
@@ -424,135 +610,30 @@ class OrchestratorService(BaseService):
             sources = retrieval_result.results
 
             # STEP 3.5: CRAG (Corrective RAG) - Document Grading and Self-Reflection
-            grade_ms = 0.0
-            self_reflection_ms = 0.0
-            thought_chain = None
-            rewrite_count = 0
+            crag_result = await self._process_crag_grading(
+                question=question,
+                search_query=search_query,
+                retrieval_result=retrieval_result,
+                resolved_mode=resolved_mode,
+                reasoning_steps=reasoning_steps,
+                start_time=start_time,
+                query_classification_ms=query_classification_ms,
+                decontextualization_ms=decontextualization_ms,
+                retrieval_ms=retrieval_ms,
+            )
 
-            if (
-                self.config.settings.crag_enabled
-                and self.grader
-                and resolved_mode != ResponseMode.CHAT
-            ):
-                # 3.5A: Grade documents for relevance
-                if retrieval_result.results:
-                    grading_result = await self.grader.grade_documents(
-                        query=search_query, documents=retrieval_result.results
-                    )
+            # Early return if CRAG determined insufficient evidence
+            if crag_result.early_return:
+                return crag_result.result
 
-                    grade_ms = grading_result.metrics.total_latency_ms
-                    grade_count = grading_result.metrics.total_documents
-                    relevant_count = grading_result.metrics.relevant_count
-
-                    reasoning_steps.append(
-                        f"CRAG graded {grade_count} documents, {relevant_count} relevant "
-                        f"({grading_result.metrics.relevant_percentage:.1f}%) in {grade_ms:.1f}ms"
-                    )
-
-                    # Filter sources to only relevant ones using existing grading result
-                    if relevant_count > 0:
-                        # Filter using the existing grading result instead of re-grading
-                        filtered_docs = [
-                            doc
-                            for doc, grade in zip(retrieval_result.results, grading_result.grades)
-                            if grade.relevant
-                        ]
-                        sources = filtered_docs
-                        reasoning_steps.append(
-                            f"CRAG filtered to {len(sources)} relevant documents for generation"
-                        )
-                    else:
-                        # No relevant documents - try query rewrite
-                        sources = []
-                        reasoning_steps.append(
-                            "CRAG: No relevant documents found, considering query rewrite"
-                        )
-                else:
-                    grade_count = 0
-                    relevant_count = 0
-                    sources = []
-
-                # 3.5B: Self-Reflection (Chain of Thought) before generation
-                if sources and self.config.settings.crag_enable_self_reflection and self.critic:
-                    reflection_start = time.perf_counter()
-
-                    try:
-                        # Get self-reflection from critic
-                        reflection = await self.critic.self_reflection(
-                            query=question, mode=resolved_mode.value, sources=sources
-                        )
-
-                        self_reflection_ms = (time.perf_counter() - reflection_start) * 1000
-                        thought_chain = reflection.thought_process
-
-                        reasoning_steps.append(
-                            f"Self-reflection generated in {self_reflection_ms:.1f}ms "
-                            f"(confidence: {reflection.confidence:.2f})"
-                        )
-
-                        # Check if reflection indicates insufficient evidence
-                        if not reflection.has_sufficient_evidence:
-                            # Return refusal if insufficient evidence
-                            if resolved_mode == ResponseMode.EVIDENCE:
-                                refusal_template = getattr(
-                                    self.config.settings,
-                                    "evidence_refusal_template",
-                                    "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats...",
-                                )
-
-                                reasoning_steps.append(
-                                    f"CRAG refusal: insufficient evidence - {', '.join(reflection.missing_evidence)}"
-                                )
-
-                                # Build metrics for early return
-                                total_pipeline_ms = (time.perf_counter() - start_time) * 1000
-
-                                metrics = RAGPipelineMetrics(
-                                    query_classification_ms=query_classification_ms,
-                                    decontextualization_ms=decontextualization_ms,
-                                    retrieval_ms=retrieval_ms,
-                                    grade_ms=grade_ms,
-                                    self_reflection_ms=self_reflection_ms,
-                                    total_pipeline_ms=total_pipeline_ms,
-                                    mode=mode.value,
-                                    sources_count=0,
-                                    tokens_generated=0,
-                                    corrections_count=0,
-                                    retrieval_strategy=retrieval_result.metrics.strategy,
-                                    retrieval_results_count=len(retrieval_result.results),
-                                    top_relevance_score=retrieval_result.metrics.top_score,
-                                    guardrail_status="unchanged",
-                                    evidence_level="NONE",
-                                    model_used="",
-                                    llm_latency_ms=0.0,
-                                    parse_errors=False,
-                                    structured_output_enabled=self.config.structured_output_effective_enabled,
-                                    critic_revision_count=0,
-                                    critic_ms=0.0,
-                                    critic_ok=False,
-                                    crag_enabled=True,
-                                    grade_count=grade_count,
-                                    relevant_count=relevant_count,
-                                    self_reflection_used=True,
-                                    rewrite_count=rewrite_count,
-                                )
-
-                                return RAGResult(
-                                    answer=refusal_template,
-                                    sources=[],
-                                    reasoning_steps=reasoning_steps,
-                                    metrics=metrics,
-                                    mode=resolved_mode,
-                                    guardrail_status=WardenStatus.UNCHANGED,
-                                    evidence_level="NONE",
-                                    success=True,
-                                    thought_chain=thought_chain,
-                                )
-
-                    except Exception as e:
-                        self.logger.warning(f"Self-reflection failed: {e}")
-                        reasoning_steps.append(f"Self-reflection failed: {str(e)[:100]}")
-                        self_reflection_ms = (time.perf_counter() - reflection_start) * 1000
+            # Extract CRAG results
+            sources = crag_result.sources
+            grade_ms = crag_result.grade_ms
+            grade_count = crag_result.grade_count
+            relevant_count = crag_result.relevant_count
+            self_reflection_ms = crag_result.self_reflection_ms
+            thought_chain = crag_result.thought_chain
+            rewrite_count = crag_result.rewrite_count
 
             # STEP 4: Build LLM context from sources
             # Note: sources may have been filtered by CRAG already
@@ -574,13 +655,24 @@ class OrchestratorService(BaseService):
             # Get mode-specific configuration
             llm_config = self.query_processor.get_mode_config(resolved_mode.value)
 
+            # RetICL: Retrieve constitutional examples before building prompt
+            constitutional_examples = await self._retrieve_constitutional_examples(
+                query=question,
+                mode=resolved_mode.value,
+                k=2,
+            )
+            examples_text = self._format_constitutional_examples(constitutional_examples)
+
             # Build messages
             system_prompt = self._build_system_prompt(
                 resolved_mode.value,
                 sources,
                 context_text,
                 structured_output_enabled=self.config.structured_output_effective_enabled,
+                user_query=question,
             )
+            # Replace placeholder with actual examples
+            system_prompt = system_prompt.replace("{{CONSTITUTIONAL_EXAMPLES}}", examples_text)
             messages = [
                 {"role": "system", "content": system_prompt},
             ]
@@ -668,7 +760,7 @@ class OrchestratorService(BaseService):
 
                     # Attempt 2: Retry with explicit JSON instruction
                     try:
-                        retry_instruction = "Du returnerade ogiltig JSON. Returnera endast giltig JSON enligt schema, inga backticks, ingen extra text."
+                        retry_instruction = ResponseTemplates.STRUCTURED_OUTPUT_RETRY_INSTRUCTION
 
                         # Re-run LLM with retry instruction
                         retry_messages = [
@@ -708,32 +800,10 @@ class OrchestratorService(BaseService):
                             )
                             parse_errors = True
 
-                            if mode == ResponseMode.EVIDENCE:
-                                refusal_template = "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats i den här sökningen. Underlag saknas för att ge ett rättssäkert svar, och jag kan därför inte spekulera. Om du vill kan du omformulera frågan eller ange vilka dokument/avsnitt du vill att jag ska söker i."
-                                full_answer = refusal_template
-                                structured_output_data = {
-                                    "mode": "EVIDENCE",
-                                    "saknas_underlag": True,
-                                    "svar": refusal_template,
-                                    "kallor": [],
-                                    "fakta_utan_kalla": [],
-                                }
-                                reasoning_steps.append(
-                                    "EVIDENCE both attempts failed - using refusal template"
-                                )
-                            else:
-                                safe_fallback = "Jag kunde inte tolka modellens strukturerade svar. Försök igen."
-                                full_answer = safe_fallback
-                                structured_output_data = {
-                                    "mode": "ASSIST",
-                                    "saknas_underlag": False,
-                                    "svar": safe_fallback,
-                                    "kallor": [],
-                                    "fakta_utan_kalla": [],
-                                }
-                                reasoning_steps.append(
-                                    "ASSIST both attempts failed - using safe fallback"
-                                )
+                            # Use extracted method for fallback handling
+                            full_answer, structured_output_data = self._create_fallback_response(
+                                mode, reasoning_steps
+                            )
 
                     except Exception as retry_e:
                         # Retry attempt also failed
@@ -743,30 +813,10 @@ class OrchestratorService(BaseService):
                         )
                         self.logger.warning(f"Attempt 2 failed unexpectedly: {retry_e}")
 
-                        # Final fallback
-                        if mode == ResponseMode.EVIDENCE:
-                            refusal_template = "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats i den här sökningen. Underlag saknas för att ge ett rättssäkert svar, och jag kan därför inte spekulera. Om du vill kan du omformulera frågan eller ange vilka dokument/avsnitt du vill att jag ska söker i."
-                            full_answer = refusal_template
-                            structured_output_data = {
-                                "mode": "EVIDENCE",
-                                "saknas_underlag": True,
-                                "svar": refusal_template,
-                                "kallor": [],
-                                "fakta_utan_kalla": [],
-                            }
-                        else:
-                            safe_fallback = (
-                                "Jag kunde inte tolka modellens strukturerade svar. Försök igen."
-                            )
-                            full_answer = safe_fallback
-                            structured_output_data = {
-                                "mode": "ASSIST",
-                                "saknas_underlag": False,
-                                "svar": safe_fallback,
-                                "kallor": [],
-                                "fakta_utan_kalla": [],
-                            }
-                        reasoning_steps.append("ASSIST both attempts failed - using safe fallback")
+                        # Final fallback - use extracted method
+                        full_answer, structured_output_data = self._create_fallback_response(
+                            mode, reasoning_steps
+                        )
 
             structured_output_ms = (time.perf_counter() - structured_output_start) * 1000
 
@@ -1131,18 +1181,124 @@ Om frågan handlar om svensk lag eller myndighetsförvaltning, kan du hänvisa t
 
         return "\n\n".join(context_parts)
 
+    async def _retrieve_constitutional_examples(
+        self, query: str, mode: str, k: int = 2
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve constitutional examples for RetICL (Retrieval-Augmented In-Context Learning).
+
+        Searches the 'constitutional_examples' ChromaDB collection for similar examples
+        based on the user's query. Returns top-k examples matching the mode.
+
+        Args:
+            query: User's question
+            mode: Response mode (evidence/assist)
+            k: Number of examples to retrieve (default: 2)
+
+        Returns:
+            List of example dictionaries with 'user' and 'assistant' fields
+        """
+        try:
+            # Import chromadb here to avoid circular imports
+            import chromadb
+            import chromadb.config
+
+            # Connect to ChromaDB
+            chromadb_path = self.config.chromadb_path
+            collection_name = "constitutional_examples"
+
+            client = chromadb.PersistentClient(
+                path=chromadb_path,
+                settings=chromadb.config.Settings(anonymized_telemetry=False),
+            )
+
+            # Get collection
+            try:
+                collection = client.get_collection(name=collection_name)
+            except Exception:
+                # Collection doesn't exist yet - return empty list
+                self.logger.debug(
+                    f"Constitutional examples collection not found: {collection_name}"
+                )
+                return []
+
+            # Generate embedding for query
+            embedding_service = get_embedding_service(self.config)
+            query_embedding = embedding_service.embed_single(query)
+
+            # Search for similar examples (filter by mode if possible)
+            results = collection.query(
+                query_embeddings=[query_embedding],
+                n_results=k,
+                where={"mode": mode.upper()} if mode in ["evidence", "assist"] else None,
+            )
+
+            # Parse results
+            examples = []
+            if results and results.get("metadatas") and len(results["metadatas"]) > 0:
+                for metadata in results["metadatas"][0]:
+                    try:
+                        example_json = json.loads(metadata.get("example_json", "{}"))
+                        examples.append(example_json)
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+
+            self.logger.debug(f"Retrieved {len(examples)} constitutional examples for mode={mode}")
+            return examples
+
+        except Exception as e:
+            self.logger.warning(f"Failed to retrieve constitutional examples: {e}")
+            return []
+
+    def _format_constitutional_examples(self, examples: List[Dict[str, Any]]) -> str:
+        """
+        Format constitutional examples for inclusion in system prompt.
+
+        Args:
+            examples: List of example dictionaries
+
+        Returns:
+            Formatted string with examples
+        """
+        if not examples:
+            return ""
+
+        formatted_parts = []
+        for i, example in enumerate(examples, 1):
+            user = example.get("user", "")
+            assistant = example.get("assistant", {})
+            assistant_json = json.dumps(assistant, ensure_ascii=False, indent=2)
+
+            formatted_parts.append(
+                f"Exempel {i}:\n" f"Användare: {user}\n" f"Assistent: {assistant_json}\n"
+            )
+
+        return (
+            "\n"
+            + "=" * 60
+            + "\nKONSTITUTIONELLA EXEMPEL (Följ dessa som mallar för ton och format):\n"
+            + "=" * 60
+            + "\n"
+            + "\n".join(formatted_parts)
+            + "\n"
+            + "=" * 60
+            + "\n"
+        )
+
     def _build_system_prompt(
         self,
         mode: str,
         sources: List[SearchResult],
         context_text: str,
         structured_output_enabled: bool = True,
+        user_query: Optional[str] = None,
     ) -> str:
         """
         Build system prompt based on response mode and structured output setting.
 
         Different prompts for CHAT/ASSIST/EVIDENCE modes.
         JSON schema instructions only included when structured_output_enabled=True.
+        Includes RetICL examples if available.
         """
 
         # Base prompt templates
@@ -1171,12 +1327,22 @@ Regler:
         text_instruction = """
 Om du saknar stöd för svaret i dokumenten, svara tydligt att du saknar underlag för att ge ett rättssäkert svar. Spekulera aldrig. Var neutral, saklig och formell. Svara kortfattat på svenska."""
 
+        # RetICL: Retrieve constitutional examples (async, but we'll handle it synchronously for now)
+        # Note: This is a synchronous method, so we'll need to make it async or use a workaround
+        constitutional_examples_text = ""
+        if user_query and mode in ["evidence", "assist"]:
+            # For now, we'll retrieve examples in the calling method and pass them
+            # This method signature will be updated to accept examples as parameter
+            pass
+
         if mode == "evidence":
             prompt = base_evidence
             if structured_output_enabled:
                 prompt += json_instruction
             else:
                 prompt += text_instruction
+            # Add RetICL examples placeholder (will be replaced by caller)
+            prompt += "{{CONSTITUTIONAL_EXAMPLES}}"
             prompt += f"\n\nKälla från korpusen:\n{context_text}"
             return prompt
 
@@ -1186,6 +1352,8 @@ Om du saknar stöd för svaret i dokumenten, svara tydligt att du saknar underla
                 prompt += json_instruction
             else:
                 prompt += text_instruction
+            # Add RetICL examples placeholder (will be replaced by caller)
+            prompt += "{{CONSTITUTIONAL_EXAMPLES}}"
             prompt += f"\n\nKälla från korpusen:\n{context_text}"
             return prompt
 
@@ -1220,18 +1388,8 @@ Om frågan handlar om svensk lag eller myndighetsförvaltning, kan du hänvisa t
             # Step 1: Classify query
             classification = self.query_processor.classify_query(question)
 
-            # Normalize mode safely (None/str/Enum)
-            if mode is None or mode == "auto":
-                response_mode = classification.mode
-            elif isinstance(mode, ResponseMode):
-                response_mode = mode
-            elif isinstance(mode, str):
-                try:
-                    response_mode = ResponseMode(mode)
-                except ValueError:
-                    response_mode = classification.mode
-            else:
-                response_mode = classification.mode
+            # Normalize mode safely (None/str/Enum) - use extracted method
+            response_mode = self._resolve_query_mode(mode, classification.mode)
 
             if response_mode == ResponseMode.CHAT:
                 # CHAT mode: Direct streaming
@@ -1264,11 +1422,13 @@ Om frågan handlar om svensk lag eller myndighetsförvaltning, kan du hänvisa t
             # Step 3: Retrieval
             retrieval_start = time.perf_counter()
 
-            # Convert history to strings for retrieval service
+            # Convert history to strings for retrieval service - optimized: filter empty content
             history_for_retrieval = None
             if history:
                 history_for_retrieval = [
-                    f"{h.get('role', 'user')}: {h.get('content', '')}" for h in history
+                    f"{h.get('role', 'user')}: {h.get('content', '')}"
+                    for h in history
+                    if h.get("content")  # Filter empty content for better performance
                 ]
 
             retrieval_result = await self.retrieval.search(
@@ -1361,13 +1521,25 @@ Om frågan handlar om svensk lag eller myndighetsförvaltning, kan du hänvisa t
 
             # Step 4: Build context and stream LLM response
             context_text = self._build_llm_context(sources)
+
+            # RetICL: Retrieve constitutional examples before building prompt
+            constitutional_examples = await self._retrieve_constitutional_examples(
+                query=question,
+                mode=response_mode.value,
+                k=2,
+            )
+            examples_text = self._format_constitutional_examples(constitutional_examples)
+
             # Disable structured output for streaming to prevent internal note leakage
             system_prompt = self._build_system_prompt(
                 response_mode.value,
                 sources,
                 context_text,
                 structured_output_enabled=False,
+                user_query=question,
             )
+            # Replace placeholder with actual examples
+            system_prompt = system_prompt.replace("{{CONSTITUTIONAL_EXAMPLES}}", examples_text)
 
             messages = [
                 {"role": "system", "content": system_prompt},
@@ -1406,6 +1578,258 @@ Om frågan handlar om svensk lag eller myndighetsförvaltning, kan du hänvisa t
 
         except Exception as e:
             yield f"data: {self._json({'type': 'error', 'message': str(e)})}\n\n"
+
+    def _resolve_query_mode(self, mode: Optional[str], default_mode: ResponseMode) -> ResponseMode:
+        """
+        Resolve query mode from various input types.
+
+        Args:
+            mode: Mode as None, str, or ResponseMode enum
+            default_mode: Default mode from classification
+
+        Returns:
+            Resolved ResponseMode enum
+        """
+        if mode is None:
+            return default_mode
+        elif isinstance(mode, ResponseMode):
+            return mode
+        elif isinstance(mode, str):
+            if mode != "auto":
+                try:
+                    return ResponseMode(mode)
+                except ValueError:
+                    return default_mode
+            return default_mode
+        else:
+            return default_mode
+
+    def _create_fallback_response(
+        self, mode: ResponseMode, reasoning_steps: List[str]
+    ) -> tuple[str, dict]:
+        """
+        Create fallback response when structured output parsing fails.
+
+        Args:
+            mode: Response mode (EVIDENCE or ASSIST)
+            reasoning_steps: List to append reasoning steps
+
+        Returns:
+            Tuple of (answer_text, structured_output_data)
+        """
+        if mode == ResponseMode.EVIDENCE:
+            refusal_template = ResponseTemplates.EVIDENCE_REFUSAL
+            reasoning_steps.append("EVIDENCE both attempts failed - using refusal template")
+            return refusal_template, {
+                "mode": "EVIDENCE",
+                "saknas_underlag": True,
+                "svar": refusal_template,
+                "kallor": [],
+                "fakta_utan_kalla": [],
+            }
+        else:
+            safe_fallback = ResponseTemplates.SAFE_FALLBACK
+            reasoning_steps.append("ASSIST both attempts failed - using safe fallback")
+            return safe_fallback, {
+                "mode": "ASSIST",
+                "saknas_underlag": False,
+                "svar": safe_fallback,
+                "kallor": [],
+                "fakta_utan_kalla": [],
+            }
+
+    async def _process_crag_grading(
+        self,
+        question: str,
+        search_query: str,
+        retrieval_result: Any,
+        resolved_mode: ResponseMode,
+        reasoning_steps: List[str],
+        start_time: float,
+        query_classification_ms: float,
+        decontextualization_ms: float,
+        retrieval_ms: float,
+    ) -> "CragResult":
+        """
+        Process CRAG (Corrective RAG) grading and self-reflection.
+
+        Returns:
+            CragResult with processed sources and metrics, or early return result
+        """
+        from dataclasses import dataclass
+        from typing import TYPE_CHECKING
+
+        if TYPE_CHECKING:
+            pass
+
+        @dataclass
+        class CragResult:
+            sources: List[SearchResult]
+            grade_ms: float
+            grade_count: int
+            relevant_count: int
+            self_reflection_ms: float
+            thought_chain: Optional[str]
+            rewrite_count: int
+            early_return: bool = False
+            result: Optional[RAGResult] = None
+
+        grade_ms = 0.0
+        self_reflection_ms = 0.0
+        thought_chain = None
+        rewrite_count = 0
+        grade_count = 0
+        relevant_count = 0
+        sources = retrieval_result.results
+
+        if not (
+            self.config.settings.crag_enabled and self.grader and resolved_mode != ResponseMode.CHAT
+        ):
+            return CragResult(
+                sources=sources,
+                grade_ms=0.0,
+                grade_count=0,
+                relevant_count=0,
+                self_reflection_ms=0.0,
+                thought_chain=None,
+                rewrite_count=0,
+            )
+
+        # Grade documents for relevance
+        if retrieval_result.results:
+            grading_result = await self.grader.grade_documents(
+                query=search_query, documents=retrieval_result.results
+            )
+
+            grade_ms = grading_result.metrics.total_latency_ms
+            grade_count = grading_result.metrics.total_documents
+            relevant_count = grading_result.metrics.relevant_count
+
+            reasoning_steps.append(
+                f"CRAG graded {grade_count} documents, {relevant_count} relevant "
+                f"({grading_result.metrics.relevant_percentage:.1f}%) in {grade_ms:.1f}ms"
+            )
+
+            # Filter sources to only relevant ones
+            if relevant_count > 0:
+                filtered_docs = [
+                    doc
+                    for doc, grade in zip(retrieval_result.results, grading_result.grades)
+                    if grade.relevant
+                ]
+                sources = filtered_docs
+                reasoning_steps.append(
+                    f"CRAG filtered to {len(sources)} relevant documents for generation"
+                )
+            else:
+                sources = []
+                reasoning_steps.append(
+                    "CRAG: No relevant documents found, considering query rewrite"
+                )
+        else:
+            grade_count = 0
+            relevant_count = 0
+            sources = []
+
+        # Self-Reflection (Chain of Thought) before generation
+        if sources and self.config.settings.crag_enable_self_reflection and self.critic:
+            reflection_start = time.perf_counter()
+
+            try:
+                reflection = await self.critic.self_reflection(
+                    query=question, mode=resolved_mode.value, sources=sources
+                )
+
+                self_reflection_ms = (time.perf_counter() - reflection_start) * 1000
+                thought_chain = reflection.thought_process
+
+                reasoning_steps.append(
+                    f"Self-reflection generated in {self_reflection_ms:.1f}ms "
+                    f"(confidence: {reflection.confidence:.2f})"
+                )
+
+                # Check if reflection indicates insufficient evidence
+                if (
+                    not reflection.has_sufficient_evidence
+                    and resolved_mode == ResponseMode.EVIDENCE
+                ):
+                    refusal_template = getattr(
+                        self.config.settings,
+                        "evidence_refusal_template",
+                        ResponseTemplates.EVIDENCE_REFUSAL,
+                    )
+
+                    reasoning_steps.append(
+                        f"CRAG refusal: insufficient evidence - {', '.join(reflection.missing_evidence)}"
+                    )
+
+                    total_pipeline_ms = (time.perf_counter() - start_time) * 1000
+                    metrics = RAGPipelineMetrics(
+                        query_classification_ms=query_classification_ms,
+                        decontextualization_ms=decontextualization_ms,
+                        retrieval_ms=retrieval_ms,
+                        grade_ms=grade_ms,
+                        self_reflection_ms=self_reflection_ms,
+                        total_pipeline_ms=total_pipeline_ms,
+                        mode=resolved_mode.value,
+                        sources_count=0,
+                        tokens_generated=0,
+                        corrections_count=0,
+                        retrieval_strategy=retrieval_result.metrics.strategy,
+                        retrieval_results_count=len(retrieval_result.results),
+                        top_relevance_score=retrieval_result.metrics.top_score,
+                        guardrail_status="unchanged",
+                        evidence_level="NONE",
+                        model_used="",
+                        llm_latency_ms=0.0,
+                        parse_errors=False,
+                        structured_output_enabled=self.config.structured_output_effective_enabled,
+                        critic_revision_count=0,
+                        critic_ms=0.0,
+                        critic_ok=False,
+                        crag_enabled=True,
+                        grade_count=grade_count,
+                        relevant_count=relevant_count,
+                        self_reflection_used=True,
+                        rewrite_count=rewrite_count,
+                    )
+
+                    return CragResult(
+                        sources=[],
+                        grade_ms=grade_ms,
+                        grade_count=grade_count,
+                        relevant_count=relevant_count,
+                        self_reflection_ms=self_reflection_ms,
+                        thought_chain=thought_chain,
+                        rewrite_count=rewrite_count,
+                        early_return=True,
+                        result=RAGResult(
+                            answer=refusal_template,
+                            sources=[],
+                            reasoning_steps=reasoning_steps,
+                            metrics=metrics,
+                            mode=resolved_mode,
+                            guardrail_status=WardenStatus.UNCHANGED,
+                            evidence_level="NONE",
+                            success=True,
+                            thought_chain=thought_chain,
+                        ),
+                    )
+
+            except Exception as e:
+                self.logger.warning(f"Self-reflection failed: {e}")
+                reasoning_steps.append(f"Self-reflection failed: {str(e)[:100]}")
+                self_reflection_ms = (time.perf_counter() - reflection_start) * 1000
+
+        return CragResult(
+            sources=sources,
+            grade_ms=grade_ms,
+            grade_count=grade_count,
+            relevant_count=relevant_count,
+            self_reflection_ms=self_reflection_ms,
+            thought_chain=thought_chain,
+            rewrite_count=rewrite_count,
+        )
 
     def _json(self, data: dict) -> str:
         """Helper to format SSE event data"""

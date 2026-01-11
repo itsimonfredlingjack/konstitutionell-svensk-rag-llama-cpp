@@ -25,7 +25,6 @@ import sqlite3
 from collections.abc import Iterator
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Optional
 
 import ijson
 
@@ -87,9 +86,9 @@ class NormalizedRecord:
     institution: str
     title: str
     authors: list
-    abstract: Optional[str]
-    year: Optional[str]
-    genre: Optional[str]
+    abstract: str | None
+    year: str | None
+    genre: str | None
     subjects: list
     raw_identifier: str
 
@@ -144,7 +143,7 @@ def normalize_authors_oai_dc(creators: list) -> list:
     return [c for c in creators if isinstance(c, str)][:20]
 
 
-def extract_year(record: dict, format_type: str) -> Optional[str]:
+def extract_year(record: dict, format_type: str) -> str | None:
     """Extract publication year from record."""
     if format_type == "pubmed":
         return record.get("pub_year")
@@ -166,7 +165,7 @@ def extract_year(record: dict, format_type: str) -> Optional[str]:
 
 def normalize_record(
     record: dict, source_code: str, format_type: str, institution: str
-) -> Optional[NormalizedRecord]:
+) -> NormalizedRecord | None:
     """Normalize a record to standard format."""
 
     # Extract identifier
@@ -277,9 +276,7 @@ def count_records(filepath: Path) -> int:
     return count
 
 
-def parse_file(
-    source_code: str, config: dict, output_path: Optional[Path] = None
-) -> tuple[int, int]:
+def parse_file(source_code: str, config: dict, output_path: Path | None = None) -> tuple[int, int]:
     """Parse a single file and optionally write normalized output."""
     filepath = config["path"]
     format_type = config["format"]
@@ -324,7 +321,7 @@ def parse_file(
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
     logger.info(
-        f"  Complete: {total:,} total, {normalized:,} normalized ({normalized*100/total:.1f}%)"
+        f"  Complete: {total:,} total, {normalized:,} normalized ({normalized * 100 / total:.1f}%)"
     )
     return total, normalized
 

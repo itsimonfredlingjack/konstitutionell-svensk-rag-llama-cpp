@@ -8,7 +8,6 @@ import json
 import re
 import time
 from datetime import datetime
-from typing import Optional
 
 import chromadb
 import requests
@@ -57,7 +56,7 @@ class RiksbankenScraper:
         print("Loading embedding model (KBLab/sentence-bert-swedish-cased)...")
         self.embedding_model = SentenceTransformer("KBLab/sentence-bert-swedish-cased")
 
-    def fetch_page(self, url: str) -> Optional[BeautifulSoup]:
+    def fetch_page(self, url: str) -> BeautifulSoup | None:
         """Fetch and parse a web page"""
         try:
             response = self.session.get(url, timeout=30)
@@ -67,7 +66,7 @@ class RiksbankenScraper:
             self.errors.append(f"Failed to fetch {url}: {e!s}")
             return None
 
-    def extract_pdf_publication(self, pdf_link, pub_type: str) -> Optional[dict]:
+    def extract_pdf_publication(self, pdf_link, pub_type: str) -> dict | None:
         """Extract data from a PDF link"""
         try:
             pdf_url = pdf_link.get("href", "")
@@ -106,7 +105,7 @@ class RiksbankenScraper:
             self.errors.append(f"Error extracting PDF: {e!s}")
             return None
 
-    def extract_html_publication(self, element, pub_type: str) -> Optional[dict]:
+    def extract_html_publication(self, element, pub_type: str) -> dict | None:
         """Extract data from HTML link"""
         try:
             link_elem = element.find("a", href=True) if element.name != "a" else element

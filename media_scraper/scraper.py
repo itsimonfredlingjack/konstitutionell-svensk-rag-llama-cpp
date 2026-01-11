@@ -10,7 +10,6 @@ import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Would use firecrawl-py in production, but we're using MCP
 # This script is for reference and local testing
@@ -23,10 +22,10 @@ class Article:
     url: str
     source: str
     title: str
-    author: Optional[str]
-    published_date: Optional[str]
-    category: Optional[str]
-    summary: Optional[str]
+    author: str | None
+    published_date: str | None
+    category: str | None
+    summary: str | None
     content: str
     tags: list[str]
     scraped_at: str
@@ -50,12 +49,10 @@ class MediaScraper:
 
         for url_obj in urls:
             url = url_obj.get("url", "")
-            if regex.search(url):
-                # Exclude sitemaps, tags, etc.
-                if not any(
-                    x in url for x in ["/sitemaps/", "/tagg/", "/story/", "/av/", "/lyssna/"]
-                ):
-                    article_urls.append(url)
+            if regex.search(url) and not any(
+                x in url for x in ["/sitemaps/", "/tagg/", "/story/", "/av/", "/lyssna/"]
+            ):
+                article_urls.append(url)
 
         return article_urls
 

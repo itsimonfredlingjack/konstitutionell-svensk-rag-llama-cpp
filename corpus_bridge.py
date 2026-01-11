@@ -25,7 +25,6 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import requests
 
@@ -59,7 +58,7 @@ class DocumentRecord:
     source: str
     source_file: str
     document_type: str
-    title: Optional[str]
+    title: str | None
     metadata_json: str
     checksum: str
     status: str = "pending"
@@ -176,7 +175,8 @@ def stream_parse_records(filepath: Path) -> Iterator[dict]:
     except ImportError:
         # Fallback: try to parse normally
         try:
-            data = json.load(open(filepath))
+            with open(filepath) as f:
+                data = json.load(f)
             if isinstance(data, dict) and "records" in data:
                 for record in data["records"]:
                     yield record
@@ -195,7 +195,8 @@ def scan_diva_files(data_dir: Path) -> Iterator[tuple[Path, int]]:
         if "checkpoint" in f.name or "summary" in f.name:
             continue
         try:
-            data = json.load(open(f))
+            with open(f) as file:
+                data = json.load(file)
             if isinstance(data, list):
                 yield f, len(data)
             elif isinstance(data, dict):
@@ -222,7 +223,8 @@ def scan_scrape_files(root_dir: Path) -> Iterator[tuple[Path, int]]:
     for pattern in ["*_scrape*.json", "*_report.json", "*_index*.json"]:
         for f in root_dir.glob(pattern):
             try:
-                data = json.load(open(f))
+                with open(f) as file:
+                    data = json.load(file)
                 if isinstance(data, list):
                     count = len(data)
                 elif isinstance(data, dict):
@@ -265,7 +267,8 @@ def inventory_source(conn: sqlite3.Connection, source_path: Path, source_type: s
         records = stream_parse_records(source_path)
     else:
         try:
-            data = json.load(open(source_path))
+            with open(source_path) as f:
+                data = json.load(f)
             if isinstance(data, list):
                 records = iter(data)
             elif isinstance(data, dict):
@@ -481,21 +484,19 @@ def cmd_inventory(args):
 
     # DIVA files (academic publications)
     logger.info("\n--- DIVA Academic Publications ---")
-    for path, count in scan_diva_files(CONFIG["data_dir"]):
+    for path, _count in scan_diva_files(CONFIG["data_dir"]):
         inserted = inventory_source(conn, path, "diva")
         total_files += 1
-        total_records += inserted
 
     # Scrape files (government documents)
     logger.info("\n--- Government Agency Scrapes ---")
-    for path, count in scan_scrape_files(CONFIG["root_dir"]):
+    for path, _count in scan_scrape_files(CONFIG["root_dir"]):
         inserted = inventory_source(conn, path, "scrape")
         total_files += 1
-        total_records += inserted
 
     # Data directory JSON files
     logger.info("\n--- Data Directory Files ---")
-    for path, count in scan_scrape_files(CONFIG["data_dir"]):
+    for path, _count in scan_scrape_files(CONFIG["data_dir"]):
         if "diva" not in path.name.lower():
             inserted = inventory_source(conn, path, "data")
             total_files += 1
@@ -545,7 +546,7 @@ def cmd_generate_queue(args):
     batch = []
 
     for row in cursor:
-        inv_id, doc_id, source, doc_type, title, metadata = row
+        _inv_id, doc_id, source, doc_type, title, metadata = row
 
         event_id = f"import_{doc_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
@@ -700,7 +701,7 @@ def cmd_trigger(args):
     interval = 1.0 / rate_limit
 
     for event in events:
-        event_id = event[1]
+        # event_id = event[1]
 
         try:
             payload = json.loads(event[3])
@@ -830,7 +831,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # inventory
-    inv_parser = subparsers.add_parser("inventory", help="Inventory all document sources")
+    # inv_parser = subparsers.add_parser("inventory", help="Inventory all document sources")
 
     # generate-queue
     queue_parser = subparsers.add_parser("generate-queue", help="Generate import queue")
@@ -853,7 +854,7 @@ def main():
     )
 
     # status
-    status_parser = subparsers.add_parser("status", help="Show current status")
+    # status_parser = subparsers.add_parser("status", help="Show current status")
 
     args = parser.parse_args()
 

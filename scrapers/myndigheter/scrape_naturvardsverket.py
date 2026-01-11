@@ -11,7 +11,6 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import chromadb
@@ -24,7 +23,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(
-            f'naturvardsverket_scrape_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
+            f"naturvardsverket_scrape_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         ),
         logging.StreamHandler(),
     ],
@@ -63,7 +62,7 @@ class NaturvardsverketScraper:
         """Generate unique document ID from URL"""
         return hashlib.md5(url.encode()).hexdigest()
 
-    def fetch_page(self, url: str, retries: int = 3) -> Optional[str]:
+    def fetch_page(self, url: str, retries: int = 3) -> str | None:
         """Fetch page with retry logic"""
         for attempt in range(retries):
             try:
@@ -383,7 +382,7 @@ class NaturvardsverketScraper:
                 batch_docs = documents_text[i : i + batch_size]
 
                 collection.upsert(ids=batch_ids, metadatas=batch_metas, documents=batch_docs)
-                logger.info(f"Inserted batch {i//batch_size + 1}: {len(batch_ids)} documents")
+                logger.info(f"Inserted batch {i // batch_size + 1}: {len(batch_ids)} documents")
 
             logger.info(f"Successfully saved {len(documents)} documents to ChromaDB")
             return {
@@ -440,7 +439,7 @@ def main():
     documents = scraper.scrape_all()
 
     # Save documents to JSON first (avoid ChromaDB crash)
-    docs_file = f'naturvardsverket_docs_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+    docs_file = f"naturvardsverket_docs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(docs_file, "w", encoding="utf-8") as f:
         json.dump(documents, f, indent=2, ensure_ascii=False)
     logger.info(f"Documents saved to {docs_file}")
@@ -451,7 +450,7 @@ def main():
     report["chromadb_note"] = "Run index_to_chromadb.py separately to avoid segfault"
 
     # Save report
-    report_file = f'naturvardsverket_final_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+    report_file = f"naturvardsverket_final_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 

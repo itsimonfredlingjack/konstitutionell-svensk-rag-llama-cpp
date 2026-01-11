@@ -315,5 +315,5 @@ def get_progress():
 if __name__ == "__main__":
     store_results()
     total, done, failed, pending = get_progress()
-    print(f"\nProgress: {done}/{total} done ({done/total*100:.1f}%)")
+    print(f"\nProgress: {done}/{total} done ({done / total * 100:.1f}%)")
     print(f"Failed: {failed}, Pending: {pending}")

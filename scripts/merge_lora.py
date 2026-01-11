@@ -11,10 +11,11 @@ Output:
     ./models/qwen-workflow-merged/ - Full modell för Ollama
 """
 
-import torch
 from pathlib import Path
-from transformers import AutoModelForCausalLM, AutoTokenizer
+
+import torch
 from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Paths
 LORA_PATH = "./models/qwen-workflow-lora"
@@ -66,7 +67,7 @@ def main():
     print(f"   python llama.cpp/convert_hf_to_gguf.py {OUTPUT_PATH} --outfile qwen-workflow.gguf")
     print("2. Create Modelfile:")
     print("   FROM qwen-workflow.gguf")
-    print("   SYSTEM \"Du är expert på n8n automation...\"")
+    print('   SYSTEM "Du är expert på n8n automation..."')
     print("3. ollama create qwen-workflow -f Modelfile")
     print("=" * 60)
 

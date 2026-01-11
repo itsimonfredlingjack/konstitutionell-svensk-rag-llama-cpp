@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import sys
 from functools import lru_cache
-from typing import Optional, Tuple
 
 
 def _ensure_parent_on_syspath() -> None:
@@ -17,11 +16,11 @@ def _ensure_parent_on_syspath() -> None:
         sys.path.append(parent_dir)
 
 
-_IMPORT_ERROR: Optional[str] = None
+_IMPORT_ERROR: str | None = None
 _GoogleHomeSpeaker = None
 
 
-def _try_import_speaker() -> Tuple[Optional[object], Optional[str]]:
+def _try_import_speaker() -> tuple[object | None, str | None]:
     global _IMPORT_ERROR, _GoogleHomeSpeaker
 
     if _GoogleHomeSpeaker is not None or _IMPORT_ERROR is not None:
@@ -45,7 +44,7 @@ def voice_available() -> bool:
     return speaker_cls is not None
 
 
-def voice_import_error() -> Optional[str]:
+def voice_import_error() -> str | None:
     _, err = _try_import_speaker()
     return err
 

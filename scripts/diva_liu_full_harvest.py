@@ -295,7 +295,7 @@ def main():
     print(f"Total records harvested: {len(records):,}")
     print(f"Deleted/skipped: {deleted:,}")
     print(f"Output file: {OUTPUT_FILE}")
-    print(f"File size: {OUTPUT_FILE.stat().st_size / (1024*1024):.1f} MB")
+    print(f"File size: {OUTPUT_FILE.stat().st_size / (1024 * 1024):.1f} MB")
     print("=" * 60)
 
     return len(records)

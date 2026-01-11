@@ -18,7 +18,6 @@ import re
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import aiohttp
@@ -34,7 +33,7 @@ class MigrationsverketScraper:
             "main": "https://www.migrationsverket.se",
             "lifos": "https://lifos.migrationsverket.se",
         }
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.documents: list[dict] = []
 
         # ChromaDB setup
@@ -277,7 +276,7 @@ class MigrationsverketScraper:
         print(f"Total unique Lifos documents: {len(unique_docs)}")
         return unique_docs
 
-    async def scrape_lifos_document(self, url: str) -> Optional[dict]:
+    async def scrape_lifos_document(self, url: str) -> dict | None:
         """Scrape individual Lifos document"""
         try:
             html = await self.fetch(url)
@@ -389,7 +388,7 @@ class MigrationsverketScraper:
             print(f"Error scraping Lifos document {url}: {e}")
             return None
 
-    async def scrape_statistics_page(self, url: str) -> Optional[dict]:
+    async def scrape_statistics_page(self, url: str) -> dict | None:
         """Scrape statistics pages and Excel files"""
         try:
             html = await self.fetch(url)
@@ -423,7 +422,7 @@ class MigrationsverketScraper:
             print(f"Error scraping statistics page {url}: {e}")
             return None
 
-    async def scrape_legal_position(self, url: str) -> Optional[dict]:
+    async def scrape_legal_position(self, url: str) -> dict | None:
         """Scrape rättsliga ställningstaganden"""
         try:
             html = await self.fetch(url)
@@ -458,7 +457,7 @@ class MigrationsverketScraper:
             print(f"Error scraping legal position {url}: {e}")
             return None
 
-    async def scrape_publication(self, url: str) -> Optional[dict]:
+    async def scrape_publication(self, url: str) -> dict | None:
         """Scrape general publications and guidelines"""
         try:
             html = await self.fetch(url)
@@ -492,7 +491,7 @@ class MigrationsverketScraper:
             print(f"Error scraping publication {url}: {e}")
             return None
 
-    async def categorize_and_scrape(self, url: str) -> Optional[dict]:
+    async def categorize_and_scrape(self, url: str) -> dict | None:
         """Categorize URL and scrape accordingly"""
         # Skip binary files - just register them as downloadable resources
         if any(

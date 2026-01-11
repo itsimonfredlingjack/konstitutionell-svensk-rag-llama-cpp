@@ -14,7 +14,6 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import aiohttp
@@ -44,7 +43,7 @@ class PublikationerScraper:
                 name=COLLECTION_NAME, metadata={"description": "Swedish government documents"}
             )
 
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.documents: list[dict] = []
         self.stats = {
             "pages_crawled": 0,
@@ -76,7 +75,7 @@ class PublikationerScraper:
         except:
             return False
 
-    async def fetch_page(self, url: str) -> Optional[str]:
+    async def fetch_page(self, url: str) -> str | None:
         """Fetch page HTML"""
         try:
             async with self.session.get(url) as response:
@@ -141,7 +140,7 @@ class PublikationerScraper:
 
         return publications
 
-    async def scrape_publication_detail(self, url: str) -> Optional[dict]:
+    async def scrape_publication_detail(self, url: str) -> dict | None:
         """Scrape individual publication page to get PDF download link"""
         html = await self.fetch_page(url)
         if not html:

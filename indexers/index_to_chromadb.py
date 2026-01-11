@@ -30,7 +30,7 @@ def index_to_chromadb(publications: list):
     try:
         collection = client.get_collection(name=COLLECTION_NAME)
         print(f"Using existing collection: {COLLECTION_NAME}")
-    except:
+    except Exception:
         collection = client.create_collection(
             name=COLLECTION_NAME, metadata={"description": "Swedish government documents"}
         )
@@ -89,11 +89,11 @@ def index_to_chromadb(publications: list):
             errors.append(str(e))
             print(f"  ERROR in batch: {e}")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("INDEXING COMPLETE")
     print(f"Total indexed: {indexed}")
     print(f"Errors: {len(errors)}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if errors:
         print("\nErrors encountered:")

@@ -13,7 +13,6 @@ import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urlencode
 
 import chromadb
@@ -40,12 +39,12 @@ class Publication:
     url: str
     doc_id: str
     authors: list[str]
-    year: Optional[str]
-    pub_type: Optional[str]
-    abstract: Optional[str]
+    year: str | None
+    pub_type: str | None
+    abstract: str | None
     subjects: list[str]
-    language: Optional[str]
-    identifier: Optional[str]
+    language: str | None
+    identifier: str | None
     source: str = "trafikverket"
     scraped_at: str = datetime.now().isoformat()
 
@@ -110,7 +109,7 @@ class TrafikverketOAIScraper:
             logger.error(f"XML parse error: {e}")
             raise
 
-    def list_records(self, metadata_prefix: str = "oai_dc", set_spec: Optional[str] = None):
+    def list_records(self, metadata_prefix: str = "oai_dc", set_spec: str | None = None):
         """
         Harvest all records using ListRecords verb with resumption tokens
         """
@@ -159,7 +158,7 @@ class TrafikverketOAIScraper:
                 logger.warning(f"Error extracting publication: {e}")
                 continue
 
-    def extract_publication(self, record: ET.Element) -> Optional[Publication]:
+    def extract_publication(self, record: ET.Element) -> Publication | None:
         """Extract publication data from OAI record"""
         try:
             # Get header info

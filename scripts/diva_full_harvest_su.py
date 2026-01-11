@@ -344,7 +344,7 @@ def main():
     print(f"Total documents: {len(all_documents):,}")
     print(f"Duration: {duration}")
     print(f"Output file: {OUTPUT_FILE}")
-    print(f"File size: {OUTPUT_FILE.stat().st_size / (1024*1024):.2f} MB")
+    print(f"File size: {OUTPUT_FILE.stat().st_size / (1024 * 1024):.2f} MB")
     print("=" * 60)
 
     return len(all_documents)

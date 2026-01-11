@@ -26,7 +26,6 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import requests
 
@@ -64,11 +63,11 @@ class SFSChunk:
     sfs_nummer: str  # T.ex. "1974:152"
     titel: str  # T.ex. "Regeringsformen"
     kortnamn: str  # T.ex. "RF"
-    kapitel: Optional[str]  # T.ex. "2 kap."
-    kapitel_rubrik: Optional[str]  # T.ex. "Grundläggande fri- och rättigheter"
-    paragraf: Optional[str]  # T.ex. "1 §"
+    kapitel: str | None  # T.ex. "2 kap."
+    kapitel_rubrik: str | None  # T.ex. "Grundläggande fri- och rättigheter"
+    paragraf: str | None  # T.ex. "1 §"
     text: str  # Själva lagtexten
-    senast_andrad: Optional[str]  # T.ex. "SFS 2022:1600"
+    senast_andrad: str | None  # T.ex. "SFS 2022:1600"
     chunk_id: str  # Unik identifierare
     source_url: str  # Källa
     scraped_at: str  # Tidpunkt för scraping
@@ -83,7 +82,7 @@ class SFSDocument:
     kortnamn: str
     departement: str
     utfardad: str
-    senast_andrad: Optional[str]
+    senast_andrad: str | None
     full_text: str
     chunks: list[SFSChunk]
     source_url: str
@@ -104,7 +103,7 @@ class SFSScraper:
             {"User-Agent": "Constitutional-AI-SFS-Scraper/1.0 (research project)"}
         )
 
-    def fetch_sfs_text(self, sfs_nummer: str) -> Optional[str]:
+    def fetch_sfs_text(self, sfs_nummer: str) -> str | None:
         """Hämta fullständig text för ett SFS-nummer"""
         # Konvertera "1974:152" till "sfs-1974-152"
         doc_id = f"sfs-{sfs_nummer.replace(':', '-')}"
@@ -316,7 +315,7 @@ class SFSScraper:
 
         return chunks
 
-    def scrape_sfs(self, sfs_nummer: str, kortnamn: str = "") -> Optional[SFSDocument]:
+    def scrape_sfs(self, sfs_nummer: str, kortnamn: str = "") -> SFSDocument | None:
         """Scrapa ett SFS-dokument och chunka det"""
         text = self.fetch_sfs_text(sfs_nummer)
         if not text:

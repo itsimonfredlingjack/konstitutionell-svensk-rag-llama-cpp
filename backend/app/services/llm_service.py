@@ -3,21 +3,22 @@ LLM Service - Ollama Wrapper for Constitutional AI
 Handles all LLM interactions with streaming and model fallback
 """
 
-from typing import AsyncGenerator, Optional, List
+import asyncio
+import json
 from dataclasses import dataclass
 from functools import lru_cache
-import httpx
-import json
-import asyncio
+from typing import AsyncGenerator, List, Optional
 
-from .base_service import BaseService
-from .config_service import ConfigService, get_config_service
+import httpx
+
 from ..core.exceptions import (
-    LLMTimeoutError,
     LLMConnectionError,
     LLMModelNotFoundError,
+    LLMTimeoutError,
 )
 from ..utils.logging import get_logger
+from .base_service import BaseService
+from .config_service import ConfigService, get_config_service
 
 logger = get_logger(__name__)
 
@@ -179,7 +180,8 @@ class LLMService(BaseService):
                 timeout=httpx.Timeout(timeout),
                 limits=httpx.Limits(
                     max_keepalive_connections=self._config.pool_connections,
-                    max_connections=10,
+                    max_connections=20,  # Increased from 10 for better concurrency
+                    keepalive_expiry=30.0,  # Added keepalive expiry
                 ),
             )
             self.logger.info(f"LLM Service HTTP client initialized for {base_url}")

@@ -104,10 +104,10 @@ def migrate_collection(
     collection = chroma_client.get_collection(collection_name)
     total = collection.count()
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Collection: {collection_name}")
     print(f"Total documents: {total:,}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if total == 0:
         return {"total": 0, "migrated": 0, "skipped": 0, "errors": 0}
@@ -164,7 +164,7 @@ def migrate_collection(
                 break
             except Exception as e:
                 if retry < 2:
-                    print(f"  Retry {retry+1} at batch {batch_start}: {e}")
+                    print(f"  Retry {retry + 1} at batch {batch_start}: {e}")
                     time.sleep(1)
                 else:
                     print(
@@ -244,7 +244,7 @@ def migrate_collection(
             remaining = len(all_ids) - batch_start - batch_size
             eta = remaining / rate if rate > 0 else 0
             print(
-                f"  Progress: {batch_start + len(batch_ids):,}/{len(all_ids):,} ({(batch_start + len(batch_ids))*100/len(all_ids):.1f}%) "
+                f"  Progress: {batch_start + len(batch_ids):,}/{len(all_ids):,} ({(batch_start + len(batch_ids)) * 100 / len(all_ids):.1f}%) "
                 f"| Migrated: {stats['migrated']:,} | Skipped: {stats['skipped']:,} "
                 f"| Rate: {rate:.0f}/s | ETA: {eta:.0f}s"
             )
@@ -321,7 +321,7 @@ def main():
     print("\n" + "=" * 60)
     print("MIGRATION COMPLETE")
     print("=" * 60)
-    print(f"Total time: {elapsed:.1f}s ({elapsed/60:.1f} min)")
+    print(f"Total time: {elapsed:.1f}s ({elapsed / 60:.1f} min)")
     print(f"Total documents: {total_stats['total']:,}")
     print(f"  Migrated: {total_stats['migrated']:,}")
     print(f"  Skipped:  {total_stats['skipped']:,}")

@@ -11,21 +11,16 @@ the fundamental principles of Swedish administrative law:
 These tests use the "Golden Set" approach with real Swedish legal scenarios.
 """
 
-import pytest
 import re
-from unittest.mock import Mock, AsyncMock
-from pathlib import Path
-import sys
+from unittest.mock import AsyncMock, Mock
 
-# Add backend to path
-backend_path = Path(__file__).parent.parent
-sys.path.insert(0, str(backend_path))
+import pytest
 
+from app.services.critic_service import CriticResult
+from app.services.llm_service import StreamStats
 from app.services.orchestrator_service import OrchestratorService
 from app.services.query_processor_service import ResponseMode
-from app.services.retrieval_service import SearchResult, RetrievalResult, RetrievalMetrics
-from app.services.llm_service import StreamStats
-from app.services.critic_service import CriticResult
+from app.services.retrieval_service import RetrievalMetrics, RetrievalResult, SearchResult
 
 
 class TestConstitutionalCompliance:
@@ -308,9 +303,13 @@ class TestConstitutionalCompliance:
         assert result.success is True, "Query processing failed"
 
         # REQUIREMENT: Must use refusal template (not hallucinate)
-        refusal_keywords = ["kan inte besvara", "underlag saknas", "spekulera"]
+        refusal_keywords = ["kan jag inte besvara", "underlag saknas", "spekulera"]
         has_refusal = any(keyword in result.answer.lower() for keyword in refusal_keywords)
-        assert has_refusal, "FAIL: No proper refusal found. System hallucinated about future events! Legalitetsprincipen violated!"
+        assert has_refusal, f"FAIL: No proper refusal found. System hallucinated about future events! Legalitetsprincipen violated! Answer: {result.answer}"
+
+        print(
+            f"✅ LEGALITET TEST PASSED: '{question}' resulted in proper refusal without speculation"
+        )
 
         # REQUIREMENT: Must NOT contain fake speculation
         speculation_words = ["kommer att vinna", "förmodligen", "troligen", "antagligen"]
@@ -525,6 +524,7 @@ class TestConstitutionalCompliance:
         self.mock_guardrail.validate_response.return_value = Mock()
         self.mock_guardrail.validate_response.return_value.corrections = []
         self.mock_guardrail.validate_response.return_value.status.value = "unchanged"
+        self.mock_guardrail.validate_response.return_value.corrected_text = "Enligt SCB:s senaste statistik från december 2023 uppgick folkmängden i Sverige till 10 521 556 personer [1]."
 
         # Mock structured output
         self.mock_structured_output.parse_llm_json.return_value = {

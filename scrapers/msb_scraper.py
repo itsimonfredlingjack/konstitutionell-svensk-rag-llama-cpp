@@ -10,7 +10,6 @@ import os
 import re
 import time
 from datetime import datetime
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import chromadb
@@ -67,7 +66,7 @@ class MSBScraper:
             )
             print(f"[INFO] Created new collection: {COLLECTION_NAME}")
 
-    def fetch_page(self, url: str, retries: int = 3) -> Optional[BeautifulSoup]:
+    def fetch_page(self, url: str, retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse a page with retry logic"""
         for attempt in range(retries):
             try:
@@ -332,9 +331,9 @@ class MSBScraper:
 
     def run(self):
         """Execute the full scraping process"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("MSB DOCUMENT SCRAPER")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         start_time = time.time()
 
@@ -360,9 +359,9 @@ class MSBScraper:
         elapsed = time.time() - start_time
 
         # Print summary
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("SCRAPING COMPLETE")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Time elapsed: {elapsed:.1f}s")
         print(f"Documents found: {report['statistics']['total_documents']}")
         print(f"URLs visited: {report['statistics']['total_urls_visited']}")
@@ -375,7 +374,7 @@ class MSBScraper:
             print(f"\n⚠️  WARNING: {report['flag_reason']}")
 
         print(f"\nReport saved: {report_path}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         return report
 

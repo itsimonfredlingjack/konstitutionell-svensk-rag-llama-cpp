@@ -11,21 +11,21 @@ Tests cover:
 
 import pytest
 from app.services.query_rewriter import (
+    AUTHORITIES,
+    ENTITY_PATTERNS,
+    LEGAL_ABBREVIATIONS,
+    SWEDISH_PRONOUNS,
     QueryRewriter,
     RewriteResult,
     validate_must_include,
     validate_no_hallucination,
     validate_sanity,
-    ENTITY_PATTERNS,
-    LEGAL_ABBREVIATIONS,
-    AUTHORITIES,
-    SWEDISH_PRONOUNS,
 )
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FIXTURES
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def rewriter():
@@ -125,6 +125,7 @@ def test_empty_history_list_no_change(rewriter):
 # ENTITY EXTRACTION TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEntityExtraction:
     """Tests for entity extraction from text."""
 
@@ -189,8 +190,8 @@ class TestEntityExtraction:
 
         types_found = {e["type"] for e in entities}
         assert "myndighet" in types_found  # IMY
-        assert "lag" in types_found        # GDPR
-        assert "sfs" in types_found        # 2018:218
+        assert "lag" in types_found  # GDPR
+        assert "sfs" in types_found  # 2018:218
 
     def test_entity_confidence_scores(self, rewriter):
         """Extracted entities should have confidence scores."""
@@ -206,22 +207,28 @@ class TestEntityExtraction:
 # NEEDS_REWRITE DETECTION TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestNeedsRewrite:
     """Tests for detecting when rewrite is needed."""
 
-    @pytest.mark.parametrize("query,expected", [
-        ("Vad säger den?", True),           # 'den' pronoun
-        ("Hur fungerar det?", True),        # 'det' pronoun
-        ("Dessa regler?", True),            # 'dessa' pronoun
-        ("Vad säger GDPR?", False),         # Explicit entity
-        ("OSL 21 kap sekretess", False),    # Multiple explicit entities
-        ("Hur?", True),                     # Very short, no entities
-        ("AB", True),                       # Very short, no entities
-    ])
+    @pytest.mark.parametrize(
+        "query,expected",
+        [
+            ("Vad säger den?", True),  # 'den' pronoun
+            ("Hur fungerar det?", True),  # 'det' pronoun
+            ("Dessa regler?", True),  # 'dessa' pronoun
+            ("Vad säger GDPR?", False),  # Explicit entity
+            ("OSL 21 kap sekretess", False),  # Multiple explicit entities
+            ("Hur?", True),  # Very short, no entities
+            ("AB", True),  # Very short, no entities
+        ],
+    )
     def test_needs_rewrite_detection(self, rewriter, query, expected):
         """Test detection of queries needing decontextualization."""
         result = rewriter.needs_rewrite(query)
-        assert result == expected, f"Query '{query}' should {'need' if expected else 'not need'} rewrite"
+        assert (
+            result == expected
+        ), f"Query '{query}' should {'need' if expected else 'not need'} rewrite"
 
     def test_swedish_pronouns_trigger_rewrite(self, rewriter):
         """All Swedish pronouns should trigger need for rewrite."""
@@ -233,6 +240,7 @@ class TestNeedsRewrite:
 # ═══════════════════════════════════════════════════════════════════════════
 # GUARDRAIL TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestGuardrails:
     """Tests for guardrail validation functions."""
@@ -309,6 +317,7 @@ class TestGuardrails:
 # REWRITE RESULT TESTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestRewriteResult:
     """Tests for RewriteResult dataclass and output."""
 
@@ -350,12 +359,12 @@ class TestRewriteResult:
 # CONSTANTS VALIDATION
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestConstants:
     """Verify pattern constants are properly configured."""
 
     def test_sfs_pattern_matches_valid(self):
         """SFS pattern should match valid SFS numbers."""
-        import re
         pattern = ENTITY_PATTERNS["sfs"]
 
         valid_sfs = ["1998:204", "2018:218", "2024:1", "1900:100"]
@@ -382,6 +391,7 @@ class TestConstants:
 # ═══════════════════════════════════════════════════════════════════════════
 # INTEGRATION TESTS
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestIntegration:
     """Integration tests for complete rewrite flow."""

@@ -1,17 +1,20 @@
 """
 GPU Panel - Live nvidia-smi stats for Mission Control layout.
 """
+
 import asyncio
+import contextlib
 from dataclasses import dataclass
-from typing import Optional
+
+from rich import box
 from rich.panel import Panel
 from rich.text import Text
-from rich import box
 
 
 @dataclass
 class GPUStats:
     """GPU statistics from nvidia-smi."""
+
     name: str = "N/A"
     temp: int = 0
     vram_used: float = 0.0
@@ -25,11 +28,11 @@ async def get_gpu_stats() -> GPUStats:
     """Query nvidia-smi and return GPU stats."""
     try:
         proc = await asyncio.create_subprocess_exec(
-            'nvidia-smi',
-            '--query-gpu=name,temperature.gpu,memory.used,memory.total,utilization.gpu,power.draw',
-            '--format=csv,noheader,nounits',
+            "nvidia-smi",
+            "--query-gpu=name,temperature.gpu,memory.used,memory.total,utilization.gpu,power.draw",
+            "--format=csv,noheader,nounits",
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await proc.communicate()
 
@@ -38,17 +41,17 @@ async def get_gpu_stats() -> GPUStats:
 
         # Parse: "NVIDIA GeForce RTX 4070, 45, 2100, 12288, 67, 120.5"
         line = stdout.decode().strip()
-        parts = [p.strip() for p in line.split(',')]
+        parts = [p.strip() for p in line.split(",")]
 
         if len(parts) >= 6:
             return GPUStats(
-                name=parts[0].replace('NVIDIA GeForce ', '').replace('NVIDIA ', ''),
+                name=parts[0].replace("NVIDIA GeForce ", "").replace("NVIDIA ", ""),
                 temp=int(parts[1]),
                 vram_used=float(parts[2]) / 1024,  # MB -> GB
                 vram_total=float(parts[3]) / 1024,  # MB -> GB
                 gpu_util=int(parts[4]),
                 power=int(float(parts[5])),
-                available=True
+                available=True,
             )
     except FileNotFoundError:
         pass
@@ -119,7 +122,7 @@ def render_gpu_panel(stats: GPUStats) -> Panel:
         box=box.ROUNDED,
         style="dim",
         padding=(0, 1),
-        width=17
+        width=17,
     )
 
 
@@ -148,7 +151,7 @@ def render_tokens_panel(tokens_per_second: float = 0.0, is_streaming: bool = Fal
         box=box.ROUNDED,
         style="dim",
         padding=(0, 1),
-        width=17
+        width=17,
     )
 
 
@@ -175,11 +178,11 @@ def render_status_panel(status: str = "Ready", connected: bool = False) -> Panel
         box=box.ROUNDED,
         style="dim",
         padding=(0, 1),
-        width=17
+        width=17,
     )
 
 
-def render_models_panel(models: list = None, active_model: str = None) -> Panel:
+def render_models_panel(models: list | None = None, active_model: str | None = None) -> Panel:
     """Render available models panel."""
     text = Text()
 
@@ -201,11 +204,11 @@ def render_models_panel(models: list = None, active_model: str = None) -> Panel:
         box=box.ROUNDED,
         style="dim",
         padding=(0, 1),
-        width=17
+        width=17,
     )
 
 
-def render_history_panel(messages: list = None) -> Panel:
+def render_history_panel(messages: list | None = None) -> Panel:
     """Render message history panel."""
     text = Text()
 
@@ -229,7 +232,7 @@ def render_history_panel(messages: list = None) -> Panel:
         box=box.ROUNDED,
         style="dim",
         padding=(0, 1),
-        width=17
+        width=17,
     )
 
 
@@ -247,17 +250,16 @@ def render_commands_panel() -> Panel:
         box=box.ROUNDED,
         style="dim",
         padding=(0, 1),
-        width=17
+        width=17,
     )
 
 
 # === GPU POLLING TASK ===
 
+
 async def gpu_poll_loop(state, interval: float = 2.0):
     """Background task that updates GPU stats periodically."""
-    while getattr(state, 'running', True):
-        try:
+    while getattr(state, "running", True):
+        with contextlib.suppress(Exception):
             state.gpu_stats = await get_gpu_stats()
-        except Exception:
-            pass
         await asyncio.sleep(interval)

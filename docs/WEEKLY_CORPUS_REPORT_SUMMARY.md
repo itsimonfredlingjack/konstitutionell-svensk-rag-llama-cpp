@@ -294,8 +294,8 @@ cat corpus_reports/$(ls -t corpus_reports/ | head -1)
 # Install required packages
 pip install chromadb pdfplumber
 
-# Or from existing project requirements
-cd juridik-ai
+# Use project-specific requirements
+cd backend
 pip install -r requirements.txt
 ```
 

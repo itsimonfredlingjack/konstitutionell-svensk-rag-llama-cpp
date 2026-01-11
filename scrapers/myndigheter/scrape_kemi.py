@@ -291,7 +291,7 @@ class KemiScraper:
                 )
 
                 indexed += len(batch)
-                print(f"  Batch {i//batch_size + 1}: {indexed}/{len(documents)}")
+                print(f"  Batch {i // batch_size + 1}: {indexed}/{len(documents)}")
 
             final_count = collection.count()
             print(f"\n CHROMADB: {final_count:,} total documents in collection")
@@ -353,10 +353,10 @@ class KemiScraper:
 ║                      SCRAPE COMPLETE                              ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║  Total documents:  {len(self.documents):>4}                                       ║
-║  Pages crawled:    {self.stats['crawled']:>4}                                       ║
-║  Extracted:        {self.stats['extracted']:>4}                                       ║
-║  Errors:           {self.stats['errors']:>4}                                       ║
-║  Time:             {elapsed/60:>4.1f} min                                      ║
+║  Pages crawled:    {self.stats["crawled"]:>4}                                       ║
+║  Extracted:        {self.stats["extracted"]:>4}                                       ║
+║  Errors:           {self.stats["errors"]:>4}                                       ║
+║  Time:             {elapsed / 60:>4.1f} min                                      ║
 ║                                                                   ║
 ║  BY TYPE:                                                         ║
 """)

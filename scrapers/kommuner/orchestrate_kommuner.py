@@ -25,7 +25,6 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 # Rich for beautiful terminal output
 try:
@@ -81,13 +80,13 @@ class KommunTask:
     url: str
     priority: int
     status: str = "pending"  # pending, running, done, failed, skipped
-    started_at: Optional[str] = None
-    finished_at: Optional[str] = None
+    started_at: str | None = None
+    finished_at: str | None = None
     pdfs_found: int = 0
     pdfs_downloaded: int = 0
     bytes_total: int = 0
     pages_visited: int = 0
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class HarvestState:
@@ -457,7 +456,7 @@ class HarvestOrchestrator:
 
             self.console.print(table)
         else:
-            print(f"\n{'='*50}")
+            print(f"\n{'=' * 50}")
             print(f"Progress: {completed}/{total} ({pct:.1f}%)")
             print(f"  Success: {done}, Failed: {failed}, Skipped: {skipped}")
             print(f"  Running: {running}, Pending: {pending}")
@@ -465,7 +464,7 @@ class HarvestOrchestrator:
                 f"PDFs: {progress['total_pdfs_found']:,} found, {progress['total_pdfs_downloaded']:,} downloaded"
             )
             print(f"Size: {total_gb:.2f} GB")
-            print(f"{'='*50}\n")
+            print(f"{'=' * 50}\n")
 
     def print_recent(self, limit: int = 5):
         """Print recently completed tasks."""
@@ -576,10 +575,10 @@ class HarvestOrchestrator:
                 )
             )
         else:
-            print(f"\n{'='*50}")
+            print(f"\n{'=' * 50}")
             print("Kommun Document Harvest")
             print(f"Total: {total} kommuner, Workers: {self.max_workers}")
-            print(f"{'='*50}\n")
+            print(f"{'=' * 50}\n")
 
         # Show initial progress
         self.print_progress()

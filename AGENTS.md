@@ -84,8 +84,9 @@ NEVER claim missing without checking. ALWAYS: `grep -r "@router" backend/app/api
 - `BUILD_MODE_COMPLETE.md` - System status
 
 ## Testing Notes
-Python: `backend/tests/`, `juridik-ai/tests/`, single test: `pytest tests/test_file.py::test_func -v`, pattern: `pytest -k "test_search" -v`.
+Python: `tests/`, `backend/tests/`, single test: `python -m pytest tests/test_file.py::test_func -v`, pattern: `python -m pytest -k "test_search" -v`.
 Frontend: Vitest in apps, single test: `npm test -- src/test.test.ts`.
+
 
 ## Service Management
 ```bash

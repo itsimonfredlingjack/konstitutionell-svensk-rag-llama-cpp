@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import sys
 import time
-from typing import Any, Optional
+from typing import Any
 
 try:
     from flask import Flask, jsonify, render_template, request
@@ -20,7 +20,7 @@ except ModuleNotFoundError as e:  # pragma: no cover
             file=sys.stderr,
             flush=True,
         )
-        raise SystemExit(1)
+        raise SystemExit(1) from e
     raise
 
 try:
@@ -45,14 +45,14 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 _SERVER_START_TS = time.time()
 
 
-def _file_mtime(path: str) -> Optional[float]:
+def _file_mtime(path: str) -> float | None:
     try:
         return float(os.path.getmtime(path))
     except Exception:
         return None
 
 
-def _require_auth() -> Optional[str]:
+def _require_auth() -> str | None:
     """Returns an error string if auth fails, otherwise None."""
     if not CONFIG.enable_auth:
         return None

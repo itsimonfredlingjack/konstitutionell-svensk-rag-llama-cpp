@@ -3,13 +3,13 @@ Embedding Service - Singleton SentenceTransformer Wrapper
 Manages sentence-transformer embedding model with lazy loading
 """
 
-from typing import List, Optional
 from functools import lru_cache
+from typing import List, Optional
 
 from sentence_transformers import SentenceTransformer
 
-from .config_service import ConfigService, get_config_service
 from ..utils.logging import get_logger
+from .config_service import ConfigService, get_config_service
 
 logger = get_logger(__name__)
 

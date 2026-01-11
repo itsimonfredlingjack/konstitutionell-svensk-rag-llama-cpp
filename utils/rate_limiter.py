@@ -8,7 +8,6 @@ import threading
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Optional
 
 # Rate limits per kommun type
 RATE_LIMITS = {
@@ -225,7 +224,7 @@ class GlobalRateLimitManager:
 
 
 # Global instance for shared use
-_global_manager: Optional[GlobalRateLimitManager] = None
+_global_manager: GlobalRateLimitManager | None = None
 
 
 def get_rate_limit_manager() -> GlobalRateLimitManager:
@@ -258,13 +257,13 @@ if __name__ == "__main__":
 
     for i in range(5):
         wait_time = limiter.wait()
-        print(f"Request {i+1}: waited {wait_time:.2f}s")
+        print(f"Request {i + 1}: waited {wait_time:.2f}s")
         limiter.record_success(0.5)
 
     print("\nSimulating errors...")
     for i in range(3):
         limiter.record_error(is_rate_limit=True)
-        print(f"After error {i+1}: delay = {limiter.current_delay:.2f}s")
+        print(f"After error {i + 1}: delay = {limiter.current_delay:.2f}s")
 
     print("\nFinal stats:")
     print(limiter.get_stats())

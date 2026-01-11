@@ -12,7 +12,6 @@ import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import aiohttp
@@ -34,9 +33,9 @@ class Document:
     title: str
     doc_type: str  # LIVSFS, rapport, vägledning, kontroll
     content: str
-    published_date: Optional[str] = None
-    document_id: Optional[str] = None
-    metadata: Optional[dict] = None
+    published_date: str | None = None
+    document_id: str | None = None
+    metadata: dict | None = None
 
     def to_dict(self):
         return asdict(self)
@@ -73,7 +72,7 @@ class LivesmedelsverketScraper:
         self.delay = delay
 
         self.ua = UserAgent()
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.documents: list[Document] = []
         self.seen_urls: set[str] = set()
         self.errors: list[dict] = []
@@ -99,7 +98,7 @@ class LivesmedelsverketScraper:
         if self.session:
             await self.session.close()
 
-    async def fetch(self, url: str) -> Optional[str]:
+    async def fetch(self, url: str) -> str | None:
         """Fetch URL with retries"""
         for attempt in range(3):
             try:
@@ -114,7 +113,7 @@ class LivesmedelsverketScraper:
                     else:
                         logger.warning(f"Status {response.status} for {url}")
             except asyncio.TimeoutError:
-                logger.warning(f"Timeout attempt {attempt+1}/3 for {url}")
+                logger.warning(f"Timeout attempt {attempt + 1}/3 for {url}")
                 await asyncio.sleep(2**attempt)
             except Exception as e:
                 logger.error(f"Error fetching {url}: {e}")
@@ -123,7 +122,7 @@ class LivesmedelsverketScraper:
                 return None
         return None
 
-    def extract_date(self, text: str) -> Optional[str]:
+    def extract_date(self, text: str) -> str | None:
         """Extract date from text"""
         patterns = [
             r"\d{4}-\d{2}-\d{2}",
@@ -507,7 +506,7 @@ class LivesmedelsverketScraper:
 
                 stored_count += len(batch)
                 logger.info(
-                    f"Stored batch {i//batch_size + 1}: {stored_count}/{len(self.documents)}"
+                    f"Stored batch {i // batch_size + 1}: {stored_count}/{len(self.documents)}"
                 )
 
             self.stats["total_docs_stored"] = stored_count

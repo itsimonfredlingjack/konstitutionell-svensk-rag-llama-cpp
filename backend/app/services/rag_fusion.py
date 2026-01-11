@@ -14,11 +14,11 @@ Reference:
 - k=60 is the standard value from the original paper
 """
 
+import logging
 import re
 import time
-import logging
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger("constitutional.rag_fusion")
 

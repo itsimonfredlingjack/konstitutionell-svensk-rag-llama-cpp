@@ -7,18 +7,18 @@ Purpose: Filter out irrelevant documents before generation to prevent
          context pollution and improve answer quality
 """
 
-from typing import List, Optional, Dict, Any
-from dataclasses import dataclass
-from functools import lru_cache
+import asyncio
 import json
 import time
-import asyncio
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import Any, Dict, List, Optional
 
+from ..utils.logging import get_logger
 from .base_service import BaseService
 from .config_service import ConfigService, get_config_service
-from .retrieval_service import SearchResult
 from .llm_service import LLMService, get_llm_service
-from ..utils.logging import get_logger
+from .retrieval_service import SearchResult
 
 logger = get_logger(__name__)
 
@@ -388,8 +388,8 @@ FRÅGA: {query}
 
 DOKUMENT:
 Titel: {document.title}
-Typ: {document.doc_type or 'Okänd'}
-Datum: {document.date or 'Okänt'}
+Typ: {document.doc_type or "Okänd"}
+Datum: {document.date or "Okänt"}
 Innehåll: {document.snippet}
 
 KONSTITUTIONELLA REGLER FÖR RELEVANS:

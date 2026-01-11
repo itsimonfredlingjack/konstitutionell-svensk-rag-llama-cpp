@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -87,9 +87,9 @@ class HarvestStats:
     batches_processed: int = 0
     errors: int = 0
     start_time: datetime = field(default_factory=datetime.now)
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
     rate_limit_hits: int = 0
-    last_resumption_token: Optional[str] = None
+    last_resumption_token: str | None = None
 
 
 def parse_mods_record(record_elem) -> dict[str, Any]:
@@ -284,7 +284,7 @@ def parse_dc_record(record_elem) -> dict[str, Any]:
     for field_name, xpath in dc_mappings.items():
         elements = dc.findall(xpath, NAMESPACES)
         if not elements:
-            elements = dc.findall(f'.//{{{NAMESPACES["dc"]}}}{field_name.split(":")[-1]}')
+            elements = dc.findall(f".//{{{NAMESPACES['dc']}}}{field_name.split(':')[-1]}")
 
         values = [e.text for e in elements if e.text]
         if len(values) == 1:
@@ -314,13 +314,13 @@ def harvest_university(
     documents = []
     resumption_token = None
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"HARVESTING: {config.name} ({config.code})")
     print(f"Endpoint: {config.base_url}")
     print(f"Format: {config.metadata_prefix}")
     print(f"Total available: {config.total_docs:,} docs")
     print(f"Target: {max_docs:,} docs")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Determine parser based on metadata format
     if "mods" in config.metadata_prefix.lower():
@@ -489,7 +489,7 @@ def main():
     DiVA MEGA-SCRAPE - Batch 1
     =============================================
     Target docs per university: {max_docs:,}
-    Universities: {', '.join(selected_unis)}
+    Universities: {", ".join(selected_unis)}
     Output directory: {output_dir}
     Rate limit: 1 req/sec
     =============================================
@@ -507,9 +507,9 @@ def main():
         all_stats.append(stats)
 
     # Final report
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("OPERATION COMPLETE - FINAL REPORT")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     total_docs = 0
     total_errors = 0

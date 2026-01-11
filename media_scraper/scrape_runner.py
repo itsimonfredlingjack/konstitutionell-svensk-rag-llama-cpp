@@ -8,13 +8,12 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 DATA_DIR = Path("/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/media_scraper/data")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def extract_sr_article(scrape_result: dict) -> Optional[dict]:
+def extract_sr_article(scrape_result: dict) -> dict | None:
     """Extract article from Sveriges Radio scrape result"""
     metadata = scrape_result.get("metadata", {})
 
@@ -48,7 +47,7 @@ def extract_sr_article(scrape_result: dict) -> Optional[dict]:
     }
 
 
-def extract_svt_article(scrape_result: dict) -> Optional[dict]:
+def extract_svt_article(scrape_result: dict) -> dict | None:
     """Extract article from SVT Nyheter scrape result"""
     metadata = scrape_result.get("metadata", {})
 
@@ -80,7 +79,7 @@ def extract_svt_article(scrape_result: dict) -> Optional[dict]:
     }
 
 
-def extract_svd_article(scrape_result: dict) -> Optional[dict]:
+def extract_svd_article(scrape_result: dict) -> dict | None:
     """Extract article from SVD scrape result"""
     metadata = scrape_result.get("metadata", {})
 

@@ -11,7 +11,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin, urlparse
 
 import chromadb
@@ -113,7 +112,7 @@ class LantmaterietScraper:
 
         return pdf_links
 
-    def download_pdf(self, url: str) -> Optional[bytes]:
+    def download_pdf(self, url: str) -> bytes | None:
         """Download PDF content"""
         try:
             response = self.session.get(url, timeout=60)
