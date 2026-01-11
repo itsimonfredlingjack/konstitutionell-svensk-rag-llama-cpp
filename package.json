@@ -1,5 +1,9 @@
 {
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.6",
+    "typescript": "^5.9.3"
   }
 }

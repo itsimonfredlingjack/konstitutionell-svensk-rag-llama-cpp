@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Clock, CornerDownLeft, History, Pencil, Play, X } from 'lucide-react';
+import { Clock, CornerDownLeft, History, Pencil, Play, X, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 
@@ -19,7 +19,7 @@ export function QueryBar({ onOpenHistory, className }: QueryBarProps) {
 
     const [isEditing, setIsEditing] = useState(false);
     const [draft, setDraft] = useState(submittedQuery);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         // Keep draft in sync when not editing.
@@ -28,9 +28,24 @@ export function QueryBar({ onOpenHistory, className }: QueryBarProps) {
 
     useEffect(() => {
         if (!isEditing) return;
-        const t = setTimeout(() => inputRef.current?.focus(), 0);
+        const t = setTimeout(() => {
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+                // Auto-resize on open
+                textareaRef.current.style.height = 'auto';
+                textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+            }
+        }, 0);
         return () => clearTimeout(t);
     }, [isEditing]);
+
+    // Auto-resize on typing
+    useEffect(() => {
+        if (isEditing && textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
+    }, [draft, isEditing]);
 
     const recent = useMemo(() => queryHistory.slice(0, 6), [queryHistory]);
 
@@ -90,25 +105,26 @@ export function QueryBar({ onOpenHistory, className }: QueryBarProps) {
                                     exit={{ opacity: 0, y: -3 }}
                                     className="flex items-center gap-2"
                                 >
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white/80 border-teal-700/30">
-                                        <input
-                                            ref={inputRef}
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl border bg-white/80 border-teal-700/30">
+                                        <textarea
+                                            ref={textareaRef}
                                             value={draft}
                                             onChange={(e) => setDraft(e.target.value)}
                                             placeholder="Type a new query…"
-                                            className="w-[420px] max-w-[52vw] bg-transparent text-[13px] font-mono text-stone-900 placeholder-stone-400 outline-none"
+                                            rows={1}
+                                            className="w-[420px] max-w-[52vw] bg-transparent text-[13px] font-mono text-stone-900 placeholder-stone-400 outline-none resize-none overflow-hidden"
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Escape') {
                                                     setIsEditing(false);
                                                     setDraft(submittedQuery);
                                                 }
-                                                if (e.key === 'Enter') {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
                                                     e.preventDefault();
                                                     run(draft);
                                                 }
                                             }}
                                         />
-                                        <span className="text-[10px] font-mono text-stone-500 hidden md:inline-flex items-center gap-1">
+                                        <span className="text-[10px] font-mono text-stone-500 hidden md:inline-flex items-center gap-1 self-end mb-1">
                                             Enter <CornerDownLeft className="w-3 h-3 opacity-60" strokeWidth={1.5} />
                                         </span>
                                     </div>
@@ -117,12 +133,12 @@ export function QueryBar({ onOpenHistory, className }: QueryBarProps) {
                                         onClick={() => run(draft)}
                                         disabled={!draft.trim() || isSearching}
                                         className={clsx(
-                                            "px-3 py-1.5 rounded-full border font-mono text-[11px] uppercase tracking-wider",
+                                            "px-3 py-1.5 rounded-full border font-mono text-[11px] uppercase tracking-wider h-[32px] flex items-center justify-center min-w-[50px]",
                                             "bg-teal-50 border-teal-100 text-stone-800 hover:bg-teal-100 transition-colors",
                                             (!draft.trim() || isSearching) && "opacity-50 cursor-not-allowed hover:bg-teal-50"
                                         )}
                                     >
-                                        Run
+                                        {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Run'}
                                     </button>
                                     <button
                                         type="button"
@@ -164,7 +180,7 @@ export function QueryBar({ onOpenHistory, className }: QueryBarProps) {
                         )}
                         title="Run again"
                     >
-                        <Play className="w-4 h-4" strokeWidth={1.6} />
+                        {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" strokeWidth={1.6} />}
                         <span className="text-[11px] font-mono uppercase tracking-wider">Run</span>
                     </button>
 

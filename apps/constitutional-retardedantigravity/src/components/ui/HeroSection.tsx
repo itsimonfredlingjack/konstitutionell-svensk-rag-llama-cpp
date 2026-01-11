@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import { Search, Map, Shield, FileText, Zap, ChevronRight, CornerDownLeft } from 'lucide-react';
+import { Search, Map, Shield, FileText, Zap, ChevronRight, CornerDownLeft, Loader2 } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 // Color mapping for Tailwind classes (must be explicit for build-time)
 const COLOR_CLASSES = {
@@ -44,13 +44,28 @@ const GLASS_CARDS = [
 ];
 
 export function HeroSection() {
-    const { query, setQuery, startSearch } = useAppStore();
+    const { query, setQuery, startSearch, isSearching } = useAppStore();
     const [activeMode, setActiveMode] = useState<'verify' | 'summarize' | 'compare'>('verify');
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (query.trim()) startSearch();
     };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (query.trim()) startSearch();
+        }
+    };
+
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
+    }, [query]);
 
     return (
         <div className="flex flex-col items-center justify-center w-full max-w-4xl mx-auto mt-[10vh]">
@@ -82,20 +97,32 @@ export function HeroSection() {
                     <div className="absolute inset-0 bg-teal-500/10 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     <div className="relative bg-white/80 border border-stone-300 backdrop-blur-xl rounded-2xl p-2 flex items-center transition-all focus-within:bg-white focus-within:border-teal-600 focus-within:ring-1 focus-within:ring-teal-600/20 shadow-lg hover:border-stone-400">
-                        <Search className="w-6 h-6 text-slate-700 ml-4" strokeWidth={1.5} />
-                        <input
-                            type="text"
+                        <Search className="w-6 h-6 text-slate-700 ml-4 self-start mt-4" strokeWidth={1.5} />
+                        <textarea
+                            ref={textareaRef}
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            disabled={isSearching}
                             placeholder="Enter query to verify against constitutional framework..."
-                            className="flex-1 bg-transparent border-none text-lg text-stone-900 font-medium placeholder-stone-400 p-4 focus:ring-0 focus:outline-none tracking-wide"
+                            rows={1}
+                            className="flex-1 bg-transparent border-none text-lg text-stone-900 font-medium placeholder-stone-400 p-4 focus:ring-0 focus:outline-none tracking-wide resize-none overflow-hidden"
+                            style={{ minHeight: '60px' }}
                         />
-                        <div className="mr-4 flex items-center gap-3">
+                        <div className="mr-4 flex items-center gap-3 self-start mt-3">
                             <span className="text-[10px] font-mono text-stone-500 bg-stone-100 px-2 py-1 rounded border border-stone-200 hidden md:block">
                                 Enter <CornerDownLeft className="w-3 h-3 inline ml-1 text-slate-700 opacity-50" strokeWidth={1.5} />
                             </span>
-                            <button type="submit" className="p-2 bg-teal-50 rounded-xl text-slate-700 hover:bg-teal-100 transition-all hover:scale-105 active:scale-95 border border-teal-100">
-                                <ChevronRight className="w-5 h-5" strokeWidth={1.5} />
+                            <button
+                                type="submit"
+                                disabled={isSearching}
+                                className="p-2 bg-teal-50 rounded-xl text-slate-700 hover:bg-teal-100 transition-all hover:scale-105 active:scale-95 border border-teal-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSearching ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5" strokeWidth={1.5} />
+                                )}
                             </button>
                         </div>
                     </div>
