@@ -119,3 +119,4 @@ node_modules/
 
 # Felaktig frontend-mapp (använd /apps/constitutional-retardedantigravity/ istället)
 frontend/
+tools/rag-tester/data/ratings.db

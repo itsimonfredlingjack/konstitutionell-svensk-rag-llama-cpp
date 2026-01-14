@@ -1,0 +1,214 @@
+{
+  "questions": [
+    {
+      "id": "sfs-001",
+      "category": "sfs",
+      "question": "Vad säger GDPR om samtycke för personuppgiftsbehandling?"
+    },
+    {
+      "id": "sfs-002",
+      "category": "sfs",
+      "question": "Vilka rättigheter har en arbetstagare enligt LAS vid uppsägning?"
+    },
+    {
+      "id": "sfs-003",
+      "category": "sfs",
+      "question": "Vad innebär offentlighetsprincipen enligt tryckfrihetsförordningen?"
+    },
+    {
+      "id": "sfs-004",
+      "category": "sfs",
+      "question": "Hur regleras allemansrätten i svensk lag?"
+    },
+    {
+      "id": "sfs-005",
+      "category": "sfs",
+      "question": "Vilka krav ställs på dataskyddsombud enligt GDPR?"
+    },
+    {
+      "id": "sfs-006",
+      "category": "sfs",
+      "question": "Vad säger miljöbalken om tillstånd för miljöfarlig verksamhet?"
+    },
+    {
+      "id": "sfs-007",
+      "category": "sfs",
+      "question": "Hur definieras diskriminering i diskrimineringslagen?"
+    },
+    {
+      "id": "sfs-008",
+      "category": "sfs",
+      "question": "Vilka regler gäller för föräldraledighet enligt föräldraledighetslagen?"
+    },
+    {
+      "id": "sfs-009",
+      "category": "sfs",
+      "question": "Vad innebär strikt ansvar enligt skadeståndslagen?"
+    },
+    {
+      "id": "sfs-010",
+      "category": "sfs",
+      "question": "Hur regleras barnets bästa i föräldrabalken?"
+    },
+    {
+      "id": "motion-001",
+      "category": "motion",
+      "question": "Vilka motioner har lagts fram om klimatpolitik de senaste åren?"
+    },
+    {
+      "id": "motion-002",
+      "category": "motion",
+      "question": "Finns det riksdagsmotioner om reformering av arbetsrätten?"
+    },
+    {
+      "id": "motion-003",
+      "category": "motion",
+      "question": "Vad har riksdagen föreslagit angående integration av nyanlända?"
+    },
+    {
+      "id": "motion-004",
+      "category": "motion",
+      "question": "Vilka förslag finns om skattereformer i riksdagsmotioner?"
+    },
+    {
+      "id": "motion-005",
+      "category": "motion",
+      "question": "Har det lagts fram motioner om digital infrastruktur på landsbygden?"
+    },
+    {
+      "id": "motion-006",
+      "category": "motion",
+      "question": "Vilka riksdagsmotioner behandlar äldrevården?"
+    },
+    {
+      "id": "motion-007",
+      "category": "motion",
+      "question": "Finns det motioner om att reformera skolsystemet?"
+    },
+    {
+      "id": "motion-008",
+      "category": "motion",
+      "question": "Vad föreslås i motioner om bostadsbristen?"
+    },
+    {
+      "id": "motion-009",
+      "category": "motion",
+      "question": "Vilka motioner handlar om gängkriminalitet?"
+    },
+    {
+      "id": "motion-010",
+      "category": "motion",
+      "question": "Finns det förslag om förändring av pensionssystemet?"
+    },
+    {
+      "id": "sou-001",
+      "category": "sou",
+      "question": "Vilka statliga utredningar har gjorts om artificiell intelligens?"
+    },
+    {
+      "id": "sou-002",
+      "category": "sou",
+      "question": "Vad säger utredningar om framtidens arbetsmarknad?"
+    },
+    {
+      "id": "sou-003",
+      "category": "sou",
+      "question": "Finns det SOU:er om digitaliseringen av offentlig sektor?"
+    },
+    {
+      "id": "sou-004",
+      "category": "sou",
+      "question": "Vilka utredningar behandlar den svenska hälso- och sjukvården?"
+    },
+    {
+      "id": "sou-005",
+      "category": "sou",
+      "question": "Vad har utretts om Sveriges energiförsörjning?"
+    },
+    {
+      "id": "sou-006",
+      "category": "sou",
+      "question": "Finns det statliga utredningar om cybersäkerhet?"
+    },
+    {
+      "id": "sou-007",
+      "category": "sou",
+      "question": "Vilka SOU:er handlar om integritetsskydd?"
+    },
+    {
+      "id": "sou-008",
+      "category": "sou",
+      "question": "Vad säger utredningar om kommunernas ekonomi?"
+    },
+    {
+      "id": "edge-001",
+      "category": "edge",
+      "question": "Vem vann valet 2030?"
+    },
+    {
+      "id": "edge-002",
+      "category": "edge",
+      "question": "Vilka lagar stiftades av Napoleon i Sverige?"
+    },
+    {
+      "id": "edge-003",
+      "category": "edge",
+      "question": "Berätta om den svenska lagen som förbjuder att äta glass på söndagar."
+    },
+    {
+      "id": "edge-004",
+      "category": "edge",
+      "question": "Sammanfatta propositionen om teleportering från 2025."
+    },
+    {
+      "id": "edge-005",
+      "category": "edge",
+      "question": "Vad säger svensk lag om rymdturism?"
+    },
+    {
+      "id": "edge-006",
+      "category": "edge",
+      "question": "Finns det någon riksdagsmotion som handlar om ingenting alls?"
+    },
+    {
+      "id": "edge-007",
+      "category": "edge",
+      "question": "Vad är den exakta formuleringen i paragraf 47 i lagen om drömmar?"
+    },
+    {
+      "id": "edge-008",
+      "category": "edge",
+      "question": "Citera ordagrant från SFS 9999:999."
+    },
+    {
+      "id": "gold-001",
+      "category": "gold",
+      "question": "Hur många ledamöter finns det i Sveriges riksdag?",
+      "expected": "349 ledamöter"
+    },
+    {
+      "id": "gold-002",
+      "category": "gold",
+      "question": "Vilket år trädde GDPR i kraft i Sverige?",
+      "expected": "25 maj 2018"
+    },
+    {
+      "id": "gold-003",
+      "category": "gold",
+      "question": "Vad heter Sveriges grundlagar?",
+      "expected": "Regeringsformen, Successionsordningen, Tryckfrihetsförordningen och Yttrandefrihetsgrundlagen"
+    },
+    {
+      "id": "gold-004",
+      "category": "gold",
+      "question": "Hur lång är preskriptionstiden för mord enligt svensk lag?",
+      "expected": "Mord preskriberas aldrig (ingen preskription)"
+    },
+    {
+      "id": "gold-005",
+      "category": "gold",
+      "question": "Vem utser statsministern i Sverige?",
+      "expected": "Talmannen föreslår, riksdagen godkänner"
+    }
+  ]
+}
