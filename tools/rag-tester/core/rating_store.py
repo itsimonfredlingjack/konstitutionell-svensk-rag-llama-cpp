@@ -113,6 +113,12 @@ class RatingStore:
                 for row in cursor.fetchall()
             ]
 
+    def get_trend_data(self, limit: int = 20) -> list[int]:
+        """Get recent ratings for trend chart."""
+        recent = self.get_recent(limit)
+        # return list of ratings in chronological order (oldest -> newest) for the chart
+        return [r.rating for r in reversed(recent)]
+
     def get_recent(self, limit: int = 20) -> list[Rating]:
         """Get the most recent ratings."""
         with sqlite3.connect(self.path) as conn:
