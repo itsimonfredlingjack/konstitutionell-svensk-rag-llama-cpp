@@ -82,7 +82,7 @@ The system uses **llama-server** (from llama.cpp), not Ollama:
 - KV-Cache Quantization (`-ctk q8_0 -ctv q8_0`) - 4x memory reduction vs FP16
 - Flash Attention (`-fa on`)
 - GPU Offloading (`-ngl 60`) - 60 layers on GPU
-- Context: 16,384 tokens
+- Context: 16,384 tokens (runtime via `start_system.sh`; `config_service.py` has 32K default)
 
 ### Embeddings (BGE-M3)
 
@@ -97,7 +97,7 @@ Critical for Swedish legal texts where exact terminology matters.
 
 ### Backend Services (backend/app/services/)
 
-17 services, ~10K lines total. Key services:
+18 services, ~10K lines total. Key services:
 
 | Service | Purpose |
 |---------|---------|
@@ -219,3 +219,34 @@ Migration scripts in `indexers/` include thermal pacing (GPU temp monitoring at 
 | `start_system.sh` | llama-server launch script |
 | `apps/constitutional-retardedantigravity/src/App.tsx` | Frontend root |
 | `apps/constitutional-retardedantigravity/src/stores/useAppStore.ts` | Zustand state |
+
+## Agent Awareness
+
+### Useful Global Skills for This Project
+| Skill | When to Use |
+|-------|-------------|
+| `systematic-debugging` | RAG pipeline issues, search quality problems |
+| `test-driven-development` | Adding new features to backend services |
+| `verification-before-completion` | Before committing changes |
+| `webapp-testing` | Frontend debugging with Playwright |
+
+### Quick Health Check
+```bash
+# All services status
+curl -s http://localhost:8900/api/constitutional/health | jq .
+curl -s http://localhost:8080/v1/models  # llama-server
+lsof -i :3001  # Frontend
+
+# Test RAG query
+curl -s -X POST http://localhost:8900/api/constitutional/agent/query/stream \
+  -H "Content-Type: application/json" \
+  -d '{"question": "test", "mode": "auto"}' | head -5
+```
+
+### Common Issues
+| Symptom | Check | Fix |
+|---------|-------|-----|
+| "dimension mismatch" | Collection names | Use `_bge_m3_1024` suffix |
+| Slow inference | GPU utilization | Check `nvidia-smi`, restart llama-server |
+| Frontend won't connect | CORS | Verify port in `backend/app/config.py` |
+| Search returns nothing | Threshold | Lower `RAG_SIMILARITY_THRESHOLD` from 0.5 |
