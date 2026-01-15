@@ -163,7 +163,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                     searchStage: state.searchStage === 'complete' || state.searchStage === 'error' ? state.searchStage : 'reasoning',
                     pipelineLog: [...state.pipelineLog, {
                         ts: Date.now(),
-                        stage: 'grading',
+                        stage: 'grading' as PipelineStage,
                         message: 'Grading: timeout, proceeding to generation',
                     }].slice(-50),
                 }));
@@ -182,7 +182,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             pipelineLog: [
                 {
                     ts: Date.now(),
-                    stage: 'query_classification',
+                    stage: 'query_classification' as PipelineStage,
                     message: 'Classify: starting pipeline…',
                 },
             ],
@@ -270,7 +270,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                     set((state) => ({
                                         pipelineLog: [...state.pipelineLog, {
                                             ts: Date.now(),
-                                            stage: 'retrieval',
+                                            stage: 'retrieval' as PipelineStage,
                                             message: `Retrieval: fetched ${data.sources?.length ?? 0} sources`,
                                         }].slice(-50),
                                         // Gå till 'grading' istället för 'generation' direkt
@@ -295,7 +295,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                     set((state) => ({
                                         pipelineLog: [...state.pipelineLog, {
                                             ts: Date.now(),
-                                            stage: 'grading',
+                                            stage: 'grading' as PipelineStage,
                                             message: typeof data.message === 'string'
                                                 ? data.message
                                                 : `Grading: ${relevant}/${total} documents relevant`,
@@ -314,7 +314,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                     set((state) => ({
                                         pipelineLog: [...state.pipelineLog, {
                                             ts: Date.now(),
-                                            stage: 'self_reflection',
+                                            stage: 'self_reflection' as PipelineStage,
                                             message: 'Reflection: analyzing evidence sufficiency...',
                                         }].slice(-50),
                                         pipelineStage: 'generation',
@@ -332,7 +332,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                         set((state) => ({
                                             pipelineLog: [...state.pipelineLog, {
                                                 ts: Date.now(),
-                                                stage: 'generation',
+                                                stage: 'generation' as PipelineStage,
                                                 message: 'Generate: composing answer…'
                                             }].slice(-50),
                                         }));
@@ -351,7 +351,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                     pipelineStage: 'guardrail_validation',
                                     pipelineLog: [...state.pipelineLog, {
                                         ts: Date.now(),
-                                        stage: 'guardrail_validation',
+                                        stage: 'guardrail_validation' as PipelineStage,
                                         message: `Validate: ${data.corrections?.length || 0} corrections applied`,
                                     }].slice(-50),
                                 }));
@@ -366,7 +366,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                     isSearching: false,
                                     pipelineLog: [...state.pipelineLog, {
                                         ts: Date.now(),
-                                        stage: 'guardrail_validation',
+                                        stage: 'guardrail_validation' as PipelineStage,
                                         message: `Complete: ${data.total_time_ms ? `${data.total_time_ms.toFixed(0)}ms` : 'done'}`,
                                     }].slice(-50),
                                 }));
@@ -381,7 +381,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                                     isSearching: false,
                                     pipelineLog: [...state.pipelineLog, {
                                         ts: Date.now(),
-                                        stage: 'idle',
+                                        stage: 'idle' as PipelineStage,
                                         message: `Error: ${data.message}`,
                                     }].slice(-50),
                                 }));

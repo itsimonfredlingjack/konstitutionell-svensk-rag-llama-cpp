@@ -2,12 +2,12 @@
 
 /* Custom theme variables for Tailwind v4 */
 @theme {
-  --color-void-dark: #E7E5E4; /* Stone-200: Warm Grey/Beige, NOT white */
-  --color-glass-border: rgba(28, 25, 23, 0.1); /* Stone-900 at 10% */
-  --color-glass-bg: rgba(250, 250, 249, 0.6); /* Stone-50 at 60% */
-  --color-cyan-glow: #0f766e; /* Teal-700 */
-  --color-amber-alert: #b45309; /* Amber-700 */
-  --color-ink-dark: #1c1917; /* Stone-900 */
+  --color-app-bg: #E7E5E4; /* Stone-200 */
+  --color-glass-border: rgba(28, 25, 23, 0.1);
+  --color-glass-bg: rgba(250, 250, 249, 0.6);
+  --color-accent-primary: #0f766e; /* Teal-700 */
+  --color-accent-secondary: #b45309; /* Amber-700 */
+  --color-app-text: #1c1917; /* Stone-900 */
 
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -21,8 +21,8 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: var(--color-void-dark);
-  color: var(--color-ink-dark);
+  background-color: var(--color-app-bg);
+  color: var(--color-app-text);
 }
 
 #root {

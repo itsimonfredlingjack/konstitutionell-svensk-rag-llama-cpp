@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Substrate } from './components/3d/Substrate';
 import { TrustHull } from './components/ui/TrustHull';
 import { EffectComposer, Noise, Vignette, Bloom, TiltShift2 } from '@react-three/postprocessing';
+import { COLORS } from './theme/colors';
 
 import { SourceViewer3D } from './components/3d/SourceViewer3D';
 import { ConnectorLogic } from './components/3d/ConnectorLogic';
@@ -17,7 +18,7 @@ function App() {
   });
 
   return (
-    <div className="w-screen h-screen bg-[#E7E5E4] overflow-hidden relative">
+    <div className="w-screen h-screen overflow-hidden relative" style={{ backgroundColor: COLORS.background }}>
       {/* ===== LAYER 0: 3D Background (Fixed, Z-0) ===== */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas
@@ -25,12 +26,12 @@ function App() {
           camera={{ position: [0, 2, 8], fov: 50 }}
           gl={{ antialias: true, powerPreference: "high-performance" }}
         >
-          <color attach="background" args={['#E7E5E4']} />
-          <fog attach="fog" args={['#E7E5E4', 5, 25]} />
+          <color attach="background" args={[COLORS.background]} />
+          <fog attach="fog" args={[COLORS.background, 5, 25]} />
 
           <ambientLight intensity={0.8} />
-          <pointLight position={[10, 10, 10]} intensity={0.6} color="#0f766e" />
-          <pointLight position={[-10, 5, -10]} intensity={0.4} color="#b45309" />
+          <pointLight position={[10, 10, 10]} intensity={0.6} color={COLORS.accentPrimary} />
+          <pointLight position={[-10, 5, -10]} intensity={0.4} color={COLORS.accentSecondary} />
 
           <Suspense fallback={null}>
             <Substrate />
@@ -40,7 +41,7 @@ function App() {
             <ConnectorLogic />
           </Suspense>
 
-          <EffectComposer multisampling={isHighPerformance ? 8 : 0} enableNormalPass={isHighPerformance}>
+          <EffectComposer multisampling={isHighPerformance ? 4 : 0} enableNormalPass={isHighPerformance}>
             <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.2} radius={0.2} />
             <Vignette eskil={false} offset={0.1} darkness={0.4} />
             {isHighPerformance ? <Noise opacity={0.01} /> : <></>}

@@ -13,12 +13,12 @@ export function TrustHull() {
     return (
         <div className="w-full h-full flex flex-col p-6 pointer-events-none bg-transparent">
             {/* GLOBAL HEADER (Minimal) */}
-            <header className="flex items-center justify-between text-slate-500 mb-4 pointer-events-auto z-50 bg-transparent">
+            <header className="flex items-center justify-between text-stone-500 mb-4 pointer-events-auto z-50 bg-transparent">
                 <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
+                    <Shield className="w-5 h-5 text-stone-700" strokeWidth={1.5} />
                     {!isHeroMode && (
-                        <span className="text-sm font-medium tracking-wider text-slate-700">
-                            CONSTITUTIONAL AI <span className="text-slate-600 font-mono text-xs">v3.0</span>
+                        <span className="text-sm font-medium tracking-wider text-stone-700">
+                            CONSTITUTIONAL AI <span className="text-stone-600 font-mono text-xs">v3.0</span>
                         </span>
                     )}
                 </div>

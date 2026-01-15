@@ -2,6 +2,7 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
+import { COLORS } from '../../theme/colors';
 
 // Generate random points in a sphere (replacement for maath.random.inSphere)
 function generateSpherePoints(count: number, radius: number): Float32Array {
@@ -16,8 +17,8 @@ function generateSpherePoints(count: number, radius: number): Float32Array {
             len = Math.sqrt(x * x + y * y + z * z);
         } while (len > 1 || len === 0);
 
-        // Normalize and scale by radius
-        const scale = radius / len;
+        // Scale by radius (distribute inside volume)
+        const scale = radius;
         points[i * 3] = x * scale;
         points[i * 3 + 1] = y * scale;
         points[i * 3 + 2] = z * scale;
@@ -53,7 +54,7 @@ export function Substrate() {
             <Points ref={ref} positions={sphere} stride={3} frustumCulled={false}>
                 <PointMaterial
                     transparent
-                    color="#0891b2"
+                    color={COLORS.accentPrimary}
                     size={0.02}
                     sizeAttenuation={true}
                     depthWrite={false}
