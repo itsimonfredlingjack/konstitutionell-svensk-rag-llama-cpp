@@ -458,7 +458,8 @@ class RetrievalOrchestrator:
             List[str]
         ] = None,  # From config.effective_default_collections
         bm25_service: Optional[BM25Service] = None,  # Hybrid search: BM25 sidecar
-        bm25_weight: float = 1.0,  # Weight for BM25 in RRF (1.0 = equal, 1.5 = favor BM25)
+        bm25_weight: float = 1.5,  # Weight for BM25 in RRF (1.0 = equal, 1.5 = favor exact terms)
+        rrf_k: float = 30.0,  # RRF k constant (lower = top results dominate)
     ):
         self.client = chromadb_client
         self.embed_fn = embedding_function
@@ -471,6 +472,7 @@ class RetrievalOrchestrator:
         # BM25 sidecar for hybrid search (lazy load if not provided)
         self._bm25_service = bm25_service
         self._bm25_weight = bm25_weight
+        self._rrf_k = rrf_k
 
     async def search(
         self,
@@ -612,7 +614,7 @@ class RetrievalOrchestrator:
         2. Expand to multiple query variants (Q0, Q1, Q2)
         3. Batch embed all queries
         4. Search each embedding in parallel (with semaphore)
-        5. Merge results with RRF (k=60)
+        5. Merge results with RRF (k=configurable, default 30)
         6. Return with fusion metrics
         """
         start_total = time.perf_counter()
@@ -725,7 +727,7 @@ class RetrievalOrchestrator:
         merged_results = hybrid_reciprocal_rank_fusion(
             dense_result_sets=valid_result_sets,
             bm25_results=bm25_results if bm25_results else None,
-            k=60.0,
+            k=self._rrf_k,
             bm25_weight=self._bm25_weight,
         )
         metrics.rrf_latency_ms = (time.perf_counter() - rrf_start) * 1000
@@ -1063,7 +1065,7 @@ class RetrievalOrchestrator:
         metrics.per_query_result_counts = [len(rs) for rs in valid_result_sets]
 
         # RRF merge
-        merged_results = reciprocal_rank_fusion(valid_result_sets, k=60.0)
+        merged_results = reciprocal_rank_fusion(valid_result_sets, k=self._rrf_k)
 
         # Calculate fusion metrics
         fusion_metrics = calculate_fusion_metrics(

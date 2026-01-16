@@ -105,6 +105,16 @@ class ConfigSettings(BaseSettings):
     confidence_threshold_high: float = 0.7
     max_escalation_steps: int = 3
 
+    # Hybrid Search & RRF Fusion
+    # BM25 weight in RRF: 1.0 = equal weight, 1.5 = favor exact legal terms
+    # Higher values prioritize exact SFS matches over semantic similarity
+    rrf_bm25_weight: float = 1.5
+
+    # RRF k constant: lower = top results dominate, higher = flatter distribution
+    # k=60 is the original paper default, k=30 better for precise legal search
+    # where exact SFS matches at rank 1 should strongly dominate
+    rrf_k: float = 30.0
+
     # CORS
     cors_origins: list[str] = [
         "http://localhost:5173",

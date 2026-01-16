@@ -367,9 +367,13 @@ class RetrievalService(BaseService):
                     query_expander=None,  # Will be added separately
                     default_collections=self.config.effective_default_collections,
                     bm25_service=bm25_service,  # Hybrid search: BM25 sidecar
-                    bm25_weight=1.0,  # Equal weight for BM25 in RRF
+                    bm25_weight=self.config.rrf_bm25_weight,  # Favor exact legal terms
+                    rrf_k=self.config.rrf_k,  # Lower k = top results dominate
                 )
-                logger.info("RetrievalOrchestrator initialized with QueryRewriter and BM25")
+                logger.info(
+                    f"RetrievalOrchestrator initialized (bm25_weight={self.config.rrf_bm25_weight}, "
+                    f"rrf_k={self.config.rrf_k})"
+                )
             except Exception as e:
                 logger.error(f"Failed to initialize RetrievalOrchestrator: {e}")
                 self._orchestrator = None

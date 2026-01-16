@@ -11,7 +11,7 @@ Signals derived from existing retrieval outputs:
 
 References:
   - Self-RAG: Learning to Retrieve, Generate, and Critique (Asai et al.)
-  - Cormack & Clarke: RRF k=60 near-optimal
+  - Cormack & Clarke: RRF k=60 near-optimal (we use k=30 for legal precision)
 """
 
 import re
@@ -22,12 +22,13 @@ from typing import Dict, List, Optional
 # CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Default thresholds - CALIBRATED for RRF scores (k=60)
-# RRF formula: 1/(k+rank), so top score at rank 1 = 1/61 ≈ 0.016
-# With 2 queries at rank 1: 2/61 ≈ 0.033, with 3: 3/61 ≈ 0.049
+# Default thresholds - CALIBRATED for RRF scores (k=30)
+# RRF formula: 1/(k+rank), so top score at rank 1 = 1/31 ≈ 0.032
+# With 2 queries at rank 1: 2/31 ≈ 0.065, with 3: 3/31 ≈ 0.097
+# NOTE: If changing rrf_k in config, adjust these thresholds proportionally
 DEFAULT_THRESHOLDS = {
-    "top_score_low": 0.025,  # Below this = weak top result (< rank 2 in any query)
-    "margin_low": 0.003,  # Below this = uncertain ranking (normalized margin)
+    "top_score_low": 0.050,  # Below this = weak top result (< rank 2 in any query)
+    "margin_low": 0.006,  # Below this = uncertain ranking (normalized margin)
     "must_include_min": 0.5,  # Below this = missing key entities
     "fusion_gain_low": 0.05,  # Below this = queries not adding value
     "overlap_high": 0.9,  # Above this + low scores = corpus lacks answer

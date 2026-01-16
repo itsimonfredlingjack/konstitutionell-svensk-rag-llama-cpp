@@ -6,12 +6,14 @@ Generates multiple query variants and merges results using RRF for improved reca
 
 Key components:
 - QueryExpander: Generates Q0 (semantic), Q1 (lexical), Q2 (paraphrase)
-- reciprocal_rank_fusion: RRF merge with k=60
+- reciprocal_rank_fusion: RRF merge with configurable k
+- hybrid_reciprocal_rank_fusion: Dense + BM25 with weighted RRF
 - calculate_fusion_metrics: Tracks overlap, gain, unique docs
 
 Reference:
 - Cormack et al., "Reciprocal Rank Fusion outperforms Condorcet..."
-- k=60 is the standard value from the original paper
+- k=60 is the original paper default; we use k=30 for legal precision
+- bm25_weight=1.5 favors exact term matches for legal documents
 """
 
 import logging
