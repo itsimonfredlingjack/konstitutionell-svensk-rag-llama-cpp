@@ -51,9 +51,14 @@ class NERDYAIClient:
         while attempt < MAX_RECONNECT_ATTEMPTS:
             try:
                 # Use asyncio.wait_for for timeout compatibility across websockets versions
-                # ping_timeout=None disables automatic ping which causes issues with slow AI responses
+                # Enable ping to detect dropped connections (heartbeat)
                 self.websocket = await asyncio.wait_for(
-                    websockets.connect(self.url, ping_timeout=None, close_timeout=10),
+                    websockets.connect(
+                        self.url,
+                        ping_interval=20,
+                        ping_timeout=20,
+                        close_timeout=10
+                    ),
                     timeout=TIMEOUT,
                 )
                 self.connected = True
@@ -167,3 +172,16 @@ class NERDYAIClient:
     def get_profile(self) -> str:
         """Hämtar aktuell agent profile"""
         return self.current_profile
+
+    async def check_connection(self) -> bool:
+        """Verifierar att anslutningen faktiskt lever via en ping"""
+        if not self.websocket or not self.connected:
+            return False
+        try:
+            # Send ping and wait for pong
+            pong_waiter = await self.websocket.ping()
+            await asyncio.wait_for(pong_waiter, timeout=5)
+            return True
+        except Exception:
+            self.connected = False
+            return False

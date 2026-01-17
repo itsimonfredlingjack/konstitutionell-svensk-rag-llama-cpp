@@ -1,479 +1,579 @@
-""".
-SIMONS AI - COMMAND CENTER v3.0 (AUTO-SCROLL)
-Dynamic Chat Rendering with Height-Aware Auto-Scroll.
-GPT-OSS 20B (Arkitekt) + Devstral 24B (Kodare)
+"""
+THE OPUS TERMINAL - SIMONS AI v4.0
+===================================
+SOUL INJECTION Edition - Robot Avatar + Cyberpunk Dashboard
+Built with Textual TUI by Will McGugan
 """
 
-import asyncio
 import random
-import re
-import sys
-from dataclasses import dataclass, field
-from typing import Literal
+import time
+from typing import ClassVar
 
-from rich import box
 from rich.align import Align
-from rich.console import Console, Group
-from rich.layout import Layout
-from rich.live import Live
+from rich.console import Group
 from rich.panel import Panel
-from rich.table import Table
 from rich.text import Text
+from textual import work
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Horizontal, VerticalScroll
+from textual.reactive import reactive
+from textual.widgets import Input, RichLog, Static, Markdown
 
-# Import model config
-from cli.config import MODEL_ARCHITECT, MODEL_ARCHITECT_NAME, MODEL_CODER, MODEL_CODER_NAME
+from cli.gpu_panel import GPUStats, get_gpu_stats
 
-# Import client
-try:
-    from cli.client import NERDYAIClient
-except ImportError:
-    # Mock for standalone testing
-    class NERDYAIClient:
-        async def connect(self):
-            pass
+# ═══════════════════════════════════════════════════════════════════════════════
+# ROBOT AVATAR - THE SOUL
+# ═══════════════════════════════════════════════════════════════════════════════
 
-        async def send_message(self, text, profile):
-            pass
-
-        async def receive_stream(self):
-            yield "Hello", None
-            yield " World", {"speed": 99.9}
-
-        async def close(self):
-            pass
-
-        def get_mode(self):
-            return MODEL_ARCHITECT
-
-# --- ASSETS & CONFIG ---
-
-
-class Colors:
-    # Command Center Palette
-    PRIMARY = "bright_cyan"  # Default border / text
-    ACTIVE = "bright_green"  # Success / Active Input
-    WARNING = "gold1"  # Thinking / Processing
-    ERROR = "red"  # Error
-    DIM = "grey42"  # Inactive / Borders
-    HIGHLIGHT = "white"  # Important text
-    BACKGROUND = "black"
-
-
-# The "Server Helmet" Avatar (Cyber-Visor)
-AVATAR_IDLE = r"""
+AVATARS = {
+    "gpt-oss": {
+        "idle": """
     ╒▅▀▀▀▀▀▅╕
     | ░░░░░ |
     | ▬   ▬ |
     | ░░░░░ |
     ╘▅▄▄▄▄▄▅╛
      //READY
-"""
-
-AVATAR_THINKING = r"""
+""",
+        "thinking": """
     ╒▅▀▀▀▀▀▅╕
     | 1 0 1 |
     | 0 1 0 |
     | 1 0 1 |
     ╘▅▄▄▄▄▄▅╛
      //THINK
-"""
-
-AVATAR_SPEAKING = r"""
+""",
+        "speaking": """
     ╒▅▀▀▀▀▀▅╕
     |  ▄ ▄  |
     | █▓█▓█ |
     |  ▀ ▀  |
     ╘▅▄▄▄▄▄▅╛
      //SPEAK
-"""
+""",
+        "error": """
+    ╒▅▀▀▀▀▀▅╕
+    | X   X |
+    |  ▄▄▄  |
+    | ~~~~~ |
+    ╘▅▄▄▄▄▄▅╛
+     //ERROR
+""",
+    },
+    "devstral": {
+        "idle": """
+    ╒═══════╕
+    | >_    |
+    |  CODE |
+    |       |
+    ╘═══════╛
+     //READY
+""",
+        "thinking": """
+    ╒═══════╕
+    | 01010 |
+    | 10101 |
+    | 01010 |
+    ╘═══════╛
+     //COMPUTING
+""",
+        "speaking": """
+    ╒═══════╕
+    | PRINT |
+    | "..." |
+    |       |
+    ╘═══════╛
+     //OUTPUT
+""",
+        "error": """
+    ╒═══════╕
+    | !ERR! |
+    |  404  |
+    |       |
+    ╘═══════╛
+     //ERROR
+""",
+    },
+}
 
-# --- HELPER FUNCTIONS ---
+# State colors (vibe-coding approved)
+STATE_COLORS = {
+    "idle": "#00F3FF",  # Neon Cyan
+    "thinking": "#FFB74D",  # Amber
+    "speaking": "#00FF41",  # Neon Green
+    "error": "#FF00FF",  # Magenta
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AGENT CONFIGURATIONS - Matches Backend_Fraga_Router.py
+# ═══════════════════════════════════════════════════════════════════════════════
+
+AGENTS = {
+    "gpt-oss": {
+        "name": "GPT-OSS 20B",
+        "description": "Arkitekten",
+        "color": "#7A00FF",
+        "icon": "🧠",
+        "code_interpreter": False,
+    },
+    "devstral": {
+        "name": "Devstral 24B",
+        "description": "Kodaren",
+        "color": "#00FF41",
+        "icon": "⚡",
+        "code_interpreter": True,
+    },
+}
+
+# Agent cycle order
+AGENT_CYCLE = ["gpt-oss", "devstral"]
 
 
-def count_lines(text: str, width: int = 80) -> int:
-    """Count how many terminal lines a text will occupy."""
-    lines = text.split("\n")
-    total = 0
-    for line in lines:
-        # Account for line wrapping
-        if len(line) == 0:
-            total += 1
+class RobotHeader(Static):
+    """The Robot Avatar with status - THE SOUL of the terminal."""
+
+    state = reactive("idle")
+    status_text = reactive("CONNECTING...")
+    current_agent = reactive("gpt-oss")
+
+    def render(self):
+        color = STATE_COLORS.get(self.state, "#00F3FF")
+
+        # Get avatars for current agent, default to gpt-oss
+        agent_avatars = AVATARS.get(self.current_agent, AVATARS["gpt-oss"])
+        avatar = agent_avatars.get(self.state, agent_avatars["idle"])
+
+        # Build avatar with color
+        avatar_styled = Text(avatar, style=color)
+
+        # Status badge
+        if self.state == "idle":
+            status = Text("● ONLINE", style="bold #00FF41")
+        elif self.state == "thinking":
+            status = Text("◐ THINKING...", style="bold #FFB74D")
+        elif self.state == "speaking":
+            status = Text("◉ STREAMING", style="bold #00FF41")
         else:
-            total += (len(line) // width) + 1
-    return total
+            status = Text("✗ ERROR", style="bold #FF00FF")
+
+        # Title text
+        title = Text("\n  SIMONS AI v4.0  ", style="bold #E0F7FA")
+        title.append(status)
+
+        # Combine avatar and title side by side
+        return Group(Align.center(avatar_styled), Align.center(title))
 
 
-def format_ai_response(text: str) -> Text:
-    """
-    Parse and color-code Code Interpreter output.
-    🔵 PLAN/TANKAR - Cyan
-    🟠 KOD/HANDLING - Orange
-    🟢 RESULTAT - Green
-    🔴 ERROR - Red
-    """
-    formatted = Text()
+class SystemMonitor(Static):
+    """Telemetry panel - Agent status, GPU stats, Code Interpreter badge."""
 
-    # Split into sections
-    lines = text.split("\n")
-    code_block = False
+    agent = reactive("sven-gpt")
+    state = reactive("idle")
+    gpu_stats = reactive(GPUStats())
 
-    for line in lines:
-        # Detect code blocks
-        if "```" in line:
-            code_block = not code_block
-            if code_block:
-                formatted.append(line + "\n", style="orange1 bold")
-            else:
-                formatted.append(line + "\n", style="orange1")
-            continue
+    def render(self):
+        # Get agent config
+        agent_cfg = AGENTS.get(self.agent, AGENTS["sven-gpt"])
+        agent_display = agent_cfg["name"]
+        agent_color = agent_cfg["color"]
+        agent_desc = agent_cfg["description"]
+        agent_icon = agent_cfg["icon"]
+        code_interpreter = agent_cfg["code_interpreter"]
 
-        if code_block:
-            # Inside code block - orange
-            formatted.append(line + "\n", style="orange1")
-            continue
+        # Status with appropriate color
+        status_color = STATE_COLORS.get(self.state, "#64748B")
+        status_map = {
+            "idle": "IDLE",
+            "thinking": "PROCESSING",
+            "speaking": "STREAMING",
+            "error": "ERROR",
+        }
+        status = status_map.get(self.state, "UNKNOWN")
 
-        # Detect section headers
-        line_lower = line.lower()
-
-        if any(
-            kw in line_lower for kw in ["uppgift:", "plan:", "tanke:", "tänker:", "analyserar:"]
-        ):
-            formatted.append(line + "\n", style="cyan bold")
-        elif any(kw in line_lower for kw in ["kod:", "script:", "python:", "executing:"]):
-            formatted.append(line + "\n", style="orange1 bold")
-        elif any(kw in line_lower for kw in ["resultat:", "output:", "svar:", "result:"]):
-            formatted.append(line + "\n", style="bright_green bold")
-        elif any(kw in line_lower for kw in ["error:", "fel:", "traceback:", "exception:"]):
-            formatted.append(line + "\n", style="red bold")
-        elif line.startswith(">>>") or line.startswith("..."):
-            # Python REPL output
-            formatted.append(line + "\n", style="orange1")
-        elif re.match(r"^\d+\.?\s", line):
-            # Numbered list - likely plan
-            formatted.append(line + "\n", style="cyan")
+        # GPU stats (Real or fallback)
+        if self.gpu_stats.available:
+            temp = f"{self.gpu_stats.temp}"
+            vram = f"{self.gpu_stats.vram_used:.1f}"
+            gpu_name = self.gpu_stats.name[:15]
         else:
-            formatted.append(line + "\n", style="white")
+            # Simulated GPU stats fallback
+            temp = f"{random.randint(42, 58)}"
+            vram = f"{random.uniform(8.5, 10.5):.1f}"
+            gpu_name = "SIMULATED"
 
-    return formatted
+        # Code Interpreter badge
+        ci_badge = "[bold #00FF41]ON [/]" if code_interpreter else "[dim]OFF[/]"
 
+        content = Text()
+        content.append("─── AGENT ───\n", style="dim #94A3B8")
+        content.append(f"  {agent_icon} {agent_display}\n", style=f"bold {agent_color}")
+        content.append(f"    {agent_desc}\n", style="dim #94A3B8")
+        content.append("\n")
+        content.append("─── STATUS ───\n", style="dim #94A3B8")
+        content.append(f"  {status}\n", style=f"bold {status_color}")
+        content.append("\n")
+        content.append("─── GPU ───\n", style="dim #94A3B8")
+        content.append(f"  TEMP: {temp}°C\n", style="#E0F7FA")
+        content.append(f"  VRAM: {vram}GB\n", style="#E0F7FA")
+        content.append("\n")
+        content.append("─── TOOLS ───\n", style="dim #94A3B8")
+        content.append("  🔧 CODE INTERP: ", style="#E0F7FA")
+        content.append_text(Text.from_markup(ci_badge))
 
-def render_chat_compact(messages: list[dict], available_height: int, chat_width: int = 80) -> Group:
-    """
-    Render chat messages with auto-scroll.
-    Only shows messages that fit in available_height.
-    Always shows the LATEST messages (auto-scroll to bottom).
-    """
-    # Calculate usable lines (minus header line)
-    usable_lines = max(available_height - 2, 5)
-
-    # Build visible messages from the end (newest first)
-    lines_used = 0
-    visible_items = []
-
-    for msg in reversed(messages):
-        role = msg["role"]
-        text = msg["text"]
-
-        # Calculate lines this message will take
-        msg_lines = count_lines(text, chat_width) + 1  # +1 for role prefix
-
-        if lines_used + msg_lines > usable_lines:
-            # Can't fit more - but show partial if it's the latest
-            if len(visible_items) == 0 and text:
-                # Show as much as we can of the latest message
-                lines_to_show = usable_lines - 1
-                text_lines = text.split("\n")
-                # Take last N lines that fit
-                truncated_lines = text_lines[-(lines_to_show):]
-                truncated_text = "\n".join(truncated_lines)
-
-                if role == "user":
-                    item = Text()
-                    item.append("▸ USER: ", style="cyan bold")
-                    item.append(truncated_text, style="white")
-                else:
-                    item = Text()
-                    item.append("◈ AI: ", style="bright_green bold")
-                    item.append_text(format_ai_response(truncated_text))
-
-                visible_items.insert(0, item)
-            break
-
-        # Format message
-        if role == "user":
-            item = Text()
-            item.append("▸ USER: ", style="cyan bold")
-            item.append(text, style="white")
-        elif role == "system":
-            item = Text()
-            item.append("⚠ SYSTEM: ", style="yellow bold")
-            item.append(text, style="yellow")
-        else:
-            item = Text()
-            item.append("◈ AI: ", style="bright_green bold")
-            item.append_text(format_ai_response(text))
-
-        visible_items.insert(0, item)
-        lines_used += msg_lines
-
-    if not visible_items:
-        return Group(Text("Awaiting Input...", style="dim"))
-
-    return Group(*visible_items)
-
-
-# --- STATE MANAGEMENT ---
-
-
-@dataclass
-class AppState:
-    messages: list[dict] = field(default_factory=list)
-    status: str = "STANDBY"
-    connected: bool = False
-    avatar_state: Literal["idle", "thinking", "speaking"] = "idle"
-    current_agent: str = MODEL_ARCHITECT  # Active agent profile (sven-gpt default)
-
-    # Telemetry Data
-    core_temp: int = 42
-    memory_usage: int = 12
-    uplink_status: str = "ENCRYPTED"
-    session_id: str = "992-ALPHA"
-
-    def add_message(self, role: str, text: str):
-        self.messages.append({"role": role, "text": text})
-        if len(self.messages) > 50:
-            self.messages = self.messages[-20:]
-
-
-# --- LAYOUT GENERATOR ---
-
-
-def get_avatar_art(state: AppState) -> str:
-    if state.avatar_state == "thinking":
-        return AVATAR_THINKING
-    elif state.avatar_state == "speaking":
-        return AVATAR_SPEAKING
-    return AVATAR_IDLE
-
-
-def get_border_color(state: AppState, zone: str) -> str:
-    """State-Aware Borders"""
-    if zone == "input":
-        return Colors.PRIMARY
-
-    if zone == "chat":
-        if state.avatar_state == "thinking":
-            return Colors.WARNING
-        elif state.avatar_state == "speaking":
-            return Colors.ACTIVE
-        return Colors.DIM
-
-    return Colors.DIM
-
-
-def render_telemetry(state: AppState) -> Panel:
-    """Right-side System Monitor"""
-    # Simulate data fluctuation
-    state.core_temp = random.randint(40, 65)
-    state.memory_usage = random.randint(10, 45)
-
-    grid = Table.grid(expand=True, padding=(0, 1))
-    grid.add_column(style=Colors.DIM, width=12)
-    grid.add_column(style=Colors.PRIMARY, justify="right")
-
-    # Show active agent prominently
-    is_coder = state.current_agent == MODEL_CODER
-    agent_color = Colors.ACTIVE if is_coder else Colors.WARNING
-    agent_display = MODEL_CODER_NAME if is_coder else MODEL_ARCHITECT_NAME
-    grid.add_row("AGENT", f"[bold {agent_color}]{agent_display}[/]")
-    grid.add_row("", "")  # Spacer
-
-    grid.add_row("SESSION ID", state.session_id)
-    grid.add_row("UPLINK", f"[{Colors.ACTIVE}]{state.uplink_status}[/]")
-    grid.add_row("CORE TEMP", f"{state.core_temp}°C")
-    grid.add_row("MEM BUFFER", f"{state.memory_usage}%")
-
-    # Tips based on current agent
-    tips_grid = Table.grid(expand=True)
-    if is_coder:
-        tips_grid.add_row("[bold green]CODE INTERPRETER[/]")
-        tips_grid.add_row("[dim]Kan köra Python![/]")
-    else:
-        tips_grid.add_row("[bold yellow]TIP: /kod[/]")
-        tips_grid.add_row("[dim]för Devstral[/]")
-
-    return Panel(
-        Group(grid, Text("\n"), tips_grid),
-        title="[bold]SYSTEM MONITOR[/]",
-        style=Colors.DIM,
-        box=box.ROUNDED,
-    )
-
-
-def make_layout(state: AppState, console_height: int = 40) -> Layout:
-    """
-    Create layout with dynamic chat height.
-    console_height: Total terminal height (from console.size.height)
-    """
-    layout = Layout()
-
-    # Header size for full avatar (7 lines + 2 borders)
-    HEADER_SIZE = 9
-
-    # Split: Header (Top), Middle (Chat+Stats)
-    layout.split_column(Layout(name="header", size=HEADER_SIZE), Layout(name="middle"))
-
-    layout["middle"].split_row(
-        Layout(name="chat", ratio=8),  # More space for chat
-        Layout(name="telemetry", ratio=2),  # Less for telemetry
-    )
-
-    # --- HEADER (Compact) ---
-    avatar_text = Text(get_avatar_art(state), style=Colors.PRIMARY)
-    status_color = Colors.ACTIVE if state.connected else Colors.ERROR
-    status_text = "ONLINE" if state.connected else "OFFLINE"
-
-    # Show proper display name
-    is_coder = state.current_agent == MODEL_CODER
-    agent_display = MODEL_CODER_NAME if is_coder else MODEL_ARCHITECT_NAME
-
-    # Code Interpreter indicator for coder
-    ci_badge = ""
-    if is_coder:
-        ci_badge = " [bold green]⚡CI[/]"
-
-    layout["header"].update(
-        Panel(
-            Align.center(avatar_text),
-            title=f"[{status_color}]● {status_text}[/] | [bold cyan]{agent_display}[/]{ci_badge}",
-            subtitle="[dim]SIMONS AI v3.0 | /help | /kod[/]",
-            style=Colors.DIM,
-            box=box.ROUNDED,
-            padding=(0, 1),
+        return Panel(
+            content, title="[bold #FFAE00]SYSTEM MONITOR[/]", border_style="#FFAE00", padding=(0, 1)
         )
-    )
-
-    # --- CHAT (Dynamic Height Auto-Scroll) ---
-    # Calculate available height for chat panel
-    # Total height - header - input line - panel borders
-    chat_height = console_height - HEADER_SIZE - 3
-
-    # Get terminal width for chat (80% of total for chat panel)
-    chat_width = 70  # Approximate
-
-    chat_border = get_border_color(state, "chat")
-    chat_title = "CHAT LOG"
-    if state.avatar_state == "thinking":
-        chat_title = "⏳ PROCESSING..."
-    elif state.avatar_state == "speaking":
-        chat_title = "📡 INCOMING..."
-
-    # Use compact rendering with auto-scroll
-    chat_content = render_chat_compact(state.messages, chat_height, chat_width)
-
-    layout["chat"].update(
-        Panel(
-            chat_content,
-            title=f"[{chat_border}]{chat_title}[/]",
-            style=chat_border,
-            box=box.ROUNDED,
-            padding=(0, 1),
-        )
-    )
-
-    # --- TELEMETRY ---
-    layout["telemetry"].update(render_telemetry(state))
-
-    return layout
 
 
-# --- MAIN APPLICATION ---
+class SimonsAIApp(App):
+    """THE OPUS TERMINAL - AI Command Center."""
 
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CYBERPUNK CSS - Vibe Coding Approved
+    # ═══════════════════════════════════════════════════════════════════════════
 
-async def main():
-    console = Console()
-    state = AppState()
-    client = NERDYAIClient()
+    CSS = """
+    Screen {
+        background: #0D1117;
+    }
 
-    # Connect
-    try:
-        await client.connect()
-        state.connected = True
-        state.status = "ONLINE"
-    except Exception:
-        state.status = "OFFLINE"
+    #robot-header {
+        height: 10;
+        background: #0D1117;
+        border-bottom: solid #00F3FF;
+    }
 
-    while True:
+    #main-area {
+        height: 1fr;
+    }
+
+    #chat-scroll {
+        width: 70%;
+        background: #1A1B26;
+        border: solid #00F3FF;
+        border-title-color: #00F3FF;
+        padding: 0 1;
+        scrollbar-background: #1A1B26;
+        scrollbar-color: #00F3FF;
+        scrollbar-color-hover: #00FF41;
+    }
+
+    #chat-scroll.thinking {
+        border: solid #FFB74D;
+    }
+
+    #chat-scroll.speaking {
+        border: solid #00FF41;
+    }
+
+    .user-message {
+        background: #0D1117;
+        color: #00F3FF;
+        padding: 1;
+        margin: 1;
+        border-left: solid #00F3FF;
+    }
+
+    .ai-message {
+        padding: 1;
+        margin: 1;
+        border-left: solid #00FF41;
+    }
+
+    .system-message {
+        color: #64748B;
+        padding: 0 1;
+    }
+
+    #system-monitor {
+        width: 30%;
+        background: #1A1B26;
+        padding: 0;
+    }
+
+    Input {
+        dock: bottom;
+        height: 3;
+        background: #1A1B26;
+        border: solid #00F3FF;
+        color: #E0F7FA;
+    }
+
+    Input:focus {
+        border: solid #00FF41;
+    }
+
+    Input > .input--placeholder {
+        color: #64748B;
+    }
+    """
+
+    BINDINGS: ClassVar[list[Binding]] = [
+        Binding("ctrl+c", "quit", "Quit", show=True),
+        Binding("ctrl+l", "clear_chat", "Clear", show=True),
+        Binding("ctrl+a", "toggle_agent", "Agent", show=True),
+        Binding("escape", "focus_input", "Focus", show=False),
+    ]
+
+    def __init__(self):
+        super().__init__()
+        self.client = None
+        self.current_response = ""
+
+    def compose(self) -> ComposeResult:
+        """Build the dashboard layout."""
+        # TOP: Robot Header
+        yield RobotHeader(id="robot-header")
+
+        # MIDDLE: Chat + System Monitor (70/30 split)
+        with Horizontal(id="main-area"):
+            yield VerticalScroll(id="chat-scroll")
+            yield SystemMonitor(id="system-monitor")
+
+        # BOTTOM: Input
+        yield Input(id="input", placeholder="Skriv kommando... (/help för hjälp)")
+
+    def add_system_message(self, text: str | Text):
+        chat = self.query_one("#chat-scroll", VerticalScroll)
+        chat.mount(Static(text, classes="system-message"))
+        chat.scroll_end(animate=False)
+
+    def add_user_message(self, text: str):
+        chat = self.query_one("#chat-scroll", VerticalScroll)
+        chat.mount(Static(f"[bold #00F3FF]USER ▸[/] {text}", classes="user-message", markup=True))
+        chat.scroll_end(animate=False)
+
+    def add_ai_message(self) -> Markdown:
+        chat = self.query_one("#chat-scroll", VerticalScroll)
+        # Create a container or just a Markdown widget
+        # Using Markdown for nice rendering
+        md = Markdown("", classes="ai-message")
+        chat.mount(md)
+        chat.scroll_end(animate=False)
+        return md
+
+    async def on_mount(self):
+        """Initialize on startup."""
+        from cli.client import NERDYAIClient
+
+        self.client = NERDYAIClient()
+        robot = self.query_one("#robot-header", RobotHeader)
+        monitor = self.query_one("#system-monitor", SystemMonitor)
+
+        # Welcome banner
+        self.add_system_message(Text.from_markup("[dim]════════════════════════════════════════════════════════════[/]"))
+        self.add_system_message(Text.from_markup("[bold #00F3FF]       ╒▅▀▀▀▀▀▅╕  THE OPUS TERMINAL[/]"))
+        self.add_system_message(Text.from_markup("[bold #00F3FF]       | ▬   ▬ |  SIMONS AI v4.0[/]"))
+        self.add_system_message(Text.from_markup("[bold #00F3FF]       ╘▅▄▄▄▄▄▅╛  Textual + Robot Soul[/]"))
+        self.add_system_message(Text.from_markup("[dim]════════════════════════════════════════════════════════════[/]"))
+        self.add_system_message("")
+
+        # Connect to backend
         try:
-            # Sync agent state with client
-            state.current_agent = client.get_profile()
+            await self.client.connect()
+            robot.state = "idle"
+            robot.status_text = "ONLINE"
 
-            # Get terminal dimensions for dynamic layout
-            term_height = console.size.height
+            # Sync agent state
+            current_profile = self.client.get_profile()
+            monitor.agent = current_profile
+            robot.current_agent = current_profile
 
-            # 1. Render Static Interface (Idle State)
-            console.clear()
-            state.avatar_state = "idle"
-            console.print(make_layout(state, term_height))
-
-            # 2. Safe Input (Blocking)
-            user_input = console.input(f"[{Colors.PRIMARY}]>[/] ").strip()
-
-            if not user_input:
-                continue
-
-            # Handle slash commands
-            if user_input.startswith("/"):
-                from cli.commands import handle_slash_command
-
-                should_exit = await handle_slash_command(client, user_input)
-                if should_exit:
-                    break
-                continue
-
-            state.add_message("user", user_input)
-
-            # 3. Live Thinking/Streaming State
-            state.avatar_state = "thinking"
-
-            # We use Live context only during active processing/streaming
-            with Live(
-                make_layout(state, term_height), console=console, screen=True, refresh_per_second=12
-            ) as live:
-                await asyncio.sleep(0.2)
-
-                try:
-                    await client.send_message(user_input)
-
-                    state.avatar_state = "speaking"
-                    state.add_message("ai", "")
-
-                    async for token, _stats in client.receive_stream():
-                        if token:
-                            state.messages[-1]["text"] += token
-                            # Update with current terminal height
-                            live.update(make_layout(state, console.size.height))
-
-                    state.avatar_state = "idle"
-                    await asyncio.sleep(0.3)
-
-                except Exception as e:
-                    state.add_message("system", f"Error: {e}")
-                    state.avatar_state = "idle"
-                    await asyncio.sleep(1)
-
-        except KeyboardInterrupt:
-            break
+            self.add_system_message(Text.from_markup("[bold #00FF41]✓ Connected to backend[/]"))
         except Exception as e:
-            console.print(f"[red]Critical Error: {e}[/]")
-            break
+            robot.state = "error"
+            robot.status_text = "OFFLINE"
+            self.add_system_message(Text.from_markup(f"[bold #FF00FF]✗ Connection failed: {e}[/]"))
 
-    await client.close()
-    console.print("[dim]Session Terminated.[/]")
+        self.add_system_message("")
+
+        # Start GPU polling
+        self.set_interval(2.0, self.update_gpu_stats)
+        self.call_after_refresh(self.update_gpu_stats)
+
+        # Focus input
+        self.query_one("#input", Input).focus()
+
+    async def update_gpu_stats(self):
+        """Fetch and update GPU stats."""
+        stats = await get_gpu_stats()
+        self.query_one("#system-monitor", SystemMonitor).gpu_stats = stats
+
+    async def on_input_submitted(self, event: Input.Submitted):
+        """Handle Enter key."""
+        user_text = event.value.strip()
+        if not user_text:
+            return
+
+        event.input.value = ""
+
+        # Slash commands
+        if user_text.startswith("/"):
+            await self.handle_command(user_text)
+            return
+
+        # User message
+        self.add_user_message(user_text)
+
+        # Send to AI
+        self.send_to_ai(user_text)
+
+    @work(exclusive=True)
+    async def send_to_ai(self, text: str):
+        """Background worker for AI communication."""
+        robot = self.query_one("#robot-header", RobotHeader)
+        monitor = self.query_one("#system-monitor", SystemMonitor)
+        chat_scroll = self.query_one("#chat-scroll")
+
+        if not self.client or not self.client.connected:
+            self.add_system_message(Text.from_markup("[bold #FF00FF]Not connected![/]"))
+            return
+
+        # THINKING state
+        robot.state = "thinking"
+        monitor.state = "thinking"
+        chat_scroll.add_class("thinking")
+        chat_scroll.remove_class("speaking")
+
+        try:
+            await self.client.send_message(text)
+
+            # SPEAKING state
+            robot.state = "speaking"
+            monitor.state = "speaking"
+            chat_scroll.remove_class("thinking")
+            chat_scroll.add_class("speaking")
+
+            # Create Markdown widget for AI response
+            md_widget = self.add_ai_message()
+
+            self.current_response = ""
+
+            # Stream tokens
+            async for token, _stats in self.client.receive_stream():
+                if token:
+                    self.current_response += token
+                    # Update Markdown widget
+                    # Markdown.update() is efficient in Textual
+                    await md_widget.update(self.current_response)
+                    chat_scroll.scroll_end(animate=False)
+
+            # Back to IDLE
+            robot.state = "idle"
+            monitor.state = "idle"
+            chat_scroll.remove_class("thinking")
+            chat_scroll.remove_class("speaking")
+
+        except Exception as e:
+            robot.state = "error"
+            monitor.state = "error"
+            self.add_system_message(Text.from_markup(f"\n[bold #FF00FF]ERROR: {e}[/]"))
+
+    async def handle_command(self, cmd: str):
+        """Slash commands."""
+        monitor = self.query_one("#system-monitor", SystemMonitor)
+        parts = cmd.split()
+        command = parts[0].lower()
+
+        if command == "/help":
+            self.add_system_message(Text.from_markup("[dim]═══════════════════ COMMANDS ═══════════════════[/]"))
+            self.add_system_message(Text.from_markup("[#00F3FF]/help[/]    - Visa denna hjälp"))
+            self.add_system_message(Text.from_markup("[#00F3FF]/clear[/]   - Rensa chatten"))
+            self.add_system_message(Text.from_markup("[#7A00FF]/sven[/]    - 🧠 Arkitekten (planering)"))
+            self.add_system_message(Text.from_markup("[#00FF41]/kod[/]     - ⚡ Kodaren (implementation)"))
+            self.add_system_message(Text.from_markup("[#00F3FF]/status[/]  - Visa status"))
+            self.add_system_message(Text.from_markup("[#00F3FF]/quit[/]    - Avsluta"))
+            self.add_system_message(Text.from_markup("[dim]═══════════════════ SHORTCUTS ══════════════════[/]"))
+            self.add_system_message(Text.from_markup("[#00F3FF]Ctrl+C[/]   - Quit"))
+            self.add_system_message(Text.from_markup("[#00F3FF]Ctrl+L[/]   - Clear"))
+            self.add_system_message(Text.from_markup("[#00F3FF]Ctrl+A[/]   - Växla Agent (cykel)"))
+            self.add_system_message(Text.from_markup("[dim]════════════════════════════════════════════════[/]"))
+
+        elif command == "/clear":
+            self.action_clear_chat()
+            self.add_system_message(Text.from_markup("[dim]Chat cleared[/]"))
+
+        elif command in ["/sven", "/gpt", "/arkitekt"]:
+            self._switch_agent("gpt-oss", monitor)
+
+        elif command in ["/kod", "/coder", "/dev"]:
+            self._switch_agent("devstral", monitor)
+
+        elif command == "/status":
+            connected = self.client.connected if self.client else False
+            agent_id = self.client.get_profile() if self.client else "unknown"
+            agent_cfg = AGENTS.get(agent_id, AGENTS["gpt-oss"])
+            status_color = "#00FF41" if connected else "#FF00FF"
+            status_text = "ONLINE" if connected else "OFFLINE"
+            self.add_system_message(Text.from_markup(f"[dim]Connection:[/] [{status_color}]{status_text}[/]"))
+            self.add_system_message(
+                Text.from_markup(
+                    f"[dim]Agent:[/] [{agent_cfg['color']}]{agent_cfg['icon']} {agent_cfg['name']}[/]"
+                )
+            )
+            self.add_system_message(Text.from_markup("[dim]Backend:[/] ws://localhost:8000/api/chat"))
+
+        elif command in ["/quit", "/exit", "/q"]:
+            self.exit()
+
+        else:
+            self.add_system_message(Text.from_markup(f"[#FFB74D]Okänt kommando: {command}. Prova /help[/]"))
+
+    def _switch_agent(self, agent_id: str, monitor: SystemMonitor):
+        """Helper to switch agent."""
+        if self.client:
+            self.client.set_profile(agent_id)
+            monitor.agent = agent_id
+
+            # Update robot avatar
+            robot = self.query_one("#robot-header", RobotHeader)
+            robot.current_agent = agent_id
+
+            agent_cfg = AGENTS[agent_id]
+            self.add_system_message(
+                Text.from_markup(
+                    f"[{agent_cfg['color']}]{agent_cfg['icon']} Switched to {agent_cfg['name']}[/]"
+                )
+            )
+            if agent_cfg["code_interpreter"]:
+                self.add_system_message(Text.from_markup("[bold #00FF41]   🔧 Code Interpreter ACTIVE[/]"))
+
+    def action_clear_chat(self):
+        """Ctrl+L."""
+        self.query_one("#chat-scroll", VerticalScroll).remove_children()
+
+    def action_toggle_agent(self):
+        """Ctrl+A - Cycle through all agents."""
+        monitor = self.query_one("#system-monitor", SystemMonitor)
+
+        if self.client:
+            # Find current index and get next
+            current = monitor.agent
+            try:
+                idx = AGENT_CYCLE.index(current)
+                next_idx = (idx + 1) % len(AGENT_CYCLE)
+            except ValueError:
+                next_idx = 0
+
+            next_agent = AGENT_CYCLE[next_idx]
+            self._switch_agent(next_agent, monitor)
+
+    def action_focus_input(self):
+        """Escape."""
+        self.query_one("#input", Input).focus()
+
+    async def on_unmount(self):
+        """Cleanup."""
+        if self.client:
+            await self.client.close()
+
+
+def main():
+    """Entry point."""
+    app = SimonsAIApp()
+    app.run()
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        sys.exit(0)
+    main()
