@@ -48,6 +48,7 @@ class RagTesterApp:
         try:
             # 2. Query API
             async for event in api_client.query_rag(question_text):
+                
                 if event.type == "token":
                     renderer.update_token(event.data)
                     full_answer += event.data
@@ -64,10 +65,27 @@ class RagTesterApp:
         finally:
             renderer.stop()
 
+        # Explicit Barrier: Forces user to acknowledge end of stream
+        # unexpected EOF or fast inputs are handled better by PromptSession
+        from prompt_toolkit import PromptSession
+        from prompt_toolkit.styles import Style
+        
+        # Use our theme for consistency
+        barrier_style = Style.from_dict({
+            'prompt': 'bold white',
+        })
+        
+        try:
+            session = PromptSession(style=barrier_style)
+            await asyncio.to_thread(session.prompt, "[ Press Enter to Open Action Menu ]")
+            # Clear lines? No, let's keep it simple.
+        except (EOFError, KeyboardInterrupt):
+             pass # just proceed to menu or let menu handle quit
+
         # 3. Action Logic (Rate or Inspect)
         while True:
-            # Re-render the last frame to keep context?
-            # The renderer.stop() keeps it on screen.
+            # Re-render the last frame to keep context
+            renderer.persist()
 
             action = await self.action_menu.show()
 

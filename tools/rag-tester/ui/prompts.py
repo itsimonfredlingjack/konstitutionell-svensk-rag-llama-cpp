@@ -6,6 +6,19 @@ Handles user interaction using prompt_toolkit.
 from typing import Optional
 
 from prompt_toolkit.shortcuts import input_dialog, radiolist_dialog
+from prompt_toolkit.styles import Style
+
+
+# Define custom styles for prompt_toolkit to match our Colorful Neon theme
+# Using ANSI standard colors or brighter hex to ensure visibility on all terminals
+MODERN_STYLE = Style.from_dict({
+    'dialog': 'bg:#2E004F #00ff00',      # Dark Violet background, Green Border
+    'dialog.body': 'bg:#4B0082 #ffffff', # Indigo body, White text
+    'dialog.shadow': 'bg:#000000',       # Black shadow
+    'button.focused': 'bg:#00ffff #000000', # Cyan focus
+    'radio-list.focused': 'bg:#00ffff #000000',
+    'text-area': 'bg:#4B0082 #ffffff',
+})
 
 
 class MainMenu:
@@ -17,14 +30,15 @@ class MainMenu:
         # A radiolist is good for menus
         result = await radiolist_dialog(
             title="RAG-Eval Terminal",
-            text="Choose an action:\n(Use Arrows to move, Space to select, Tab to go to OK, then Enter)",
+            text="Welcome back. Please select an operational mode:",
             values=[
-                ("1", "🎲 Random Question"),
-                ("2", "📂 Select Category"),
-                ("3", "✍️  Custom Question"),
-                ("4", "📜 View History"),
-                ("q", "🚪 Quit"),
+                ("1", "random   [Random Question] 🎲"),
+                ("2", "category [Select Category] 📂"),
+                ("3", "custom   [Custom Question] ✍️"),
+                ("4", "history  [View History]    📜"),
+                ("q", "quit     [Exit System]     🚪"),
             ],
+            style=MODERN_STYLE
         ).run_async()
         return result
 
@@ -34,11 +48,12 @@ class CategorySelector:
 
     async def select(self, categories: list[str]) -> Optional[str]:
         """Show category selector."""
-        values = [(c, c.upper()) for c in categories]
+        values = [(c, f"📂 {c.upper()}") for c in categories]
         result = await radiolist_dialog(
             title="Select Category",
-            text="Choose a question category:\n(Use Arrows to move, Space to select, Tab to go to OK)",
+            text="Filter questions by knowledge domain:",
             values=values,
+            style=MODERN_STYLE
         ).run_async()
         return result
 
@@ -53,34 +68,39 @@ class RatingInput:
         while rating is None:
             rating_str = await radiolist_dialog(
                 title="Rate Answer",
-                text="How good was the answer?",
+                text="How would you rate the quality of this response?",
                 values=[
-                    (5, "⭐⭐⭐⭐⭐ (Perfect)"),
-                    (4, "⭐⭐⭐⭐ (Good)"),
-                    (3, "⭐⭐⭐ (Okay)"),
-                    (2, "⭐⭐ (Poor)"),
-                    (1, "⭐ (Bad)"),
+                    (5, "⭐⭐⭐⭐⭐ Excellent"),
+                    (4, "⭐⭐⭐⭐ Good"),
+                    (3, "⭐⭐⭐ Satisfactory"),
+                    (2, "⭐⭐ Needs Improvement"),
+                    (1, "⭐ Poor"),
                 ],
+                style=MODERN_STYLE
             ).run_async()
 
             if rating_str:
                 rating = int(rating_str)
             else:
-                # If cancelled, maybe default to skipping or ask again?
-                # For now let's insist or return None to signal abort savings?
-                # Better to just return None rating to skip saving
+                # If cancelled
                 return 0, None
 
         # 2. Get Comment
         comment = await input_dialog(
-            title="Comment", text="Optional comment (Press Enter to skip):"
+            title="Feedback", 
+            text="Optional: Add a comment or tag for this rating:",
+            style=MODERN_STYLE
         ).run_async()
 
         return rating, comment
 
     async def get_custom_question(self) -> Optional[str]:
         """Get a custom question text."""
-        return await input_dialog(title="Custom Question", text="Enter your question:").run_async()
+        return await input_dialog(
+            title="Custom Question", 
+            text="Please enter your query:",
+            style=MODERN_STYLE
+        ).run_async()
 
 
 class ActionMenu:
@@ -88,13 +108,18 @@ class ActionMenu:
 
     async def show(self) -> str:
         """Show action menu."""
+        # Small delay to ensure previous input is processed/cleared
+        import asyncio
+        await asyncio.sleep(0.1)
+        
         result = await radiolist_dialog(
             title="Action Menu",
-            text="What would you like to do?\n(Use Arrows/Space/Tab/Enter)",
+            text="Result generated. Choose next step:",
             values=[
-                ("rate", "Rate Answer"),
-                ("inspect", "Inspect Sources"),
-                ("continue", "Continue (Skip Rating)"),
+                ("rate", "📝 Rate & Save"),
+                ("inspect", "🔍 Inspect Sources"),
+                ("continue", "⏩ Continue"),
             ],
+            style=MODERN_STYLE
         ).run_async()
         return result
