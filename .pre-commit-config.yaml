@@ -73,13 +73,6 @@ repos:
         files: '^apps/constitutional-gpt/.*\.(ts|tsx|js|jsx)$'
         pass_filenames: false
 
-      - id: eslint-constitutional-dashboard
-        name: ESLint (constitutional-dashboard)
-        entry: bash -c 'cd apps/constitutional-dashboard && npm run lint 2>/dev/null || true'
-        language: system
-        files: '^apps/constitutional-dashboard/.*\.(ts|tsx|js|jsx)$'
-        pass_filenames: false
-
   # Markdown linting (optional)
   # - repo: https://github.com/igorshubovych/markdownlint-cli
   #   rev: v0.38.0
@@ -93,4 +86,4 @@ ci:
   autofix_prs: true
   autoupdate_commit_msg: 'chore: update pre-commit hooks'
   autoupdate_schedule: monthly
-  skip: [eslint-constitutional-gpt, eslint-constitutional-dashboard]  # Skip in CI, run separately
+  skip: [eslint-constitutional-gpt]  # Skip in CI, run separately

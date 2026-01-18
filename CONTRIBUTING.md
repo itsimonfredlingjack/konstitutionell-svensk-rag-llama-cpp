@@ -8,7 +8,6 @@ This document describes the code style and contribution guidelines for the Const
 09_CONSTITUTIONAL-AI/
 ├── apps/                    # TypeScript/React applications
 │   ├── constitutional-gpt/      # Main agentic RAG interface (Next.js 16)
-│   ├── constitutional-dashboard/ # Metrics dashboard (Vite + React 18)
 │   └── constitutional-gpt-database/ # Database interface
 ├── scrapers/                # Python web scrapers (~100 files)
 ├── juridik-ai/              # Python legal AI pipelines
@@ -234,9 +233,6 @@ Each app has its own ESLint configuration:
 ```bash
 # In constitutional-gpt
 cd apps/constitutional-gpt && npm run lint
-
-# In constitutional-dashboard
-cd apps/constitutional-dashboard && npm run lint
 ```
 
 ## Commit Guidelines

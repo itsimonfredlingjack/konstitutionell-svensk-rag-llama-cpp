@@ -122,11 +122,6 @@ uvicorn app.main:app --reload --port 8900
 cd apps/constitutional-retardedantigravity
 npm install
 npm run dev -- --port 3001 --host 0.0.0.0
-
-# Admin dashboard
-cd apps/constitutional-dashboard
-npm install
-npm run dev
 ```
 
 ### Testing
