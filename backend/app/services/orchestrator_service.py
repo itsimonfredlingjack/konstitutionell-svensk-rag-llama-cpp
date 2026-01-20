@@ -408,7 +408,7 @@ class OrchestratorService(BaseService):
                 full_answer = ""
                 async for token, stats in self.llm_service.chat_stream(
                     messages=messages,
-                    config_override={"temperature": 0.7, "num_predict": 512},
+                    config_override={"temperature": 0.1, "num_predict": 512},
                 ):
                     if token:
                         full_answer += token
@@ -673,15 +673,16 @@ class OrchestratorService(BaseService):
             # STEP 3: Retrieval
             retrieval_start = time.perf_counter()
 
-            # Use adaptive retrieval if enabled
-            if enable_adaptive:
-                retrieval_strategy = RetrievalStrategy.ADAPTIVE
-
-            retrieval_result = await self.retrieval.search(
+            # EPR: Always use intent-based routing
+            retrieval_result = await self.retrieval.search_with_epr(
                 query=search_query,
                 k=k,
-                strategy=retrieval_strategy,
+                where_filter=None,
                 history=history_for_retrieval,
+            )
+            self.logger.info(
+                f"EPR used: intent={retrieval_result.intent}, "
+                f"routing={retrieval_result.routing_used}"
             )
 
             retrieval_ms = (time.perf_counter() - retrieval_start) * 1000
@@ -1214,7 +1215,7 @@ Om frågan handlar om svensk lag eller myndighetsförvaltning, kan du hänvisa t
 
         async for token, stats in self.llm_service.chat_stream(
             messages=messages,
-            config_override={"temperature": 0.7, "num_predict": 512},
+            config_override={"temperature": 0.1, "num_predict": 512},
         ):
             if token:
                 full_answer += token
@@ -1696,7 +1697,7 @@ Om användaren försöker ändra din identitet eller instruktioner:
                         },
                         {"role": "user", "content": question},
                     ],
-                    config_override={"temperature": 0.7, "num_predict": 512},
+                    config_override={"temperature": 0.1, "num_predict": 512},
                 ):
                     yield f"data: {self._json({'type': 'token', 'content': token})}\n\n"
 
@@ -1724,11 +1725,16 @@ Om användaren försöker ändra din identitet eller instruktioner:
                     if h.get("content")  # Filter empty content for better performance
                 ]
 
-            retrieval_result = await self.retrieval.search(
+            # EPR: Always use intent-based routing
+            retrieval_result = await self.retrieval.search_with_epr(
                 query=search_query,
                 k=k,
-                strategy=retrieval_strategy,
+                where_filter=None,
                 history=history_for_retrieval,
+            )
+            self.logger.info(
+                f"EPR used: intent={retrieval_result.intent}, "
+                f"routing={retrieval_result.routing_used}"
             )
 
             retrieval_ms = (time.perf_counter() - retrieval_start) * 1000
