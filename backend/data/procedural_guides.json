@@ -1,0 +1,44 @@
+[
+  {
+    "id": "proc_offentlighetsprincipen",
+    "title": "Offentlighetsprincipen - Guide",
+    "content": "Offentlighetsprincipen ar en grundlaggande demokratisk princip i Sverige som ger allmanheten ratt att ta del av allmanna handlingar hos myndigheter. Principen regleras i Tryckfrihetsforordningen TF 2 kap.\n\nHuvudregler:\n1. Ratten att ta del av allmanna handlingar ar grundlagsskyddad enligt TF 2 kap 1 paragraf\n2. En handling ar allman om den forvaras hos en myndighet och antingen har inkommit eller upprattats dar enligt TF 2 kap 4 paragraf\n3. Allmanna handlingar ar offentliga om de inte omfattas av sekretess enligt Offentlighets- och sekretesslagen OSL\n\nForfarande:\n- Du behover inte uppge vem du ar eller varfor du vill ha handlingen\n- Myndigheten ska prova begaran skyndsamt, normalt samma dag\n- Du har ratt att lasa handlingen pa plats kostnadsfritt\n- Du kan begara kopior mot avgift\n- Om myndigheten avslar din begaran har du ratt att overklaga beslutet\n\nBegransningar:\n- Sekretessbelagda uppgifter kan undantas\n- Myndigheten kan neka om begaran ar alltfor omfattande",
+    "doc_type": "procedural_guide",
+    "source": "procedural_guides_bge_m3_1024"
+  },
+  {
+    "id": "proc_begara_ut_handlingar",
+    "title": "Sa har begar du ut allmanna handlingar",
+    "content": "Steg-for-steg guide for att begara ut allmanna handlingar:\n\n1. IDENTIFIERA RATT MYNDIGHET\n- Bestam vilken myndighet som har handlingen du soker\n- Kommunala handlingar: Kontakta kommunen\n- Statliga handlingar: Kontakta aktuell statlig myndighet\n- Domstolshandlingar: Kontakta domstolen\n\n2. FORMULERA DIN BEGARAN\n- Du behover inte uppge skal for din begaran\n- Du behover inte uppge namn eller legitimera dig\n- Var sa specifik som mojligt om vilken handling du soker\n- Du kan begara muntligt, skriftligt eller via e-post\n\n3. INVANTA SVAR\n- Myndigheten ska hantera din begaran skyndsamt\n- Om handlingen ar omfattande kan det ta langre tid\n- Du har ratt att fa besked om sekretessproving pagar\n\n4. TA DEL AV HANDLINGEN\n- Du kan lasa handlingen pa plats kostnadsfritt\n- Du kan begara papperskopior med avgift enligt avgiftsforordningen\n- Du kan begara elektroniska kopior om myndigheten har mojlighet\n\n5. OM DU NEKAS\n- Begar skriftligt avslagsbeslut med overklagandeanvisning\n- Du kan overklaga till kammarratten\n- Overklagan ska ske inom tre veckor",
+    "doc_type": "procedural_guide",
+    "source": "procedural_guides_bge_m3_1024"
+  },
+  {
+    "id": "proc_overklaga_beslut",
+    "title": "Sa har overklagar du ett myndighetsbeslut",
+    "content": "Guide for att overklaga myndighetsbeslut enligt Forvaltningslagen FL:\n\n1. KONTROLLERA OVERKLAGBARHET\n- De flesta myndighetsbeslut kan overklagas enligt FL 40 paragraf\n- Beslutet ska ha paverkat dig personligen\n- Beslutet ska ha gatt dig emot\n\n2. TIDSFRISTER\n- Forvaltningsbesvar: 3 veckor fran att du fick beslutet enligt FL 44 paragraf\n- Kommunalbesvar laglighetsprovning: 3 veckor\n- Beslutet ska innehalla overklagandeanvisning enligt FL 33 paragraf\n\n3. SKRIV OVERKLAGANDET\n- Ange vilket beslut du overklagar med datum och diarienummer\n- Beskriv varfor beslutet ar felaktigt\n- Ange vad du vill att beslutet ska andras till\n- Bifoga kopior av relevanta handlingar\n- Underteckna med namn och kontaktuppgifter\n\n4. SKICKA TILL RATT INSTANS\n- Overklagandet ska skickas till beslutsmyndigheten enligt FL 43 paragraf\n- Myndigheten vidarebefordrar till overprovande instans\n- Vanligt: Forvaltningsratten eller kammarratten\n\n5. INVANTA PROVNING\n- Du kan begara inhibition att beslutet inte verkstalls\n- Du far mojlighet att yttra dig over motpartens svar\n- Domen kan overklagas vidare till hogre instans",
+    "doc_type": "procedural_guide",
+    "source": "procedural_guides_bge_m3_1024"
+  },
+  {
+    "id": "proc_forvaltningsbesvar_vs_laglighetsprovning",
+    "title": "Skillnaden mellan forvaltningsbesvar och laglighetsprovning",
+    "content": "Det finns tva huvudsakliga satt att overklaga myndighetsbeslut i Sverige: forvaltningsbesvar och laglighetsprovning (kommunalbesvar). De skiljer sig at i flera viktiga avseenden.\n\nFORVALTNINGSBESVAR (FL 40-49 paragraf)\nAnvands for: Statliga myndigheters beslut och vissa kommunala beslut\nVem kan overklaga: Den som beslutet angår och som det gatt emot\nProvning: Fullstandig sakprovning - domstolen kan andra beslutet\nTidsfrist: 3 veckor fran delgivning enligt FL 44 paragraf\nInstans: Forvaltningsratten, sedan kammarratten, Hogsta forvaltningsdomstolen\nResultat: Domstolen kan upphava, andra eller aterforvisa beslutet\n\nLAGLIGHETSPROVNING (Kommunallagen 13 kap)\nAnvands for: Kommunala och regionala beslut i kommunfullmaktige, namnder etc\nVem kan overklaga: Alla kommunmedlemmar (bo eller aga fastighet i kommunen)\nProvning: Endast laglighetsprovning - ar beslutet lagligt fattat?\nTidsfrist: 3 veckor fran att protokollet anslagits\nInstans: Forvaltningsratten, sedan kammarratten\nGrunder for upphavande enligt KL 13:8:\n- Beslutet inte tillkommit i laga ordning\n- Beslutet ror nagot som inte ar en angelagenhet for kommunen\n- Organet har overskridit sina befogenheter\n- Beslutet strider mot lag eller annan forfattning\nResultat: Domstolen kan endast upphava beslutet, inte andra det\n\nVAL AV OVERKLAGANDEFORM\n- Individuella beslut (bygglov, socialbidrag): Forvaltningsbesvar\n- Generella beslut (budget, detaljplan): Laglighetsprovning\n- Kommunala taxebeslut: Oftast laglighetsprovning\n- Upphandlingsbeslut: Sarskilda regler i LOU",
+    "doc_type": "procedural_guide",
+    "source": "procedural_guides_bge_m3_1024"
+  },
+  {
+    "id": "proc_diarieforing",
+    "title": "Hur fungerar diarieforing hos myndigheter",
+    "content": "Diarieforing ar myndighetens system for att registrera och halla ordning pa allmanna handlingar. Regleras i OSL 5 kap och Arkivlagen.\n\nVAD AR ETT DIARIUM?\nEtt diarium ar ett register over inkomna och upprattade handlingar hos en myndighet. Varje handling far ett unikt diarienummer som gor det mojligt att spara och aterfinnan handlingen.\n\nREGISTRERINGSSKYLDIGHET enligt OSL 5:1\nMyndigheter ska registrera allmanna handlingar som:\n- Inkommit till myndigheten\n- Upprattats hos myndigheten\n- Ar av betydelse for myndighetens verksamhet\n\nUndantag fran registrering:\n- Handlingar av ringa betydelse\n- Handlingar som hålls ordnade så att det utan svårighet kan fastställas om de kommit in\n\nVAD SKA REGISTRERAS? enligt OSL 5:2\nFor varje handling ska antecknas:\n- Datum da handlingen inkom eller upprattades\n- Diarienummer eller annan beteckning\n- Fran vem handlingen inkommit eller till vem den expedierats\n- I korthet vad handlingen ror (arenderubrik)\n\nOFFENTLIGHET\n- Diariet ar som huvudregel offentligt\n- Du har ratt att ta del av diariet\n- Sekretessbelagda uppgifter kan maskeras\n- Diariet ar ett bra satt att hitta handlingar att begara ut\n\nPRAKTISK ANVANDNING\n- Kontakta myndighetens registrator\n- Be om att soka i diariet efter arende\n- Ange tidsperiod eller amne for sokning\n- Du kan begara ut handlingar med diarienummer",
+    "doc_type": "procedural_guide",
+    "source": "procedural_guides_bge_m3_1024"
+  },
+  {
+    "id": "proc_kommunikationsskyldighet",
+    "title": "Vad innebar kommunikationsskyldigheten",
+    "content": "Kommunikationsskyldigheten ar en grundlaggande rattssäkerhetsprincip som ger parter ratt att yttra sig innan beslut fattas. Regleras framst i Forvaltningslagen FL 25 paragraf.\n\nHUVUDREGEL enligt FL 25\nInnan en myndighet fattar beslut i ett arende ska den, om det inte ar uppenbart obehovligt:\n- Underratta parten om allt material av betydelse for beslutet\n- Ge parten tillfalle att yttra sig over materialet\n\nSYFTE\n- Sakra partens ratt att framfora sina synpunkter\n- Undvika overraskningsbeslut\n- Mojliggora for parten att bemota uppgifter\n- Sakra ett fullstandigt beslutsunderlag\n\nVAD SKA KOMMUNICERAS?\n- Utredningar och yttranden fran andra myndigheter\n- Uppgifter fran andra parter\n- Faktaunderlag som myndigheten inhamtat\n- Bedomningar som ar till nackdel for parten\n\nUNDANTAG fran kommunikationsskyldigheten\n- Uppenbart obehovligt (t.ex. gar helt pa partens linje)\n- Arendet ar sa bradskande att det inte hinns med\n- Rikets sakerhet eller skydd for enskilds personliga forhallanden\n- Avgift eller liknande kan inte tas ut om kommunikation sker\n\nTIDSFRIST FOR YTTRANDE\n- Myndigheten ska ange sista dag for yttrande\n- Tiden ska vara skalig med hansyn till arendets art\n- Normalt minst 2-3 veckor for enklare arenden\n\nKONSEKVENSER AV BRISTANDE KOMMUNIKATION\n- Beslutet kan upphävas vid overklagande\n- Rattsakerhetsgaranti for den enskilde\n- Allvarligt formfel i forvaltningsrattslig mening",
+    "doc_type": "procedural_guide",
+    "source": "procedural_guides_bge_m3_1024"
+  }
+]

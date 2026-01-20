@@ -40,7 +40,13 @@ class ConfigSettings(BaseSettings):
     # Collections
     # NOTE: Embedding switch to BGE-M3 (1024 dim) requires re-indexing.
     # Use new collection names to avoid dimension-mismatch crashes against legacy 768-dim collections.
-    default_collections: list[str] = ["sfs_lagtext", "riksdag_documents_p1", "swedish_gov_docs"]
+    default_collections: list[str] = [
+        "sfs_lagtext",
+        "riksdag_documents_p1",
+        "swedish_gov_docs",
+        "diva_research",
+        "procedural_guides",
+    ]
 
     # Embedding Model (BGE-M3, 1024 dim) - requires re-indexing
     embedding_model: str = "BAAI/bge-m3"
@@ -315,6 +321,14 @@ class ConfigService:
     @property
     def max_concurrent_queries(self) -> int:
         return self._settings.max_concurrent_queries
+
+    @property
+    def rrf_bm25_weight(self) -> float:
+        return self._settings.rrf_bm25_weight
+
+    @property
+    def rrf_k(self) -> float:
+        return self._settings.rrf_k
 
     def get_mode_config(self, mode: str) -> dict:
         """

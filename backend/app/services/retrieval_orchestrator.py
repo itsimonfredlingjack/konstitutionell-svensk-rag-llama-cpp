@@ -45,7 +45,7 @@ from .bm25_service import BM25Service
 
 # EPR: Evidence Policy Routing (Phase 5)
 from .source_hierarchy import SourceHierarchy, SourceTier
-from .intent_classifier import IntentClassifier
+from .intent_classifier import IntentClassifier, QueryIntent
 from .intent_routing import get_routing_for_intent
 
 logger = logging.getLogger("constitutional.retrieval")
@@ -1216,6 +1216,11 @@ class RetrievalOrchestrator:
         # Step 5: Merge and sort results by tier
         all_results = pass1_results + pass2_results
 
+        # PRECISION TUNING: Filter out low-score results (min_score=0.35)
+        MIN_SCORE = 0.30
+        all_results = [r for r in all_results if r.get("score", 0.0) >= MIN_SCORE]
+        logger.info(f"EPR: After min_score filter: {len(all_results)} results")
+
         # Convert to SearchResult with tier annotation
         search_results = []
         for r in all_results:
@@ -1238,6 +1243,12 @@ class RetrievalOrchestrator:
             )
 
         # Sort by tier priority (A before B before C), then by score within tier
+        # INTENT-SPECIFIC BOOST: For PRACTICAL_PROCESS, boost procedural_guides to Tier A
+        if detected_intent == QueryIntent.PRACTICAL_PROCESS:
+            for r in search_results:
+                if "procedural_guides" in r.source:
+                    r.tier = "A"  # Boost to Tier A for this intent
+
         def sort_key(result: SearchResult):
             tier_order = {"A": 1, "B": 2, "C": 3}
             return (tier_order.get(result.tier, 99), -result.score)
@@ -1247,13 +1258,26 @@ class RetrievalOrchestrator:
         # Limit to k results
         search_results = search_results[:k]
 
-        # Deduplicate by id (keep first occurrence, which has best tier)
-        seen_ids = set()
+        # PRECISION TUNING: Deduplicate by doc_id (keep first occurrence, which has best tier)
+        # This prevents same doc from taking up multiple slots
+        seen_doc_ids = set()
         unique_results = []
         for r in search_results:
-            if r.id not in seen_ids:
-                seen_ids.add(r.id)
+            # Try to extract doc_id from chunk id (format: doc_id:chunk_num or doc_id_chunk_num)
+            doc_id = r.id
+            if ":" in doc_id:
+                doc_id = doc_id.split(":")[0]
+            elif "_chunk_" in doc_id:
+                doc_id = doc_id.split("_chunk_")[0]
+
+            # Keep first occurrence only (already sorted by tier+score)
+            if doc_id not in seen_doc_ids:
+                seen_doc_ids.add(doc_id)
                 unique_results.append(r)
+
+        logger.info(
+            f"EPR: After dedupe: {len(unique_results)} unique docs (from {len(search_results)} chunks)"
+        )
 
         metrics.total_latency_ms = (time.perf_counter() - start_total) * 1000
         metrics.unique_docs_total = len(unique_results)
