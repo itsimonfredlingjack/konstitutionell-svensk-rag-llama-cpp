@@ -4,6 +4,7 @@ The "Brain" that binds together all services for the complete RAG pipeline
 """
 
 import asyncio
+import re
 import json
 import time
 from dataclasses import dataclass, field
@@ -290,6 +291,46 @@ class OrchestratorService(BaseService):
         - All services are singletons
         - No shared mutable state between coroutines
     """
+
+    def _is_truncated_answer(self, llm_output: str) -> bool:
+        """Detect if an answer is truncated.
+
+        Works with both raw JSON and plain text responses.
+        Checks for patterns like "dessa steg:" without actual steps.
+        """
+        if not llm_output:
+            return True
+
+        # Try to extract "svar" from JSON response
+        try:
+            import json
+
+            parsed = json.loads(llm_output)
+            answer = parsed.get("svar", llm_output)
+        except (json.JSONDecodeError, TypeError):
+            answer = llm_output
+
+        answer_stripped = answer.strip()
+
+        # Truncated if ends with ":" suggesting incomplete list
+        if answer_stripped.endswith(":"):
+            return True
+
+        # Very short answer with "steg" or "följande" - likely truncated
+        if len(answer_stripped) < 150:
+            if any(
+                word in answer_stripped.lower() for word in ["steg", "följande", "dessa", "nedan"]
+            ):
+                return True
+
+        # Check for incomplete list patterns (says steps but doesn't list them)
+        if re.search(
+            r"(dessa|följande|nedanstående)\s+(steg|punkter|regler)[\s:,]*$",
+            answer_stripped.lower(),
+        ):
+            return True
+
+        return False
 
     def __init__(
         self,
@@ -916,6 +957,96 @@ class OrchestratorService(BaseService):
             if structured_output_data and "svar" in structured_output_data:
                 full_answer = structured_output_data["svar"]
 
+            # STEP 5A-FINAL: ANTI-TRUNCATION CHECK (after svar extracted)
+            # Check if the final svar is truncated and retry if needed (up to 3 times)
+            truncation_retry_count = 0
+            max_truncation_retries = 3
+            best_answer_found = full_answer  # Track best answer across retries
+
+            while (
+                full_answer
+                and (len(full_answer.strip()) < 150 or full_answer.strip().endswith(":"))
+                and truncation_retry_count < max_truncation_retries
+            ):
+                truncation_retry_count += 1
+                self.logger.warning(
+                    f"TRUNCATION DETECTED (attempt {truncation_retry_count}/{max_truncation_retries}): len={len(full_answer)}, "
+                    f"preview={full_answer[:80]!r}"
+                )
+                try:
+                    # Retry with FRESH messages (avoid alternation errors)
+                    retry_messages = []
+                    if messages and messages[0].get("role") == "system":
+                        retry_messages.append(messages[0])
+                    # Use different prompt structures to break the pattern
+                    prompts = [
+                        f"{question}\n\nVIKTIGT: Ge ett KOMPLETT svar med ALLA detaljer. Lista MINST 5 steg med förklaringar.",
+                        f"Besvara följande fråga utförligt och konkret med minst 5 punkter:\n\n{question}",
+                        f"Förklara steg-för-steg med konkreta exempel:\n\n{question}\n\nInkludera alla relevanta lagar och paragrafer.",
+                    ]
+                    retry_messages.append(
+                        {"role": "user", "content": prompts[min(truncation_retry_count - 1, 2)]}
+                    )
+                    retry_config = dict(llm_config)
+                    retry_config["num_predict"] = 2000  # Much higher budget
+                    retry_config["temperature"] = 0.4 + (
+                        truncation_retry_count * 0.15
+                    )  # More variance
+
+                    retry_answer = ""
+                    async for token, _ in self.llm_service.chat_stream(
+                        messages=retry_messages,
+                        config_override=retry_config,
+                    ):
+                        if token:
+                            retry_answer += token
+
+                    # Parse the retry response
+                    retry_svar = retry_answer
+                    try:
+                        retry_parsed = json.loads(retry_answer)
+                        retry_svar = retry_parsed.get("svar", retry_answer)
+                        if "svar" in retry_parsed and len(retry_svar) > len(full_answer):
+                            structured_output_data = retry_parsed
+                    except Exception:
+                        pass
+
+                    ends_colon = retry_svar.strip().endswith(":")
+                    self.logger.info(
+                        f"TRUNCATION RETRY {truncation_retry_count}: retry_len={len(retry_svar)}, original_len={len(full_answer)}, ends_colon={ends_colon}"
+                    )
+
+                    # Track best answer (longest non-colon-ending)
+                    if not ends_colon and len(retry_svar) > len(best_answer_found):
+                        best_answer_found = retry_svar
+
+                    # Use retry if longer and not truncated
+                    if len(retry_svar) > len(full_answer) and not ends_colon:
+                        full_answer = retry_svar
+                        self.logger.info(
+                            f"TRUNCATION FIXED on attempt {truncation_retry_count}: using retry answer ({len(full_answer)} chars)"
+                        )
+                        reasoning_steps.append(
+                            f"Truncation fixed on attempt {truncation_retry_count} ({len(full_answer)} chars)"
+                        )
+                        break  # Success, exit retry loop
+                    else:
+                        self.logger.warning(
+                            f"TRUNCATION RETRY {truncation_retry_count} NOT USED: retry longer={len(retry_svar) > len(full_answer)}, ends_colon={ends_colon}"
+                        )
+                except Exception as e:
+                    self.logger.error(f"TRUNCATION RETRY {truncation_retry_count} ERROR: {e}")
+
+            # After all retries, use best answer if current is still truncated
+            if (len(full_answer.strip()) < 150 or full_answer.strip().endswith(":")) and len(
+                best_answer_found
+            ) > len(full_answer):
+                full_answer = best_answer_found
+                self.logger.info(
+                    f"TRUNCATION FALLBACK: using best answer found ({len(full_answer)} chars)"
+                )
+                reasoning_steps.append(f"Used best retry answer ({len(full_answer)} chars)")
+
             # STEP 5B: Critic→Revise Loop (feature-flagged)
             critic_revision_count = 0
             critic_ms = 0.0
@@ -1454,6 +1585,17 @@ EXEMPEL PÅ FEL:
 ❌ "yttrandefrihet innebär att man kan uttrycka sig utan att frukta bestraffning" (tillägg som inte finns i källan)
 ✓ "Enligt RF 2 kap. 1 §: 'yttrandefrihet: frihet att i tal, skrift eller bild eller på annat sätt meddela upplysningar'" (exakt citat)
 === SLUT GROUNDING ===
+=== SLUTFÖR-REGEL (OBLIGATORISK) ===
+SLUTFÖR ALLTID DINA SVAR FULLSTÄNDIGT:
+1. SLUTA ALDRIG mitt i en mening eller efter ett kolon (:)
+2. Om du påbörjar en lista ("följande steg:", "dessa punkter:") - SKRIV UT ALLA PUNKTER
+3. Om du påbörjar ett citat - AVSLUTA citatet
+4. Om du säger "följ dessa steg:" - LISTA STEGEN, sluta inte bara där
+5. Kortare svar är OK, men de måste vara KOMPLETTA
+6. FÖRBJUDET: Avsluta med ":", "följande:", "dessa steg:", eller liknande utan innehåll
+=== SLUT SLUTFÖR-REGEL ===
+
+
 
 === SÄRSKILDA REGLER FÖR PROCEDUELLA FRÅGOR (EVIDENCE) ===
 Om frågan ber om en PROCESS, PROCEDUR, eller SKILLNAD (t.ex. "hur fungerar", "hur gör jag", "vad är skillnaden"):
@@ -1535,6 +1677,17 @@ EXEMPEL PÅ FEL:
 ❌ "yttrandefrihet innebär att man kan uttrycka sig utan att frukta bestraffning" (tillägg som inte finns i källan)
 ✓ "Enligt RF 2 kap. 1 §: 'yttrandefrihet: frihet att i tal, skrift eller bild eller på annat sätt meddela upplysningar'" (exakt citat)
 === SLUT GROUNDING ===
+=== SLUTFÖR-REGEL (OBLIGATORISK) ===
+SLUTFÖR ALLTID DINA SVAR FULLSTÄNDIGT:
+1. SLUTA ALDRIG mitt i en mening eller efter ett kolon (:)
+2. Om du påbörjar en lista ("följande steg:", "dessa punkter:") - SKRIV UT ALLA PUNKTER
+3. Om du påbörjar ett citat - AVSLUTA citatet
+4. Om du säger "följ dessa steg:" - LISTA STEGEN, sluta inte bara där
+5. Kortare svar är OK, men de måste vara KOMPLETTA
+6. FÖRBJUDET: Avsluta med ":", "följande:", "dessa steg:", eller liknande utan innehåll
+=== SLUT SLUTFÖR-REGEL ===
+
+
 === SÄRSKILDA REGLER FÖR PROCEDUELLA FRÅGOR ===
 Om frågan ber om en PROCESS eller PROCEDUR (identifiera genom nyckelord som: "hur fungerar", "hur gör jag", "hur begär", "hur överklagar", "hur ansöker", "vilka steg", "vad är processen", "vad innebär [X]skyldighet", "vad innebär [X]princip"):
 

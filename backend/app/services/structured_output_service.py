@@ -136,7 +136,7 @@ class StructuredOutputService(BaseService):
 
     def parse_llm_json(self, text: str) -> Dict[str, Any]:
         """
-        Parse JSON from LLM response, handling markdown code fences.
+        Parse JSON from LLM response, handling various formats.
 
         Args:
             text: LLM response text
@@ -147,6 +147,8 @@ class StructuredOutputService(BaseService):
         Raises:
             json.JSONDecodeError: If text cannot be parsed as JSON
         """
+        import re
+
         # Strip markdown code fences if present
         json_text = text.strip()
         if json_text.startswith("```json"):
@@ -157,6 +159,32 @@ class StructuredOutputService(BaseService):
             json_text = json_text[:-3]
         json_text = json_text.strip()
 
+        # Try direct parse first
+        try:
+            return json.loads(json_text)
+        except json.JSONDecodeError:
+            pass
+
+        # Try to find JSON object in text (handles preamble text)
+        # Look for { ... } pattern that spans multiple lines
+        json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", json_text, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group())
+            except json.JSONDecodeError:
+                pass
+
+        # More aggressive: find first { and last }
+        first_brace = json_text.find("{")
+        last_brace = json_text.rfind("}")
+        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+            candidate = json_text[first_brace : last_brace + 1]
+            try:
+                return json.loads(candidate)
+            except json.JSONDecodeError:
+                pass
+
+        # Nothing worked, raise the original error
         return json.loads(json_text)
 
     async def validate_with_retries(
