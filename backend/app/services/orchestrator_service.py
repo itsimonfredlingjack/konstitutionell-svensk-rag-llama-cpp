@@ -13,6 +13,7 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from ..core.exceptions import SecurityViolationError
 from ..utils.logging import get_logger
+from ..utils.metrics import get_rag_metrics, log_structured_metric
 from .base_service import BaseService
 from .config_service import ConfigService, get_config_service
 from .critic_service import CriticService, get_critic_service
@@ -1325,6 +1326,35 @@ class OrchestratorService(BaseService):
                 f"RAG pipeline complete: {total_pipeline_ms:.1f}ms "
                 f"(mode: {mode.value}, sources: {len(sources)}, "
                 f"tokens: {final_stats.tokens_generated if final_stats else 0})"
+            )
+
+            # Record metrics for observability
+            rag_metrics = get_rag_metrics()
+            saknas_value = (
+                structured_output_data.get("saknas_underlag") if structured_output_data else None
+            )
+            rag_metrics.record_event(
+                question=question,
+                mode=mode.value,
+                saknas_underlag=saknas_value,
+                parse_errors=parse_errors,
+                latency_ms=total_pipeline_ms,
+                model_used=final_stats.model_used if final_stats else "",
+                retrieval_count=len(retrieval_result.results) if retrieval_result else 0,
+            )
+
+            # Structured log for log aggregation (Loki/Grafana/Splunk)
+            log_structured_metric(
+                logger=logger,
+                event_type="rag_completion",
+                question=question,
+                mode=mode.value,
+                saknas_underlag=saknas_value,
+                parse_errors=parse_errors,
+                latency_ms=total_pipeline_ms,
+                sources_count=len(sources),
+                evidence_level=evidence_level,
+                model=final_stats.model_used if final_stats else "",
             )
 
             return RAGResult(

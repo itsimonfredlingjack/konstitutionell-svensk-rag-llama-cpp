@@ -204,6 +204,40 @@ async def health_check(
     )
 
 
+@router.get("/metrics")
+async def get_rag_metrics_endpoint():
+    """
+    Get RAG pipeline metrics for observability.
+
+    Returns:
+        - Lifetime totals for requests, saknas_underlag, and parse_errors
+        - Rates for last 1min, 5min, and 1hour windows
+        - Breakdown by response mode
+        - Top questions triggering saknas_underlag and parse_errors
+    """
+    from ..utils.metrics import get_rag_metrics
+
+    metrics = get_rag_metrics()
+    return metrics.get_full_metrics()
+
+
+@router.get("/metrics/prometheus")
+async def get_prometheus_metrics():
+    """
+    Export metrics in Prometheus text exposition format.
+
+    Can be scraped by Prometheus server at /api/constitutional/metrics/prometheus
+    """
+    from fastapi.responses import PlainTextResponse
+    from ..utils.metrics import get_rag_metrics
+
+    metrics = get_rag_metrics()
+    return PlainTextResponse(
+        content=metrics.to_prometheus_format(),
+        media_type="text/plain; version=0.0.4; charset=utf-8",
+    )
+
+
 @router.get("/stats/overview", response_model=OverviewStats)
 async def get_stats_overview():
     """
