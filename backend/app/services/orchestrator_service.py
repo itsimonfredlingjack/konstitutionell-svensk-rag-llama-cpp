@@ -927,16 +927,65 @@ class OrchestratorService(BaseService):
                                 "Structured output validation: PASSED (attempt 2 - retry)"
                             )
                         else:
-                            # Both attempts failed - final fallback based on mode
+                            # Both attempts failed - try JSON-only reformat (attempt 3)
                             reasoning_steps.append(
                                 f"Structured output validation: FAILED attempt 2 ({attempt2_error})"
                             )
-                            parse_errors = True
 
-                            # Use extracted method for fallback handling
-                            full_answer, structured_output_data = self._create_fallback_response(
-                                mode, reasoning_steps
-                            )
+                            # ATTEMPT 3: JSON-only reformat
+                            try:
+                                reformat_messages = [
+                                    {
+                                        "role": "system",
+                                        "content": "Du är en JSON-formaterare. Returnera ENDAST giltig JSON, ingen annan text.",
+                                    },
+                                    {
+                                        "role": "user",
+                                        "content": f"Konvertera detta till giltig JSON med fälten 'svar' och 'kallor':\n\n{retry_full_answer[:2000]}",
+                                    },
+                                ]
+
+                                reformat_answer = ""
+                                async for token, _ in self.llm_service.chat_stream(
+                                    messages=reformat_messages,
+                                    config_override={"temperature": 0.0, "num_predict": 1024},
+                                ):
+                                    reformat_answer += token
+
+                                # Try to parse reformat result
+                                attempt3_success, attempt3_schema, attempt3_error = (
+                                    try_parse_and_validate(reformat_answer, 3)
+                                )
+
+                                if attempt3_success and attempt3_schema:
+                                    structured_output_data = (
+                                        self.structured_output.strip_internal_note(attempt3_schema)
+                                    )
+                                    reasoning_steps.append(
+                                        "Structured output validation: PASSED (attempt 3 - JSON reformat)"
+                                    )
+                                    self.logger.info("JSON reformat attempt 3 succeeded")
+                                else:
+                                    # All 3 attempts failed - now use fallback
+                                    parse_errors = True
+                                    reasoning_steps.append(
+                                        f"Structured output validation: FAILED attempt 3 ({attempt3_error})"
+                                    )
+                                    self.logger.error(
+                                        f"JSON REFORMAT FAILED - raw output: {retry_full_answer[:500]!r}"
+                                    )
+                                    full_answer, structured_output_data = (
+                                        self._create_fallback_response(mode, reasoning_steps)
+                                    )
+                            except Exception as reformat_e:
+                                parse_errors = True
+                                reasoning_steps.append(
+                                    f"JSON reformat attempt 3 failed: {str(reformat_e)[:100]}"
+                                )
+                                self.logger.error(f"JSON REFORMAT ERROR: {reformat_e}")
+                                full_answer, structured_output_data = (
+                                    self._create_fallback_response(mode, reasoning_steps)
+                                )
 
                     except Exception as retry_e:
                         # Retry attempt also failed
@@ -946,7 +995,8 @@ class OrchestratorService(BaseService):
                         )
                         self.logger.warning(f"Attempt 2 failed unexpectedly: {retry_e}")
 
-                        # Final fallback - use extracted method
+                        # Final fallback - log raw output for debugging
+                        self.logger.error(f"STRUCTURED OUTPUT FAILED - raw: {full_answer[:500]!r}")
                         full_answer, structured_output_data = self._create_fallback_response(
                             mode, reasoning_steps
                         )

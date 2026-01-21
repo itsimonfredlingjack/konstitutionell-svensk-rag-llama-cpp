@@ -3,6 +3,7 @@ Config Service - Centralized Configuration for Constitutional AI
 Wraps pydantic-settings with environment variable support
 """
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
@@ -361,7 +362,14 @@ class ConfigService:
             },
         }
 
-        return mode_config_map.get(mode.lower(), mode_config_map["assist"])
+        config = mode_config_map.get(mode.lower(), mode_config_map["assist"])
+
+        # DETERMINISTIC_EVAL mode: force temperature=0, top_p=1 for consistent output
+        if os.environ.get("DETERMINISTIC_EVAL", "").lower() == "true":
+            config["temperature"] = 0.0
+            config["top_p"] = 1.0
+
+        return config
 
     @property
     def structured_output_effective_enabled(self) -> bool:
