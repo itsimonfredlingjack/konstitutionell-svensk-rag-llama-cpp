@@ -143,9 +143,6 @@ class RagApp(App):
         chat = self.query_one("#chat-view", ChatView)
         status_bar = self.query_one(StatusBar)
 
-        # Add user message to history
-        self.rag_provider.add_to_history("user", text)
-
         chat.add_message("assistant", "")
         assistant_text = ""
 
@@ -157,7 +154,8 @@ class RagApp(App):
                     assistant_text += chunk.text
                     chat.stream_append(chunk.text)
 
-            # Track assistant response in history
+            # Track conversation history (after query so current message is not duplicated)
+            self.rag_provider.add_to_history("user", text)
             self.rag_provider.add_to_history("assistant", assistant_text)
 
             # Display sources if we got any
