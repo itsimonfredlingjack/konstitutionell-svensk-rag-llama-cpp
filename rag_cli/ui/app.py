@@ -1,32 +1,18 @@
 # rag_cli/ui/app.py
 
-import asyncio
 import logging
 from pathlib import Path
 
-import aiofiles
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, ScrollableContainer, Vertical
 from textual.widgets import Input, Static
 
-
-from rag_cli.agent.loop import AgentLoop
-from rag_cli.config import AgentConfig, Config
-from rag_cli.providers.factory import build_provider
-from rag_cli.tools.base import ToolRegistry
-from rag_cli.tools.cloud import AWSResourceLister, K8sLogFetcher
-from rag_cli.tools.filesystem import ReadFileTool, StrReplaceTool, WriteFileTool
-from rag_cli.tools.git import GitAddTool, GitCommitTool, GitStatusTool
-from rag_cli.tools.shell import ShellTool
+from rag_cli.config import Config
+from rag_cli.providers.rag_backend import RAGBackendProvider
 
 from .theme import CSS_VARS
-from .widgets import (
-    AgentHeader,
-    ConfirmationModal,
-    MainframeBubble,
-    StatusBar,
-)
+from .widgets import AgentHeader, MainframeBubble, StatusBar
 
 
 logger = logging.getLogger(__name__)
@@ -119,42 +105,8 @@ class RagApp(App):
         super().__init__(**kwargs)
         self.workspace = Path.cwd()
         self.config = Config.load()
-        self.tools = ToolRegistry(load_plugins=False)
-        self.tools.register(ReadFileTool(self.workspace))
-        self.tools.register(WriteFileTool(self.workspace))
-        self.tools.register(StrReplaceTool(self.workspace))
-        self.tools.register(GitStatusTool(self.workspace))
-        self.tools.register(GitAddTool(self.workspace))
-        self.tools.register(GitCommitTool(self.workspace))
-        self.tools.register(AWSResourceLister())
-        self.tools.register(K8sLogFetcher())
-        self.tools.register(ShellTool(self.workspace, allowed_commands=self.config.shell.allowed))
-
-        provider_cfg = self.config.providers.get(self.config.default_provider)
-        self.provider = build_provider(provider_cfg)
-        self.agent = AgentLoop(self.provider, self.tools, AgentConfig(), on_confirmation=self._handle_confirmation)
-
-    async def _handle_confirmation(self, tool_name: str, arguments: dict) -> bool:
-        """Handle confirmation requests from the agent"""
-        return await self.push_screen_wait(ConfirmationModal(tool_name, arguments))
-
-    def on_mount(self) -> None:
-        self.set_interval(10.0, self._poll_models)
-        self.run_worker(self._load_plugins(), group="plugins")
-
-    async def _load_plugins(self) -> None:
-        await asyncio.to_thread(self.tools.register_plugins, self.workspace)
-
-    async def _poll_models(self) -> None:
-        try:
-            models = await self.provider.get_available_models()
-            if models:
-                new_model = models[0]
-                header = self.query_one(AgentHeader)
-                if header.model != new_model:
-                    header.model = new_model
-        except Exception:
-            pass
+        self.rag_provider = RAGBackendProvider(base_url=self.config.rag_backend_url)
+        self._last_sources: list[dict] = []
 
     def compose(self) -> ComposeResult:
         # Professional HUD Layout
@@ -191,18 +143,34 @@ class RagApp(App):
         chat = self.query_one("#chat-view", ChatView)
         status_bar = self.query_one(StatusBar)
 
+        # Add user message to history
+        self.rag_provider.add_to_history("user", text)
+
         chat.add_message("assistant", "")
+        assistant_text = ""
 
         try:
-            async for chunk in self.agent.run(text):
-                if hasattr(chunk, "text") and chunk.text:
+            async for chunk in self.rag_provider.query(text):
+                if chunk.metadata and chunk.metadata.get("sources"):
+                    self._last_sources = chunk.metadata["sources"]
+                if chunk.text:
+                    assistant_text += chunk.text
                     chat.stream_append(chunk.text)
-                elif hasattr(chunk, "tool_name") and chunk.tool_name:
-                    chat.add_message("tool", chunk.content)
-                    chat.add_message("assistant", "")
+
+            # Track assistant response in history
+            self.rag_provider.add_to_history("assistant", assistant_text)
+
+            # Display sources if we got any
+            if self._last_sources:
+                sources_text = "\n\u2500\u2500 K\u00e4llor \u2500\u2500\n"
+                for src in self._last_sources:
+                    score = src.get("score", 0)
+                    title = src.get("title", "Unknown")
+                    sources_text += f"  [{score:.2f}] {title}\n"
+                chat.add_message("tool", sources_text)
+                self._last_sources = []
 
             status_bar.status = "ready"
-
         except Exception as e:
             chat.add_message("tool", f"CRITICAL_FAILURE: {e}")
             status_bar.status = "ready"

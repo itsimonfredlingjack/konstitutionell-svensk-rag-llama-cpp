@@ -50,6 +50,7 @@ class Config(BaseModel):
     shell: ShellConfig = Field(default_factory=ShellConfig)
     providers: dict[str, ProviderConfig] = Field(default_factory=dict)
     default_provider: str = "local"
+    rag_backend_url: str = "http://localhost:8900"
 
     @classmethod
     def load(cls, path: Path | None = None) -> "Config":
