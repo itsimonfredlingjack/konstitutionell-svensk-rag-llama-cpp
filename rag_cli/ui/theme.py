@@ -4,10 +4,10 @@ from rich.box import ROUNDED
 
 # Stone Light Palette (Constitutional web frontend)
 COLORS = {
-    "bg": "#C4C0BD",           # Stone-350-ish (clearly grey, not white)
-    "surface": "#F5F5F4",      # Stone-100 (panels pop against grey bg)
+    "bg": "#E7E5E4",            # Stone-200 (light canvas)
+    "surface": "#FAFAF9",       # Stone-50 (panels)
     "surface_light": "#A8A29E", # Stone-400 (visible borders/dividers)
-    "surface_glow": "#E7E5E4",  # Stone-200 (highlight, midpoint)
+    "surface_glow": "#F5F5F4",  # Stone-100 (highlight, midpoint)
 
     "primary": "#0F766E",       # Teal-700 (primär accent)
     "secondary": "#B45309",     # Amber-700 (sekundär accent)
@@ -20,6 +20,17 @@ COLORS = {
     "text": "#1C1917",          # Stone-900 (primär text)
     "text_dim": "#57534E",      # Stone-600 (darker dim — readable on light)
     "text_bright": "#0C0A09",   # Stone-950 (betonad text)
+
+    # Terminal / system output (dark, high-contrast)
+    "terminal_bg": "#0B0F14",
+    "terminal_border": "#334155",  # Slate-700
+    "terminal_text": "#E5E7EB",    # Gray-200
+    "terminal_text_dim": "#9CA3AF",# Gray-400
+    "terminal_primary": "#2DD4BF", # Teal-400
+    "terminal_secondary": "#FBBF24",# Amber-400
+    "terminal_tertiary": "#38BDF8",# Sky-400
+    "terminal_success": "#34D399", # Emerald-400
+    "terminal_error": "#F87171",   # Red-400
 }
 
 CSS_VARS = f"""
@@ -79,4 +90,35 @@ class RagNeonStyle(PygmentsStyle):
         Generic.Prompt: f"bold {COLORS['primary']}",
         Generic.Output: COLORS["text"],
         Generic.Traceback: COLORS["error"],
+    }
+
+
+class RagTerminalStyle(PygmentsStyle):
+    """Dark terminal-like Syntax Highlighting for system output blocks."""
+
+    background_color = COLORS["terminal_bg"]
+    highlight_color = "#111827"  # Slate-900-ish
+
+    styles = {
+        Keyword: f"bold {COLORS['terminal_primary']}",
+        Keyword.Constant: f"bold {COLORS['terminal_tertiary']}",
+        Keyword.Namespace: f"bold {COLORS['terminal_primary']}",
+
+        Name: COLORS["terminal_text"],
+        Name.Function: f"bold {COLORS['terminal_primary']}",
+        Name.Class: f"bold {COLORS['terminal_tertiary']}",
+        Name.Builtin: COLORS["terminal_primary"],
+
+        String: COLORS["terminal_success"],
+        String.Doc: f"italic {COLORS['terminal_text_dim']}",
+
+        Number: COLORS["terminal_secondary"],
+        Operator: COLORS["terminal_primary"],
+
+        Comment: f"italic {COLORS['terminal_text_dim']}",
+        Error: f"bold {COLORS['terminal_error']}",
+
+        Generic.Prompt: f"bold {COLORS['terminal_primary']}",
+        Generic.Output: COLORS["terminal_text"],
+        Generic.Traceback: COLORS["terminal_error"],
     }

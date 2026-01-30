@@ -21,6 +21,7 @@ from .theme import COLORS, HUD
 
 # Register custom neon theme
 pygments.styles.STYLE_MAP["rag_neon"] = "rag_cli.ui.theme:RagNeonStyle"
+pygments.styles.STYLE_MAP["rag_terminal"] = "rag_cli.ui.theme:RagTerminalStyle"
 
 
 class StatusBar(Static):
@@ -91,17 +92,24 @@ class MainframeBubble(Widget):
                 border_style=COLORS["surface_light"],
                 box=HUD,
                 padding=(0, 1),
-                style=f"on {COLORS['bg']}",
+                style=f"on {COLORS['surface']}",
             ))
             
         elif self.role == "tool":
-            header = f"[{COLORS['tertiary']}]SYSTEM[/]"
+            header = f"[{COLORS['terminal_tertiary']}]SYSTEM[/]"
             return Panel(
-                Syntax(self.content, "text", theme="rag_neon"),
+                Syntax(
+                    self.content,
+                    "text",
+                    theme="rag_terminal",
+                    background_color=COLORS["terminal_bg"],
+                    word_wrap=True,
+                ),
                 title=header,
-                border_style=COLORS["surface_light"],
+                border_style=COLORS["terminal_border"],
                 box=HUD,
-                style=f"on {COLORS['bg']}",
+                padding=(0, 1),
+                style=f"on {COLORS['terminal_bg']}",
             )
             
         return Text(self.content)
