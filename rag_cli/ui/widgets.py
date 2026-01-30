@@ -23,8 +23,6 @@ from .theme import COLORS, HUD
 pygments.styles.STYLE_MAP["rag_neon"] = "rag_cli.ui.theme:RagNeonStyle"
 pygments.styles.STYLE_MAP["rag_terminal"] = "rag_cli.ui.theme:RagTerminalStyle"
 
-BUBBLE_WIDTH = 76
-
 
 class StatusBar(Static):
     """Minimal Input Status"""
@@ -71,6 +69,8 @@ class MainframeBubble(Widget):
 
     def render(self) -> RenderableType:
         time_str = datetime.now().strftime("%H:%M")
+        # Default to near-full width; allow the terminal to scale with the window.
+        bubble_width = max(60, self.size.width - 6)
         
         if self.role == "user":
             header = f"[{COLORS['terminal_primary']}]USER[/] [{COLORS['terminal_muted']}]{time_str}[/]"
@@ -78,11 +78,11 @@ class MainframeBubble(Widget):
                 Text(self.content, style=COLORS['terminal_text']),
                 title=header,
                 title_align="right",
-                border_style=COLORS["terminal_primary"],
+                border_style=COLORS["terminal_border"],
                 box=HUD,
                 padding=(0, 1),
                 style=f"on {COLORS['terminal_panel_bg']}",
-                width=BUBBLE_WIDTH,
+                width=bubble_width,
             ))
             
         elif self.role == "assistant":
@@ -96,11 +96,11 @@ class MainframeBubble(Widget):
                 ),
                 title=header,
                 title_align="left",
-                border_style=COLORS["terminal_secondary"],
+                border_style=COLORS["terminal_border"],
                 box=HUD,
                 padding=(0, 1),
                 style=f"on {COLORS['terminal_panel_bg']}",
-                width=BUBBLE_WIDTH,
+                width=bubble_width,
             ))
             
         elif self.role == "tool":
@@ -114,10 +114,11 @@ class MainframeBubble(Widget):
                     word_wrap=True,
                 ),
                 title=header,
-                border_style=COLORS["terminal_tertiary"],
+                border_style=COLORS["terminal_border"],
                 box=HUD,
                 padding=(0, 1),
                 style=f"on {COLORS['terminal_panel_bg_alt']}",
+                width=bubble_width,
             )
             
         return Text(self.content)

@@ -44,13 +44,13 @@ class RagApp(App):
     #layout-root {
         height: 1fr;
         width: 1fr;
-        padding: 1 2;
+        padding: 0 1;
     }
     
     /* Header Area */
     AgentHeader {
         dock: top;
-        height: 4;
+        height: 3;
         margin: 0 0 1 0;
         padding: 0 2;
         border: round $surface_light;
@@ -86,24 +86,27 @@ class RagApp(App):
         dock: bottom;
         height: auto;
         border: round $surface_light;
-        background: $surface;
-        padding: 0 2;
+        background: $surface_glow;
+        padding: 0 1;
         margin: 0;
     }
     
     Input {
         border: round $surface_light;
-        background: $surface_glow;
+        background: #FFFFFF;
         color: $text;
         width: 100%;
         height: 3;
         padding: 0 1;
     }
     Input:focus { border: round $primary; }
+    Input > .input--placeholder { color: $text_dim; }
+    Input > .input--cursor { background: $primary; color: $surface; }
+    Input > .input--selection { background: $primary 30%; }
 
     /* StatusBar */
     StatusBar {
-        background: $surface;
+        background: $surface_glow;
         color: $text_dim;
         padding: 0 1;
     }
