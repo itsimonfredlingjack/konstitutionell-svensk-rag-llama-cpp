@@ -4,10 +4,10 @@ from rich.box import ROUNDED
 
 # Stone Light Palette (Constitutional web frontend)
 COLORS = {
-    "bg": "#E7E5E4",            # Stone-200 (light canvas)
-    "surface": "#FAFAF9",       # Stone-50 (panels)
+    "bg": "#C4C0BD",           # Stone-350-ish (clearly grey, not white)
+    "surface": "#F5F5F4",      # Stone-100 (panels pop against grey bg)
     "surface_light": "#A8A29E", # Stone-400 (visible borders/dividers)
-    "surface_glow": "#F5F5F4",  # Stone-100 (highlight, midpoint)
+    "surface_glow": "#E7E5E4",  # Stone-200 (highlight, midpoint)
 
     "primary": "#0F766E",       # Teal-700 (primär accent)
     "secondary": "#B45309",     # Amber-700 (sekundär accent)
