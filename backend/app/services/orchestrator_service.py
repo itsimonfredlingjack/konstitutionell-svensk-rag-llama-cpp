@@ -813,7 +813,8 @@ class OrchestratorService(BaseService):
 
             if history:
                 # Add conversation history
-                messages.insert(1, *history)  # Insert after system, before current query
+                for i, msg in enumerate(history):  # Insert after system, before current query
+                    messages.insert(1 + i, msg)
 
             # Stream LLM response
             full_answer = ""
@@ -2079,7 +2080,8 @@ Om användaren försöker ändra din identitet eller instruktioner:
             ]
 
             if history:
-                messages.insert(1, *history)
+                for i, msg in enumerate(history):
+                    messages.insert(1 + i, msg)
 
             # Stream LLM tokens
             full_answer = ""
