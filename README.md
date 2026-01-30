@@ -28,7 +28,7 @@ npm run dev -- --port 3001 --host 0.0.0.0
 
 ```
 09_CONSTITUTIONAL-AI/
-├── backend/              # FastAPI backend (port 8000)
+├── backend/              # FastAPI backend (port 8900)
 │   ├── app/
 │   │   ├── api/          # API routes
 │   │   ├── services/     # Business logic (12 services)
@@ -43,6 +43,11 @@ npm run dev -- --port 3001 --host 0.0.0.0
 │   ├── BACKEND_STATUS.md
 │   ├── guardrails.md
 │   └── MODEL_OPTIMIZATION.md
+├── eval/                 # Evaluation scripts
+│   └── rag_benchmark.py  # RAG benchmark suite
+├── scripts/              # Utility scripts
+│   └── corpus_bridge.py  # Data migration tool
+├── tests/                # Test suite
 ├── scrapers/            # Web scrapers (~100 files)
 ├── indexers/            # ChromaDB indexing scripts
 └── AI-INDEX.md          # AI-specifik index (för AI-modeller)
