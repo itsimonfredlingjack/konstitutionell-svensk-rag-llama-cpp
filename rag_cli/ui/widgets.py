@@ -48,7 +48,7 @@ class AgentHeader(Widget):
         icon_col = f"[{COLORS['primary']}] ▟█▙[/]\n[{COLORS['primary']}] ▜█▛[/]"
         
         # Stacked data lines
-        line1 = f" [bold {COLORS['text_bright']}]VIBE CLI[/] [dim]v0.6.0[/]"
+        line1 = f" [bold {COLORS['text_bright']}]RAG CLI[/] [dim]v0.6.0[/]"
         line2 = f" [dim]{self.branch}[/] [{COLORS['text_dim']}]·[/] [{COLORS['secondary']}]{self.model}[/] [{COLORS['text_dim']}]·[/] [dim]{self.tokens} tks[/]"
         
         content = Text.from_markup(f"{icon_col.splitlines()[0]}{line1}\n{icon_col.splitlines()[1]}{line2}")
