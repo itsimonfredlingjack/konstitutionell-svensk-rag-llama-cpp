@@ -23,6 +23,8 @@ from .theme import COLORS, HUD
 pygments.styles.STYLE_MAP["rag_neon"] = "rag_cli.ui.theme:RagNeonStyle"
 pygments.styles.STYLE_MAP["rag_terminal"] = "rag_cli.ui.theme:RagTerminalStyle"
 
+BUBBLE_WIDTH = 76
+
 
 class StatusBar(Static):
     """Minimal Input Status"""
@@ -71,28 +73,34 @@ class MainframeBubble(Widget):
         time_str = datetime.now().strftime("%H:%M")
         
         if self.role == "user":
-            header = f"[{COLORS['terminal_primary']}]USER[/] [dim]{time_str}[/]"
+            header = f"[{COLORS['terminal_primary']}]USER[/] [{COLORS['terminal_muted']}]{time_str}[/]"
             return Align.right(Panel(
                 Text(self.content, style=COLORS['terminal_text']),
                 title=header,
                 title_align="right",
-                border_style=COLORS['terminal_border'],
+                border_style=COLORS["terminal_primary"],
                 box=HUD,
                 padding=(0, 1),
-                style=f"on {COLORS['terminal_bg']}",
-                width=60 
+                style=f"on {COLORS['terminal_panel_bg']}",
+                width=BUBBLE_WIDTH,
             ))
             
         elif self.role == "assistant":
-            header = f"[{COLORS['terminal_secondary']}]AGENT[/] [dim]{time_str}[/]"
+            header = f"[{COLORS['terminal_secondary']}]AGENT[/] [{COLORS['terminal_muted']}]{time_str}[/]"
             return Align.left(Panel(
-                Markdown(self.content),
+                Markdown(
+                    self.content,
+                    style=COLORS["terminal_text"],
+                    code_theme="rag_terminal",
+                    inline_code_theme="rag_terminal",
+                ),
                 title=header,
                 title_align="left",
-                border_style=COLORS['terminal_border'],
+                border_style=COLORS["terminal_secondary"],
                 box=HUD,
                 padding=(0, 1),
-                style=f"on {COLORS['terminal_bg']}",
+                style=f"on {COLORS['terminal_panel_bg']}",
+                width=BUBBLE_WIDTH,
             ))
             
         elif self.role == "tool":
@@ -102,14 +110,14 @@ class MainframeBubble(Widget):
                     self.content,
                     "text",
                     theme="rag_terminal",
-                    background_color=COLORS["terminal_bg"],
+                    background_color=COLORS["terminal_panel_bg_alt"],
                     word_wrap=True,
                 ),
                 title=header,
-                border_style=COLORS["terminal_border"],
+                border_style=COLORS["terminal_tertiary"],
                 box=HUD,
                 padding=(0, 1),
-                style=f"on {COLORS['terminal_bg']}",
+                style=f"on {COLORS['terminal_panel_bg_alt']}",
             )
             
         return Text(self.content)
