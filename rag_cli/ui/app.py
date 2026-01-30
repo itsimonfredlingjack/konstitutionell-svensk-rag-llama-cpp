@@ -38,7 +38,7 @@ class RagApp(App):
     CSS = (
         CSS_VARS
         + """
-    Screen { background: $bg; }
+    Screen { background: $surface; }
     
     /* === Professional Layout === */
     #layout-root {
@@ -49,6 +49,7 @@ class RagApp(App):
     
     /* Header Area */
     AgentHeader {
+        background: $surface;
         dock: top;
         height: 2;
         margin-bottom: 1;
@@ -59,13 +60,15 @@ class RagApp(App):
     /* Chat Area (Main) */
     #chat-area {
         height: 1fr;
-        background: $bg;
+        background: $terminal_bg;
         border: none;
     }
     
     #chat-view {
         height: 1fr;
+        background: $terminal_bg;
         scrollbar-gutter: stable;
+        padding: 1 2;
     }
     
     /* Input Box */
@@ -79,13 +82,14 @@ class RagApp(App):
     }
     
     Input {
-        border: none;
+        border: round $surface_light;
         background: $surface;
         color: $text;
         width: 100%;
         height: 3;
+        padding: 0 1;
     }
-    Input:focus { border: none; }
+    Input:focus { border: round $primary; }
 
     /* StatusBar */
     StatusBar {

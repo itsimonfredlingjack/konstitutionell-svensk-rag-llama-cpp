@@ -50,6 +50,11 @@ CSS_VARS = f"""
     $text: {COLORS["text"]};
     $text_dim: {COLORS["text_dim"]};
     $text_bright: {COLORS["text_bright"]};
+
+    $terminal_bg: {COLORS["terminal_bg"]};
+    $terminal_border: {COLORS["terminal_border"]};
+    $terminal_text: {COLORS["terminal_text"]};
+    $terminal_text_dim: {COLORS["terminal_text_dim"]};
 """
 
 # --- STRUCTURAL ASSETS ---

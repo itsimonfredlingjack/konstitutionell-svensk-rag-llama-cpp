@@ -71,28 +71,28 @@ class MainframeBubble(Widget):
         time_str = datetime.now().strftime("%H:%M")
         
         if self.role == "user":
-            header = f"[{COLORS['primary']}]USER[/] [dim]{time_str}[/]"
+            header = f"[{COLORS['terminal_primary']}]USER[/] [dim]{time_str}[/]"
             return Align.right(Panel(
-                Text(self.content, style=COLORS["text"]),
+                Text(self.content, style=COLORS['terminal_text']),
                 title=header,
                 title_align="right",
-                border_style=COLORS["surface_light"],
+                border_style=COLORS['terminal_border'],
                 box=HUD,
                 padding=(0, 1),
-                style=f"on {COLORS['surface']}",
+                style=f"on {COLORS['terminal_bg']}",
                 width=60 
             ))
             
         elif self.role == "assistant":
-            header = f"[{COLORS['secondary']}]AGENT[/] [dim]{time_str}[/]"
+            header = f"[{COLORS['terminal_secondary']}]AGENT[/] [dim]{time_str}[/]"
             return Align.left(Panel(
                 Markdown(self.content),
                 title=header,
                 title_align="left",
-                border_style=COLORS["surface_light"],
+                border_style=COLORS['terminal_border'],
                 box=HUD,
                 padding=(0, 1),
-                style=f"on {COLORS['surface']}",
+                style=f"on {COLORS['terminal_bg']}",
             ))
             
         elif self.role == "tool":
