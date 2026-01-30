@@ -69,37 +69,35 @@ class MainframeBubble(Widget):
 
     def render(self) -> RenderableType:
         time_str = datetime.now().strftime("%H:%M")
-        # Default to near-full width; allow the terminal to scale with the window.
-        bubble_width = max(60, self.size.width - 6)
+        bubble_width = max(60, min(90, self.size.width - 6))
+        tool_width = max(60, self.size.width - 4)
         
         if self.role == "user":
-            header = f"[{COLORS['terminal_primary']}]USER[/] [{COLORS['terminal_muted']}]{time_str}[/]"
+            header = f"[{COLORS['primary']}]USER[/] [dim]{time_str}[/]"
             return Align.right(Panel(
-                Text(self.content, style=COLORS['terminal_text']),
+                Text(self.content, style=COLORS["text"]),
                 title=header,
                 title_align="right",
-                border_style=COLORS["terminal_border"],
+                border_style=COLORS["surface_light"],
                 box=HUD,
                 padding=(0, 1),
-                style=f"on {COLORS['terminal_panel_bg']}",
+                style=f"on {COLORS['surface']}",
                 width=bubble_width,
             ))
             
         elif self.role == "assistant":
-            header = f"[{COLORS['terminal_secondary']}]AGENT[/] [{COLORS['terminal_muted']}]{time_str}[/]"
+            header = f"[{COLORS['secondary']}]AGENT[/] [dim]{time_str}[/]"
             return Align.left(Panel(
                 Markdown(
                     self.content,
-                    style=COLORS["terminal_text"],
-                    code_theme="rag_terminal",
-                    inline_code_theme="rag_terminal",
+                    code_theme="rag_neon",
                 ),
                 title=header,
                 title_align="left",
-                border_style=COLORS["terminal_border"],
+                border_style=COLORS["surface_light"],
                 box=HUD,
                 padding=(0, 1),
-                style=f"on {COLORS['terminal_panel_bg']}",
+                style=f"on {COLORS['bg']}",
                 width=bubble_width,
             ))
             
@@ -110,15 +108,15 @@ class MainframeBubble(Widget):
                     self.content,
                     "text",
                     theme="rag_terminal",
-                    background_color=COLORS["terminal_panel_bg_alt"],
+                    background_color=COLORS["terminal_bg"],
                     word_wrap=True,
                 ),
                 title=header,
                 border_style=COLORS["terminal_border"],
                 box=HUD,
                 padding=(0, 1),
-                style=f"on {COLORS['terminal_panel_bg_alt']}",
-                width=bubble_width,
+                style=f"on {COLORS['terminal_bg']}",
+                width=tool_width,
             )
             
         return Text(self.content)

@@ -26,16 +26,11 @@ COLORS = {
     "terminal_border": "#334155",  # Slate-700
     "terminal_text": "#E5E7EB",    # Gray-200
     "terminal_text_dim": "#9CA3AF",# Gray-400
-    "terminal_muted": "#94A3B8",   # Slate-400
     "terminal_primary": "#2DD4BF", # Teal-400
     "terminal_secondary": "#FBBF24",# Amber-400
     "terminal_tertiary": "#38BDF8",# Sky-400
     "terminal_success": "#34D399", # Emerald-400
     "terminal_error": "#F87171",   # Red-400
-
-    # Slightly lifted panels inside the terminal area (bubbles, blocks)
-    "terminal_panel_bg": "#0F172A",      # Slate-900
-    "terminal_panel_bg_alt": "#111827",  # Slate-900-ish
 }
 
 CSS_VARS = f"""
@@ -56,10 +51,6 @@ CSS_VARS = f"""
     $text_dim: {COLORS["text_dim"]};
     $text_bright: {COLORS["text_bright"]};
 
-    $terminal_bg: {COLORS["terminal_bg"]};
-    $terminal_border: {COLORS["terminal_border"]};
-    $terminal_text: {COLORS["terminal_text"]};
-    $terminal_text_dim: {COLORS["terminal_text_dim"]};
 """
 
 # --- STRUCTURAL ASSETS ---

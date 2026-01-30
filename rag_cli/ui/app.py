@@ -44,17 +44,16 @@ class RagApp(App):
     #layout-root {
         height: 1fr;
         width: 1fr;
-        padding: 0 1;
+        padding: 0;
     }
     
     /* Header Area */
     AgentHeader {
         dock: top;
-        height: 3;
-        margin: 0 0 1 0;
-        padding: 0 2;
-        border: round $surface_light;
-        background: $surface;
+        height: 2;
+        margin-bottom: 1;
+        margin-left: 2;
+        padding-top: 1;
     }
     
     /* Chat Area (Main) */
@@ -66,34 +65,22 @@ class RagApp(App):
     
     #chat-view {
         height: 1fr;
-        background: $terminal_bg;
         scrollbar-gutter: stable;
-        padding: 1 2;
-        margin: 0 0 1 0;
-        border: round $terminal_border;
-    }
-
-    MainframeBubble {
-        margin: 0 0 1 0;
-    }
-
-    #top-spacer {
-        height: 1;
     }
     
     /* Input Box */
     #input-container {
         dock: bottom;
         height: auto;
-        border: round $surface_light;
-        background: $surface_glow;
+        border-top: solid $surface_light;
+        background: $surface;
         padding: 0 1;
-        margin: 0;
+        margin-top: 1;
     }
     
     Input {
         border: round $surface_light;
-        background: #FFFFFF;
+        background: $surface_glow;
         color: $text;
         width: 100%;
         height: 3;
@@ -101,12 +88,10 @@ class RagApp(App):
     }
     Input:focus { border: round $primary; }
     Input > .input--placeholder { color: $text_dim; }
-    Input > .input--cursor { background: $primary; color: $surface; }
-    Input > .input--selection { background: $primary 30%; }
 
     /* StatusBar */
     StatusBar {
-        background: $surface_glow;
+        background: $surface;
         color: $text_dim;
         padding: 0 1;
     }
