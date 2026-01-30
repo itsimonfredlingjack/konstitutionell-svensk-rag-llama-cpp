@@ -12,6 +12,7 @@ class StreamChunk(BaseModel):
     tool_calls: List[ToolCall] | None = None
     done: bool = False
     usage: dict | None = None
+    metadata: dict | None = None
 
 class LLMProvider(ABC):
     @abstractmethod
