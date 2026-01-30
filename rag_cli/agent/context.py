@@ -1,4 +1,4 @@
-from vibe_cli.models.messages import Conversation, Message, Role
+from rag_cli.models.messages import Conversation, Message, Role
 
 
 class ContextManager:

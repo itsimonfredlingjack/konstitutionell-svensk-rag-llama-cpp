@@ -1,10 +1,10 @@
 from typing import AsyncIterator, Awaitable, Callable, List
 
-from vibe_cli.agent.context import ContextManager
-from vibe_cli.config import AgentConfig
-from vibe_cli.models.messages import Conversation, Message, Role, ToolCall, ToolResult
-from vibe_cli.providers.base import LLMProvider, StreamChunk
-from vibe_cli.tools.base import ToolRegistry
+from rag_cli.agent.context import ContextManager
+from rag_cli.config import AgentConfig
+from rag_cli.models.messages import Conversation, Message, Role, ToolCall, ToolResult
+from rag_cli.providers.base import LLMProvider, StreamChunk
+from rag_cli.tools.base import ToolRegistry
 
 
 class AgentLoop:

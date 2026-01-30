@@ -1,4 +1,4 @@
-# vibe_cli/ui/theme.py
+# rag_cli/ui/theme.py
 
 from rich.box import ROUNDED
 
@@ -51,7 +51,7 @@ HUD = ROUNDED
 from pygments.style import Style as PygmentsStyle
 from pygments.token import Comment, Error, Generic, Keyword, Name, Number, Operator, String
 
-class VibeNeonStyle(PygmentsStyle):
+class RagNeonStyle(PygmentsStyle):
     """Pro Dark Syntax Highlighting"""
 
     background_color = COLORS["surface"]

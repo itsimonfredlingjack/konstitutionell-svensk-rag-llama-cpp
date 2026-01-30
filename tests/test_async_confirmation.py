@@ -2,12 +2,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from vibe_cli.agent.loop import AgentLoop
-from vibe_cli.config import AgentConfig
-from vibe_cli.models.messages import ToolCall, ToolResult
-from vibe_cli.models.tools import ToolDefinition
-from vibe_cli.providers.base import LLMProvider, StreamChunk
-from vibe_cli.tools.base import Tool, ToolRegistry
+from rag_cli.agent.loop import AgentLoop
+from rag_cli.config import AgentConfig
+from rag_cli.models.messages import ToolCall, ToolResult
+from rag_cli.models.tools import ToolDefinition
+from rag_cli.providers.base import LLMProvider, StreamChunk
+from rag_cli.tools.base import Tool, ToolRegistry
 
 
 class MockProvider(LLMProvider):

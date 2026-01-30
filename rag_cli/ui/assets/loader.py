@@ -1,4 +1,4 @@
-# vibe_cli/ui/assets/loader.py
+# rag_cli/ui/assets/loader.py
 """ASCII Art Asset Loader"""
 
 import logging

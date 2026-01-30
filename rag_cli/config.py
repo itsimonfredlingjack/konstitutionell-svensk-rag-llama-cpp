@@ -54,7 +54,7 @@ class Config(BaseModel):
     @classmethod
     def load(cls, path: Path | None = None) -> "Config":
         if path is None:
-            config_dir = Path(platformdirs.user_config_dir("vibe"))
+            config_dir = Path(platformdirs.user_config_dir("rag-cli"))
             path = config_dir / "config.toml"
 
         if not path.exists():

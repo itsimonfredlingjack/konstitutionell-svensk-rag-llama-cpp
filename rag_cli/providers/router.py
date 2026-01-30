@@ -2,9 +2,9 @@
 
 from typing import AsyncIterator
 
-from vibe_cli.models.messages import Message
-from vibe_cli.models.tools import ToolDefinition
-from vibe_cli.providers.base import LLMProvider, StreamChunk
+from rag_cli.models.messages import Message
+from rag_cli.models.tools import ToolDefinition
+from rag_cli.providers.base import LLMProvider, StreamChunk
 
 
 class ModelRouter:

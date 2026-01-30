@@ -1,7 +1,7 @@
 
 import pytest
 
-from vibe_cli.tools.filesystem import ReadFileTool, WriteFileTool
+from rag_cli.tools.filesystem import ReadFileTool, WriteFileTool
 
 
 @pytest.mark.asyncio

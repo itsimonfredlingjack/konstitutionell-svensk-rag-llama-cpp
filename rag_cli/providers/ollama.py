@@ -3,10 +3,10 @@ from typing import AsyncIterator
 
 import httpx
 
-from vibe_cli.models.messages import Message, Role, ToolCall
-from vibe_cli.models.tools import ToolDefinition
-from vibe_cli.providers.base import LLMProvider, StreamChunk
-from vibe_cli.providers.model_switch import select_model_for_messages
+from rag_cli.models.messages import Message, Role, ToolCall
+from rag_cli.models.tools import ToolDefinition
+from rag_cli.providers.base import LLMProvider, StreamChunk
+from rag_cli.providers.model_switch import select_model_for_messages
 
 
 class OllamaProvider(LLMProvider):

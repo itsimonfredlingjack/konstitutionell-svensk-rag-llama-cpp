@@ -1,9 +1,9 @@
 import pytest
 
-from vibe_cli.config import Config
-from vibe_cli.models.messages import ToolResult
-from vibe_cli.ui.app import VibeApp
-from vibe_cli.ui.project_tree import FilePinMessage
+from rag_cli.config import Config
+from rag_cli.models.messages import ToolResult
+from rag_cli.ui.app import RagApp
+from rag_cli.ui.project_tree import FilePinMessage
 
 
 class DummyProvider:
@@ -17,10 +17,10 @@ class DummyProvider:
 @pytest.mark.asyncio
 async def test_sidebar_collapsible_sections_present(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr("vibe_cli.ui.app.Config.load", lambda *args, **kwargs: Config())
-    monkeypatch.setattr("vibe_cli.ui.app.build_provider", lambda *args, **kwargs: DummyProvider())
+    monkeypatch.setattr("rag_cli.ui.app.Config.load", lambda *args, **kwargs: Config())
+    monkeypatch.setattr("rag_cli.ui.app.build_provider", lambda *args, **kwargs: DummyProvider())
 
-    app = VibeApp()
+    app = RagApp()
     async with app.run_test() as pilot:
         await pilot.pause()
         app.query_one("#sidebar-project")
@@ -33,10 +33,10 @@ async def test_sidebar_collapsible_sections_present(monkeypatch, tmp_path):
 async def test_pin_expands_pinned_section(monkeypatch, tmp_path):
     (tmp_path / "x.txt").write_text("hello")
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr("vibe_cli.ui.app.Config.load", lambda *args, **kwargs: Config())
-    monkeypatch.setattr("vibe_cli.ui.app.build_provider", lambda *args, **kwargs: DummyProvider())
+    monkeypatch.setattr("rag_cli.ui.app.Config.load", lambda *args, **kwargs: Config())
+    monkeypatch.setattr("rag_cli.ui.app.build_provider", lambda *args, **kwargs: DummyProvider())
 
-    app = VibeApp()
+    app = RagApp()
     async with app.run_test() as pilot:
         await pilot.pause()
         pinned = app.query_one("#sidebar-pinned")
@@ -50,10 +50,10 @@ async def test_pin_expands_pinned_section(monkeypatch, tmp_path):
 @pytest.mark.asyncio
 async def test_tool_error_expands_log_section(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr("vibe_cli.ui.app.Config.load", lambda *args, **kwargs: Config())
-    monkeypatch.setattr("vibe_cli.ui.app.build_provider", lambda *args, **kwargs: DummyProvider())
+    monkeypatch.setattr("rag_cli.ui.app.Config.load", lambda *args, **kwargs: Config())
+    monkeypatch.setattr("rag_cli.ui.app.build_provider", lambda *args, **kwargs: DummyProvider())
 
-    app = VibeApp()
+    app = RagApp()
 
     async def fake_run(_text: str):
         yield ToolResult(tool_call_id="1", content="boom", is_error=True, tool_name="run_command")

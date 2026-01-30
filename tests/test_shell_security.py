@@ -8,7 +8,7 @@ All tests must pass before production deployment.
 import pytest
 from pathlib import Path
 
-from vibe_cli.tools.shell import ShellTool
+from rag_cli.tools.shell import ShellTool
 
 
 @pytest.mark.security

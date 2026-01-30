@@ -2,8 +2,8 @@ import asyncio
 import shlex
 from pathlib import Path
 
-from vibe_cli.models.tools import ToolParameter
-from vibe_cli.tools.base import Tool, ToolDefinition, ToolResult
+from rag_cli.models.tools import ToolParameter
+from rag_cli.tools.base import Tool, ToolDefinition, ToolResult
 
 
 class ShellTool(Tool):

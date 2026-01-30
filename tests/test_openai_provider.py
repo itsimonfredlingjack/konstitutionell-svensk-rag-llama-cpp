@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from vibe_cli.models.messages import Message, Role
-from vibe_cli.providers.openai_compat import OpenAICompatProvider
+from rag_cli.models.messages import Message, Role
+from rag_cli.providers.openai_compat import OpenAICompatProvider
 
 
 @pytest.mark.asyncio

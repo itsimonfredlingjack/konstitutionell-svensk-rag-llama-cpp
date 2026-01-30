@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibe_cli.providers.router import ModelRouter
+from rag_cli.providers.router import ModelRouter
 
 
 @pytest.fixture

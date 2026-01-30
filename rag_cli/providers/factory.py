@@ -1,8 +1,8 @@
-from vibe_cli.config import ProviderConfig
-from vibe_cli.providers.base import LLMProvider
-from vibe_cli.providers.ollama import OllamaProvider
-from vibe_cli.providers.openai_compat import OpenAICompatProvider
-from vibe_cli.providers.opencode import OpenCodeProvider
+from rag_cli.config import ProviderConfig
+from rag_cli.providers.base import LLMProvider
+from rag_cli.providers.ollama import OllamaProvider
+from rag_cli.providers.openai_compat import OpenAICompatProvider
+from rag_cli.providers.opencode import OpenCodeProvider
 
 
 def build_provider(config: ProviderConfig | None) -> LLMProvider:

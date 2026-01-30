@@ -1,10 +1,10 @@
 import sys
 
-from vibe_cli.ui.app import VibeApp
+from rag_cli.ui.app import RagApp
 
 
 def main():
-    app = VibeApp()
+    app = RagApp()
     app.run()
     return 0
 

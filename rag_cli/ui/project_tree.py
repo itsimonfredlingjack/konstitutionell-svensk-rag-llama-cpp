@@ -7,7 +7,7 @@ from rich.text import Text
 from textual.message import Message
 from textual.widgets import Static, Tree
 
-from vibe_cli.ui.theme import COLORS
+from rag_cli.ui.theme import COLORS
 
 
 class FilePinMessage(Message):

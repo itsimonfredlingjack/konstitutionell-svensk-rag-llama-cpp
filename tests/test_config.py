@@ -1,4 +1,4 @@
-from vibe_cli.config import Config
+from rag_cli.config import Config
 
 
 def test_load_default_config(tmp_path):

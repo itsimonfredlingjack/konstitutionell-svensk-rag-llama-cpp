@@ -3,13 +3,13 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-from vibe_cli.models.messages import Conversation
+from rag_cli.models.messages import Conversation
 
 
 class CheckpointManager:
     def __init__(self, workspace: Path):
         self.workspace = workspace
-        self.checkpoint_dir = workspace / ".vibe" / "checkpoints"
+        self.checkpoint_dir = workspace / ".rag-cli" / "checkpoints"
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
     def create(self, conversation: Conversation, description: str = "") -> str:
@@ -46,12 +46,12 @@ class CheckpointManager:
         return checkpoint_id
 
     def _get_tracked_files(self) -> list[Path]:
-        """Simple file listing, skipping .git and .vibe"""
+        """Simple file listing, skipping .git and .rag-cli"""
         files = []
         for path in self.workspace.rglob("*"):
             if path.is_file():
                 rel = str(path.relative_to(self.workspace))
-                if ".vibe" in rel or ".git" in rel or ".venv" in rel or "__pycache__" in rel:
+                if ".rag-cli" in rel or ".git" in rel or ".venv" in rel or "__pycache__" in rel:
                     continue
                 files.append(path)
         return files

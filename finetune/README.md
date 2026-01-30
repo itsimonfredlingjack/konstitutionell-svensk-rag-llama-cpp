@@ -1,6 +1,6 @@
 # Fine-Tuning Granite 3.1 2B for Vibe-CLI
 
-This directory contains scripts to fine-tune the `ibm-granite/granite-3.1-2b-instruct` model on the `vibe-cli` codebase.
+This directory contains scripts to fine-tune the `ibm-granite/granite-3.1-2b-instruct` model on the `rag-cli` codebase.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ pip install torch transformers peft bitsandbytes datasets trl accelerate
 ## Steps
 
 1.  **Prepare the Dataset**:
-    Run the preparation script to scan your `vibe-cli` code and create a JSONL file.
+    Run the preparation script to scan your `rag-cli` code and create a JSONL file.
     ```bash
     python prepare_data.py
     ```
@@ -29,4 +29,4 @@ pip install torch transformers peft bitsandbytes datasets trl accelerate
     ```
 
 3.  **Merge and Export**:
-    After training, you will have LoRA adapters in `granite-vibe-cli-lora`. You can merge these back into the base model or load them at runtime.
+    After training, you will have LoRA adapters in `granite-rag-cli-lora`. You can merge these back into the base model or load them at runtime.

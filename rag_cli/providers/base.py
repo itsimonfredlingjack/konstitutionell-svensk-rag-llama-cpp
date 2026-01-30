@@ -3,8 +3,8 @@ from typing import AsyncIterator, List, Optional
 
 from pydantic import BaseModel
 
-from vibe_cli.models.messages import Message, ToolCall
-from vibe_cli.models.tools import ToolDefinition
+from rag_cli.models.messages import Message, ToolCall
+from rag_cli.models.tools import ToolDefinition
 
 
 class StreamChunk(BaseModel):

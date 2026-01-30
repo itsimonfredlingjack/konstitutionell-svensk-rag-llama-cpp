@@ -1,6 +1,6 @@
-# vibe-cli
+# rag-cli
 
-**vibe-cli** is an Agentic AI coding assistant with a terminal-based user interface (TUI) built using Textual. It empowers developers to interact with LLMs directly from their terminal to perform coding tasks, run commands, and manage their workspace with built-in security controls.
+**rag-cli** is an Agentic AI coding assistant with a terminal-based user interface (TUI) built using Textual. It empowers developers to interact with LLMs directly from their terminal to perform coding tasks, run commands, and manage their workspace with built-in security controls.
 
 ## Project Overview
 
@@ -12,9 +12,9 @@
 
 The project is structured as follows:
 
-*   **`vibe_cli/`**: The main package directory.
+*   **`rag_cli/`**: The main package directory.
     *   **`__main__.py`**: Entry point for the application.
-    *   **`config.py`**: Handles configuration loading from `~/.config/vibe/config.toml`.
+    *   **`config.py`**: Handles configuration loading from `~/.config/rag-cli/config.toml`.
     *   **`agent/`**: Core agent logic.
         *   `loop.py`: The main loop (LLM -> Tool Execution -> Context Update).
         *   `context.py`: Manages conversation history and token compression.
@@ -31,7 +31,7 @@ The project is structured as follows:
         *   `shell.py`: Command execution with allowlist/blocklist security.
         *   `git.py`: Git integration.
     *   **`ui/`**: Textual-based user interface.
-        *   `app.py`: Main application class `VibeApp`.
+        *   `app.py`: Main application class `RagApp`.
         *   `widgets.py`: Custom widgets like Chat view, Input area.
         *   `theme.py`: UI styling and ASCII art.
 
@@ -53,12 +53,12 @@ The project is structured as follows:
 
 To start the Vibe CLI:
 ```bash
-vibe
+rag
 ```
 
 ### Configuration
 
-Configuration is stored in `~/.config/vibe/config.toml`.
+Configuration is stored in `~/.config/rag-cli/config.toml`.
 
 Example `config.toml`:
 ```toml
@@ -104,11 +104,11 @@ ruff format .
     *   **Allowlist:** `ls`, `cat`, `grep`, `git`, `pytest`, `npm`, etc.
     *   **Blocklist:** `rm -rf`, `> /dev/`, `sudo`.
 *   **Dangerous Tool Confirmation:** Tools like `write_file` or `run_command` can be configured to require user confirmation.
-*   **Plugin Security:** Workspace plugins (`.vibe/tools/*.py`) are disabled by default. Enable with `VIBE_ALLOW_WORKSPACE_PLUGINS=1`.
+*   **Plugin Security:** Workspace plugins (`.rag-cli/tools/*.py`) are disabled by default. Enable with `RAG_CLI_ALLOW_WORKSPACE_PLUGINS=1`.
 
 ## Key Files for Context
 
-*   **`vibe_cli/tools/base.py`**: Understanding how tools are registered and executed.
-*   **`vibe_cli/agent/loop.py`**: The "brain" of the agent, handling the reasoning loop.
-*   **`vibe_cli/ui/app.py`**: The entry point for the TUI, managing application lifecycle.
+*   **`rag_cli/tools/base.py`**: Understanding how tools are registered and executed.
+*   **`rag_cli/agent/loop.py`**: The "brain" of the agent, handling the reasoning loop.
+*   **`rag_cli/ui/app.py`**: The entry point for the TUI, managing application lifecycle.
 *   **`CLAUDE.md`**: Contains detailed architectural notes and context for AI assistants.

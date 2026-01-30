@@ -1,4 +1,4 @@
-# vibe-cli
+# rag-cli
 
 An Agentic AI coding assistant with a Textual TUI.
 
@@ -11,12 +11,12 @@ pip install -e .
 ## Usage
 
 ```bash
-vibe
+rag
 ```
 
 ## Providers (Ollama)
 
-Create `~/.config/vibe/config.toml`:
+Create `~/.config/rag-cli/config.toml`:
 
 ```toml
 default_provider = "ollama"
@@ -33,7 +33,7 @@ keep_alive = 0
 
 ## Tool Plugins
 
-Drop Python files in `.vibe/tools/`. Each file can expose either:
+Drop Python files in `.rag-cli/tools/`. Each file can expose either:
 
 - `load_tools()` returning a `Tool` instance or a list of `Tool` instances
 - `TOOLS` list of `Tool` instances

@@ -11,7 +11,7 @@ from trl import SFTTrainer, SFTConfig
 
 # Configuration
 MODEL_NAME = "ibm-granite/granite-3.1-2b-instruct"
-OUTPUT_DIR = "granite-vibe-cli-lora"
+OUTPUT_DIR = "granite-rag-cli-lora"
 DATASET_FILE = "dataset.jsonl"
 
 def train():

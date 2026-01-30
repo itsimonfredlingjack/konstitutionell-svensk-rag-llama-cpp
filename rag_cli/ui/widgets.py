@@ -20,7 +20,7 @@ from textual.widgets import Button, Label, Static
 from .theme import COLORS, HUD
 
 # Register custom neon theme
-pygments.styles.STYLE_MAP["vibe_neon"] = "vibe_cli.ui.theme:VibeNeonStyle"
+pygments.styles.STYLE_MAP["rag_neon"] = "rag_cli.ui.theme:RagNeonStyle"
 
 
 class StatusBar(Static):
@@ -97,7 +97,7 @@ class MainframeBubble(Widget):
         elif self.role == "tool":
             header = f"[{COLORS['tertiary']}]SYSTEM[/]"
             return Panel(
-                Syntax(self.content, "text", theme="vibe_neon"),
+                Syntax(self.content, "text", theme="rag_neon"),
                 title=header,
                 border_style=COLORS["surface_light"],
                 box=HUD,
@@ -151,7 +151,7 @@ class ConfirmationModal(ModalScreen[bool]):
             Syntax(
                 args_json,
                 "json",
-                theme="vibe_neon",
+                theme="rag_neon",
                 line_numbers=False,
                 word_wrap=True,
                 id="details",

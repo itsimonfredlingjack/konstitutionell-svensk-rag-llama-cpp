@@ -8,7 +8,7 @@ Focuses on symlink attack vectors which are not fully covered in basic tests.
 import pytest
 from pathlib import Path
 
-from vibe_cli.tools.filesystem import ReadFileTool, WriteFileTool, StrReplaceTool
+from rag_cli.tools.filesystem import ReadFileTool, WriteFileTool, StrReplaceTool
 
 
 @pytest.mark.security

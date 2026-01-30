@@ -5,13 +5,13 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from types import ModuleType
 
-from vibe_cli.models.tools import ToolDefinition, ToolResult
+from rag_cli.models.tools import ToolDefinition, ToolResult
 
 logger = logging.getLogger(__name__)
 
 # Security: Disable workspace plugin loading by default
-# Set VIBE_ALLOW_WORKSPACE_PLUGINS=1 to enable loading plugins from .vibe/tools/
-ALLOW_WORKSPACE_PLUGINS = os.environ.get("VIBE_ALLOW_WORKSPACE_PLUGINS", "0") == "1"
+# Set RAG_CLI_ALLOW_WORKSPACE_PLUGINS=1 to enable loading plugins from .rag-cli/tools/
+ALLOW_WORKSPACE_PLUGINS = os.environ.get("RAG_CLI_ALLOW_WORKSPACE_PLUGINS", "0") == "1"
 
 
 class Tool(ABC):
@@ -66,27 +66,27 @@ class ToolRegistry:
                 self.register(tool)
 
     def register_plugins(self, workspace: Path) -> None:
-        """Load plugins from workspace .vibe/tools/ directory.
+        """Load plugins from workspace .rag-cli/tools/ directory.
 
-        SECURITY: Disabled by default. Set VIBE_ALLOW_WORKSPACE_PLUGINS=1 to enable.
+        SECURITY: Disabled by default. Set RAG_CLI_ALLOW_WORKSPACE_PLUGINS=1 to enable.
         Loading arbitrary Python code from workspaces is a security risk.
         """
         if not ALLOW_WORKSPACE_PLUGINS:
-            plugin_dir = workspace / ".vibe" / "tools"
+            plugin_dir = workspace / ".rag-cli" / "tools"
             if plugin_dir.exists() and any(plugin_dir.glob("*.py")):
                 logger.warning(
                     "Workspace plugins found in %s but loading is disabled. "
-                    "Set VIBE_ALLOW_WORKSPACE_PLUGINS=1 to enable (security risk).",
+                    "Set RAG_CLI_ALLOW_WORKSPACE_PLUGINS=1 to enable (security risk).",
                     plugin_dir,
                 )
             return
-        self.load_plugins(workspace / ".vibe" / "tools")
+        self.load_plugins(workspace / ".rag-cli" / "tools")
 
     def _default_plugin_dir(self) -> Path:
-        return Path.cwd() / ".vibe" / "tools"
+        return Path.cwd() / ".rag-cli" / "tools"
 
     def _load_module(self, path: Path) -> ModuleType | None:
-        module_name = f"vibe_cli_plugin_{path.stem}"
+        module_name = f"rag_cli_plugin_{path.stem}"
         spec = importlib.util.spec_from_file_location(module_name, path)
         if spec is None or spec.loader is None:
             return None

@@ -22,7 +22,7 @@ def prepare_dataset(root_dir: str, output_file: str):
                 print(f"Skipping {file_path}: {e}")
 
 if __name__ == "__main__":
-    # Assuming we run this from vibe-cli/finetune
+    # Assuming we run this from rag-cli/finetune
     project_root = Path(__file__).parent.parent
     prepare_dataset(str(project_root), "dataset.jsonl")
     print(f"Dataset created at dataset.jsonl")

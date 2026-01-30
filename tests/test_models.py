@@ -1,5 +1,5 @@
-from vibe_cli.models.messages import Message, Role, ToolCall
-from vibe_cli.models.tools import ToolDefinition, ToolParameter
+from rag_cli.models.messages import Message, Role, ToolCall
+from rag_cli.models.tools import ToolDefinition, ToolParameter
 
 
 def test_message_serialization():

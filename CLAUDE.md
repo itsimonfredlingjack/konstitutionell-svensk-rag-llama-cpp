@@ -15,7 +15,7 @@ source venv/bin/activate
 pip install -e ".[dev]"
 
 # Run the application
-vibe
+rag
 
 # Run tests
 pytest -xvs
@@ -31,7 +31,7 @@ ruff format .
 ## Architecture
 
 ```
-vibe_cli/
+rag_cli/
 ├── __main__.py          # Entry point
 ├── config.py            # TOML-based hierarchical config
 ├── agent/
@@ -50,7 +50,7 @@ vibe_cli/
 │   ├── shell.py         # ShellTool with allowlist/blocklist
 │   └── git.py           # GitStatus, GitAdd, GitCommit
 └── ui/
-    ├── app.py           # VibeApp (Textual TUI)
+    ├── app.py           # RagApp (Textual TUI)
     ├── theme.py         # Neon color scheme and ASCII art
     └── widgets.py       # Chat, Avatar, TypingIndicator
 ```
@@ -73,7 +73,7 @@ vibe_cli/
 
 ### Configuration
 
-Config loads from `~/.config/vibe/config.toml` with sections:
+Config loads from `~/.config/rag-cli/config.toml` with sections:
 - `provider`: API endpoint, model, tokens, key
 - `ui`: Theme, confirmations
 - `context`: Token limits, compression threshold (70%)
@@ -96,7 +96,7 @@ Tools marked `dangerous=True` require user confirmation: `write_file`, `str_repl
 - `/clear` - Clear conversation
 - `/help` - Show available commands
 
-Checkpoints save to `.vibe/checkpoints/` with conversation JSON and tracked file copies.
+Checkpoints save to `.rag-cli/checkpoints/` with conversation JSON and tracked file copies.
 
 ## Testing
 

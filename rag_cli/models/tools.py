@@ -2,7 +2,7 @@ from typing import List, Literal
 
 from pydantic import BaseModel
 
-from vibe_cli.models.messages import ToolResult  # Re-export for tools/base.py
+from rag_cli.models.messages import ToolResult  # Re-export for tools/base.py
 
 __all__ = ["ToolParameter", "ToolDefinition", "ToolResult"]
 

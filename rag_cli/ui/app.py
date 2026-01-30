@@ -1,4 +1,4 @@
-# vibe_cli/ui/app.py
+# rag_cli/ui/app.py
 
 import asyncio
 import logging
@@ -11,14 +11,14 @@ from textual.containers import Container, ScrollableContainer, Vertical
 from textual.widgets import Input, Static
 
 
-from vibe_cli.agent.loop import AgentLoop
-from vibe_cli.config import AgentConfig, Config
-from vibe_cli.providers.factory import build_provider
-from vibe_cli.tools.base import ToolRegistry
-from vibe_cli.tools.cloud import AWSResourceLister, K8sLogFetcher
-from vibe_cli.tools.filesystem import ReadFileTool, StrReplaceTool, WriteFileTool
-from vibe_cli.tools.git import GitAddTool, GitCommitTool, GitStatusTool
-from vibe_cli.tools.shell import ShellTool
+from rag_cli.agent.loop import AgentLoop
+from rag_cli.config import AgentConfig, Config
+from rag_cli.providers.factory import build_provider
+from rag_cli.tools.base import ToolRegistry
+from rag_cli.tools.cloud import AWSResourceLister, K8sLogFetcher
+from rag_cli.tools.filesystem import ReadFileTool, StrReplaceTool, WriteFileTool
+from rag_cli.tools.git import GitAddTool, GitCommitTool, GitStatusTool
+from rag_cli.tools.shell import ShellTool
 
 from .theme import CSS_VARS
 from .widgets import (
@@ -48,7 +48,7 @@ class ChatView(ScrollableContainer):
                 self.scroll_end(animate=False)
 
 
-class VibeApp(App):
+class RagApp(App):
     CSS = (
         CSS_VARS
         + """
@@ -212,4 +212,4 @@ class VibeApp(App):
         chat.remove_children()
 
 if __name__ == "__main__":
-    VibeApp().run()
+    RagApp().run()

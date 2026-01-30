@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from typing import Callable
 
-from vibe_cli.models.messages import Message
+from rag_cli.models.messages import Message
 
 
 def select_model_for_messages(
