@@ -1,0 +1,39 @@
+# vibe-cli
+
+An Agentic AI coding assistant with a Textual TUI.
+
+## Installation
+
+```bash
+pip install -e .
+```
+
+## Usage
+
+```bash
+vibe
+```
+
+## Providers (Ollama)
+
+Create `~/.config/vibe/config.toml`:
+
+```toml
+default_provider = "ollama"
+
+[providers.ollama]
+type = "ollama"
+model = "granite3.1-dense:2b"
+base_url = "http://localhost:11434"
+auto_switch = true
+small_model = "granite3.1-dense:2b"
+large_model = "granite3.1-dense:8b"
+keep_alive = 0
+```
+
+## Tool Plugins
+
+Drop Python files in `.vibe/tools/`. Each file can expose either:
+
+- `load_tools()` returning a `Tool` instance or a list of `Tool` instances
+- `TOOLS` list of `Tool` instances
