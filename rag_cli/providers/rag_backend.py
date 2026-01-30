@@ -27,7 +27,7 @@ class RAGBackendProvider:
         payload = {
             "question": question,
             "mode": mode,
-            "history": self.history[-10:] if self.history else None,
+            "history": self.history[-10:],
         }
 
         async with httpx.AsyncClient() as client:
