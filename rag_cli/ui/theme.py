@@ -2,24 +2,24 @@
 
 from rich.box import ROUNDED
 
-# Pro Dark Palette (Carbon/Monokai inspired)
+# Stone Light Palette (Constitutional web frontend)
 COLORS = {
-    "bg": "#1e1e1e",           # VSCode Dark
-    "surface": "#252526",      # Lighter background
-    "surface_light": "#333333",
-    "surface_glow": "#444444",
+    "bg": "#C4C0BD",           # Stone-350-ish (clearly grey, not white)
+    "surface": "#F5F5F4",      # Stone-100 (panels pop against grey bg)
+    "surface_light": "#A8A29E", # Stone-400 (visible borders/dividers)
+    "surface_glow": "#E7E5E4",  # Stone-200 (highlight, midpoint)
 
-    "primary": "#61afef",      # Blue (Info/Structure)
-    "secondary": "#98c379",    # Green (Success/Add)
-    "tertiary": "#e5c07b",     # Yellow (Warning/Change)
-    
-    "error": "#e06c75",        # Red
-    "warning": "#d19a66",      # Orange
-    "success": "#98c379",      # Green
+    "primary": "#0F766E",       # Teal-700 (primär accent)
+    "secondary": "#B45309",     # Amber-700 (sekundär accent)
+    "tertiary": "#0E7490",      # Cyan-700 (system/info)
 
-    "text": "#abb2bf",         # Standard Text
-    "text_dim": "#5c6370",     # Comments
-    "text_bright": "#ffffff",  # Highlights
+    "error": "#B91C1C",         # Red-700
+    "warning": "#B45309",       # Amber-700
+    "success": "#047857",       # Emerald-700
+
+    "text": "#1C1917",          # Stone-900 (primär text)
+    "text_dim": "#57534E",      # Stone-600 (darker dim — readable on light)
+    "text_bright": "#0C0A09",   # Stone-950 (betonad text)
 }
 
 CSS_VARS = f"""
@@ -52,10 +52,10 @@ from pygments.style import Style as PygmentsStyle
 from pygments.token import Comment, Error, Generic, Keyword, Name, Number, Operator, String
 
 class RagNeonStyle(PygmentsStyle):
-    """Pro Dark Syntax Highlighting"""
+    """Stone Light Syntax Highlighting"""
 
     background_color = COLORS["surface"]
-    highlight_color = COLORS["surface_light"]
+    highlight_color = COLORS["surface_glow"]
 
     styles = {
         Keyword: f"bold {COLORS['primary']}",             # Blue
@@ -67,10 +67,10 @@ class RagNeonStyle(PygmentsStyle):
         Name.Class: f"bold {COLORS['tertiary']}",         # Yellow
         Name.Builtin: COLORS["primary"],
         
-        String: COLORS["secondary"],                      # Green
+        String: COLORS["success"],                        # Emerald
         String.Doc: f"italic {COLORS['text_dim']}",
         
-        Number: COLORS["tertiary"],                       # Yellow
+        Number: COLORS["secondary"],                      # Amber
         Operator: COLORS["primary"],
         
         Comment: f"italic {COLORS['text_dim']}",          # Grey
