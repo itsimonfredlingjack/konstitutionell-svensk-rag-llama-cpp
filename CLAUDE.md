@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Vibe-CLI is an agentic AI coding assistant with a Textual TUI. It provides an interactive terminal interface for LLM-powered code manipulation with built-in security controls.
+rag-cli is a terminal chat client for the Constitutional AI RAG backend. It provides an interactive Textual TUI that sends queries to the FastAPI backend via SSE streaming and displays responses with source citations.
 
 ## Commands
 
@@ -14,14 +14,11 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -e ".[dev]"
 
-# Run the application
+# Run the application (requires backend on localhost:8900)
 rag
 
 # Run tests
 pytest -xvs
-
-# Run single test file
-pytest tests/test_models.py -xvs
 
 # Lint and format
 ruff check --fix .
@@ -32,77 +29,45 @@ ruff format .
 
 ```
 rag_cli/
-├── __main__.py          # Entry point
-├── config.py            # TOML-based hierarchical config
-├── agent/
-│   ├── loop.py          # Core agentic loop (LLM → tools → repeat)
-│   ├── context.py       # Token management and compression
-│   └── checkpoint.py    # Conversation state snapshots
-├── models/
-│   ├── messages.py      # Message, ToolCall, ToolResult, Conversation
-│   └── tools.py         # ToolDefinition with OpenAI/Anthropic schema export
+├── __main__.py              # Entry point (rag command)
+├── config.py                # TOML-based config from ~/.config/rag-cli/config.toml
 ├── providers/
-│   ├── base.py          # LLMProvider abstract interface
-│   └── openai_compat.py # OpenAI-compatible streaming client
-├── tools/
-│   ├── base.py          # Tool and ToolRegistry abstractions
-│   ├── filesystem.py    # ReadFile, WriteFile, StrReplace
-│   ├── shell.py         # ShellTool with allowlist/blocklist
-│   └── git.py           # GitStatus, GitAdd, GitCommit
+│   ├── base.py              # StreamChunk model
+│   └── rag_backend.py       # SSE client to Constitutional AI backend
 └── ui/
-    ├── app.py           # RagApp (Textual TUI)
-    ├── theme.py         # Neon color scheme and ASCII art
-    └── widgets.py       # Chat, Avatar, TypingIndicator
+    ├── app.py               # RagApp (Textual TUI) - main application
+    ├── theme.py             # Color scheme and Pygments syntax styles
+    └── widgets.py           # StatusBar, AgentHeader, MainframeBubble
 ```
 
-### Key Patterns
+### Data Flow
 
-- **Async throughout**: All I/O uses httpx, aiofiles, asyncio subprocess
-- **Streaming**: LLM responses stream to UI in real-time via `StreamChunk` yields
-- **Tool registry**: Tools self-register with `ToolDefinition` schemas
-- **Provider abstraction**: `LLMProvider` base class supports multiple backends
-- **Security layers**: Path traversal prevention, command allowlisting, dangerous tool confirmation
+1. User types query in Input widget
+2. `RagApp.process()` sends query to backend via `RAGBackendProvider.query()`
+3. Backend streams SSE events (token, metadata, done, error)
+4. Tokens are appended to assistant bubble in real-time
+5. Sources displayed after response completes
+6. Conversation history tracked for multi-turn context
 
-### Agent Loop Flow
+### Key Components
 
-1. User message added to conversation
-2. LLM response streamed and parsed for tool calls
-3. Tools executed (with confirmation if dangerous)
-4. Tool results added to conversation
-5. Repeat until no tool calls or max iterations
+- **RAGBackendProvider**: httpx SSE client that streams from `/api/constitutional/agent/query/stream`
+- **RagApp**: Textual App with chat view, input, and status bar
+- **MainframeBubble**: Rich-rendered message bubbles (user/assistant/system)
+- **Config**: Pydantic model loading from TOML with `rag_backend_url` setting
 
 ### Configuration
 
-Config loads from `~/.config/rag-cli/config.toml` with sections:
-- `provider`: API endpoint, model, tokens, key
-- `ui`: Theme, confirmations
-- `context`: Token limits, compression threshold (70%)
-- `shell`: Allowed commands, blocked patterns, timeout
-- `agent`: Max iterations, confirmation settings
-
-Default provider: Local model at `http://localhost:8080/v1` with `phi-4`
-
-## Tool Security
-
-All filesystem tools enforce workspace boundary checks. Shell commands use:
-- **Allowlist**: `["ls", "cat", "grep", "git", "pytest", "npm", "echo", "pwd", "mkdir", "touch"]`
-- **Blocklist patterns**: `["rm -rf", "> /dev/", "sudo"]`
-
-Tools marked `dangerous=True` require user confirmation: `write_file`, `str_replace`, `run_command`, `git_commit`
-
-## UI Slash Commands
-
-- `/checkpoint [description]` - Create conversation checkpoint
-- `/clear` - Clear conversation
-- `/help` - Show available commands
-
-Checkpoints save to `.rag-cli/checkpoints/` with conversation JSON and tracked file copies.
+Config loads from `~/.config/rag-cli/config.toml`:
+- `rag_backend_url`: Backend URL (default: `http://localhost:8900`)
+- `ui.theme`: Theme setting
+- `ui.show_tokens`: Show token count in header
 
 ## Testing
 
-Tests use pytest with pytest-asyncio. Run with:
+Tests use pytest with pytest-asyncio:
 ```bash
 pytest -xvs                    # All tests, verbose, stop on first failure
 pytest --tb=short              # Shorter tracebacks
-pytest -k "test_read"          # Run tests matching pattern
+pytest -k "test_stream"        # Run tests matching pattern
 ```
