@@ -270,7 +270,7 @@ async def search_single_collection(
                 # Use page_content from metadata if available (for contextual retrieval),
                 # otherwise fallback to document field
                 display_text = metadata.get("page_content", document)
-                snippet = display_text[:1500] + "..." if len(display_text) > 1500 else display_text
+                snippet = display_text[:1200] + "..." if len(display_text) > 1200 else display_text
 
                 results.append(
                     {
@@ -481,6 +481,9 @@ class RetrievalOrchestrator:
         self._bm25_service = bm25_service
         self._bm25_weight = bm25_weight
         self._rrf_k = rrf_k
+        # EPR RAG-Fusion settings
+        self._use_epr_fusion = True
+        self._epr_fusion_num_queries = 3
 
     async def search(
         self,
@@ -1171,50 +1174,100 @@ class RetrievalOrchestrator:
             f"secondary={routing_config.secondary}, budget={routing_config.secondary_budget}"
         )
 
-        # Generate query embedding
-        query_embedding = self.embed_fn([query])[0]
+        # Generate query embedding(s) - multi-query if RAG-Fusion enabled
+        use_fusion = getattr(self, "_use_epr_fusion", True)
 
-        # Step 3: Pass 1 - Search primary + support collections
+        if use_fusion and self.rewriter:
+            # RAG-Fusion: expand to multiple query variants for better recall
+            rewrite_result = self.rewriter.rewrite(query, history)
+            search_query = rewrite_result.expanded_query
+
+            num_queries = getattr(self, "_epr_fusion_num_queries", 3)
+            expanded = self.expander.expand(search_query, rewrite_result, num_queries=num_queries)
+            query_embeddings = self.embed_fn(expanded.queries)
+
+            metrics.fusion_used = True
+            metrics.num_queries = len(expanded.queries)
+            metrics.query_variants = expanded.queries
+            metrics.expansion_latency_ms = expanded.expansion_latency_ms
+            logger.info(
+                f"EPR RAG-Fusion: expanded to {len(expanded.queries)} queries: "
+                f"{[q[:40] for q in expanded.queries]}"
+            )
+        else:
+            # Single query fallback
+            query_embeddings = [self.embed_fn([query])[0]]
+
+        # Step 3: Pass 1 - Search primary + support collections (multi-query)
         pass1_collections = routing_config.primary + routing_config.support
-        pass1_results = []
+        pass1_result_sets = []
 
         if pass1_collections:
-            raw_results, pass1_metrics = await parallel_collection_search(
-                client=self.client,
-                query_embedding=query_embedding,
-                collection_names=pass1_collections,
-                n_results_per_collection=k,
-                where_filter=where_filter,
-                timeout_seconds=self.default_timeout,
-            )
-            pass1_results = raw_results
+            for emb in query_embeddings:
+                raw_results, pass1_metrics = await parallel_collection_search(
+                    client=self.client,
+                    query_embedding=emb,
+                    collection_names=pass1_collections,
+                    n_results_per_collection=k,
+                    where_filter=where_filter,
+                    timeout_seconds=self.default_timeout,
+                )
+                pass1_result_sets.append(raw_results)
             metrics.dense_latency_ms = pass1_metrics.dense_latency_ms
-            metrics.dense_result_count = len(raw_results)
-            logger.info(f"EPR Pass 1: {len(raw_results)} results from {pass1_collections}")
+            total_pass1 = sum(len(rs) for rs in pass1_result_sets)
+            metrics.dense_result_count = total_pass1
+            logger.info(
+                f"EPR Pass 1: {total_pass1} results from {pass1_collections} "
+                f"({len(query_embeddings)} queries)"
+            )
 
         # Step 4: Pass 2 - Search secondary collections (if budget > 0)
-        pass2_results = []
+        pass2_result_sets = []
 
         if routing_config.secondary_budget > 0 and routing_config.secondary:
-            secondary_raw, pass2_metrics = await parallel_collection_search(
-                client=self.client,
-                query_embedding=query_embedding,
-                collection_names=routing_config.secondary,
-                n_results_per_collection=routing_config.secondary_budget,
-                where_filter=where_filter,
-                timeout_seconds=self.default_timeout,
-            )
-            # Limit to budget
-            pass2_results = secondary_raw[: routing_config.secondary_budget]
-            metrics.bm25_latency_ms = pass2_metrics.dense_latency_ms  # Reuse field for pass2
-            metrics.bm25_result_count = len(pass2_results)
+            for emb in query_embeddings[:1]:  # Only first query for secondary (budget)
+                secondary_raw, pass2_metrics = await parallel_collection_search(
+                    client=self.client,
+                    query_embedding=emb,
+                    collection_names=routing_config.secondary,
+                    n_results_per_collection=routing_config.secondary_budget,
+                    where_filter=where_filter,
+                    timeout_seconds=self.default_timeout,
+                )
+                pass2_result_sets.append(secondary_raw[: routing_config.secondary_budget])
+            metrics.bm25_latency_ms = pass2_metrics.dense_latency_ms
+            total_pass2 = sum(len(rs) for rs in pass2_result_sets)
+            metrics.bm25_result_count = total_pass2
             logger.info(
-                f"EPR Pass 2: {len(pass2_results)} results from {routing_config.secondary} "
+                f"EPR Pass 2: {total_pass2} results from {routing_config.secondary} "
                 f"(budget={routing_config.secondary_budget})"
             )
 
-        # Step 5: Merge and sort results by tier
-        all_results = pass1_results + pass2_results
+        # Step 5: Merge results using RRF (multi-query fusion)
+        all_result_sets = pass1_result_sets + pass2_result_sets
+
+        if len(all_result_sets) > 1:
+            # Use RRF to merge multi-query results
+            merged_results = hybrid_reciprocal_rank_fusion(
+                dense_result_sets=all_result_sets,
+                bm25_results=None,
+                k=self._rrf_k,
+                bm25_weight=self._bm25_weight,
+            )
+            # Use rrf_score as the primary score
+            all_results = []
+            for r in merged_results:
+                r["score"] = r.get("rrf_score", r.get("score", 0.0))
+                all_results.append(r)
+            metrics.rrf_latency_ms = 0.0  # RRF is fast, included in total
+            logger.info(
+                f"EPR RRF merge: {len(all_results)} unique results from {len(all_result_sets)} sets"
+            )
+        else:
+            # Single query - flatten
+            all_results = []
+            for rs in all_result_sets:
+                all_results.extend(rs)
 
         # PRECISION TUNING: Filter out low-score results (min_score=0.35)
         MIN_SCORE = 0.30

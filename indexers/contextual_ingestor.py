@@ -22,7 +22,7 @@ Usage:
     chunks = ingestor.process_document(
         full_text="...",
         document_title="GDPR-lagen",
-        chunk_size_tokens=500
+        chunk_size_tokens=750
     )
 """
 
@@ -30,7 +30,7 @@ import asyncio
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import ClassVar
 
 # Add backend to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
@@ -59,7 +59,7 @@ class ContextualIngestor:
     Contextual Ingestion Pipeline
 
     Processes documents by:
-    1. Chunking text into ~500 token pieces
+    1. Chunking text into ~750 token pieces with paragraph-aware boundaries
     2. Generating context summary for each chunk via LLM
     3. Prepending summary to chunk for embedding
     4. Embedding enriched text with BGE-M3
@@ -68,11 +68,11 @@ class ContextualIngestor:
 
     def __init__(
         self,
-        llm_base_url: Optional[str] = None,
-        embedding_model: Optional[str] = None,
-        context_model: Optional[str] = None,
-        chunk_size_tokens: int = 500,
-        chunk_overlap_tokens: int = 50,
+        llm_base_url: str | None = None,
+        embedding_model: str | None = None,
+        context_model: str | None = None,
+        chunk_size_tokens: int = 750,
+        chunk_overlap_tokens: int = 100,
     ):
         """
         Initialize Contextual Ingestor
@@ -113,9 +113,78 @@ class ContextualIngestor:
         """Rough token estimation: ~4 chars per token for Swedish"""
         return max(1, int(len(text) / 4))
 
+    # SFS structural boundary patterns for smart chunking
+    _SFS_BOUNDARY_PATTERNS: ClassVar[list[str]] = [
+        r"\n\s*§\s*\d+",  # § 1, § 2, etc.
+        r"\n\s*\d+\s*§",  # 1 §, 2 §, etc.
+        r"\n\s*Kapitel\s+\d+",  # Kapitel 1, Kapitel 2
+        r"\n\s*\d+\s+kap\.",  # 1 kap., 2 kap.
+        r"\n\s*Avdelning\s+\w+",  # Avdelning I, II, etc.
+        r"\n\s*Artikel\s+\d+",  # Artikel 1, 2 (EU-rättsakter)
+    ]
+
+    def _find_best_boundary(self, text: str, target_pos: int, search_range: int = 200) -> int:
+        """
+        Find the best chunk boundary near target_pos.
+
+        Priority:
+        1. SFS structural boundaries (§, Kapitel, etc.)
+        2. Paragraph boundaries (double newline)
+        3. Sentence boundaries (. followed by space/newline)
+        4. Fall back to target_pos
+
+        Args:
+            text: Full text
+            target_pos: Ideal split position
+            search_range: How far to search for a boundary
+
+        Returns:
+            Best boundary position
+        """
+        import re
+
+        search_start = max(0, target_pos - search_range)
+        search_end = min(len(text), target_pos + search_range)
+        search_text = text[search_start:search_end]
+
+        best_pos = target_pos
+        best_priority = 99
+
+        # Priority 1: SFS structural boundaries
+        for pattern in self._SFS_BOUNDARY_PATTERNS:
+            for match in re.finditer(pattern, search_text):
+                pos = search_start + match.start()
+                dist = abs(pos - target_pos)
+                if dist < search_range and best_priority > 1:
+                    best_pos = pos
+                    best_priority = 1
+
+        # Priority 2: Paragraph boundaries (\n\n)
+        if best_priority > 2:
+            for match in re.finditer(r"\n\n+", search_text):
+                pos = search_start + match.end()
+                dist = abs(pos - target_pos)
+                if dist < search_range:
+                    best_pos = pos
+                    best_priority = 2
+
+        # Priority 3: Sentence boundaries
+        if best_priority > 3:
+            for match in re.finditer(r"\.\s+", search_text):
+                pos = search_start + match.end()
+                dist = abs(pos - target_pos)
+                if dist < search_range:
+                    best_pos = pos
+                    best_priority = 3
+
+        return best_pos
+
     def _chunk_text(self, text: str, max_tokens: int, overlap_tokens: int) -> list[str]:
         """
-        Split text into chunks with overlap
+        Split text into chunks with paragraph-aware boundaries.
+
+        Respects SFS structural markers (§, Kapitel), paragraph breaks,
+        and sentence boundaries to avoid splitting mid-concept.
 
         Args:
             text: Full document text
@@ -133,18 +202,33 @@ class ContextualIngestor:
         overlap_chars = overlap_tokens * 4
 
         chunks: list[str] = []
-        step = max(1, max_chars - overlap_chars)
         start = 0
         text_len = len(text)
 
         while start < text_len:
-            end = min(text_len, start + max_chars)
+            # Calculate ideal end position
+            ideal_end = min(text_len, start + max_chars)
+
+            if ideal_end >= text_len:
+                # Last chunk - take everything remaining
+                chunk = text[start:].strip()
+                if chunk:
+                    chunks.append(chunk)
+                break
+
+            # Find best boundary near the ideal end
+            end = self._find_best_boundary(text, ideal_end, search_range=min(200, max_chars // 4))
+
+            # Ensure we make progress (at least half the max_chars)
+            if end <= start + max_chars // 2:
+                end = ideal_end
+
             chunk = text[start:end].strip()
             if chunk:
                 chunks.append(chunk)
-            if end >= text_len:
-                break
-            start += step
+
+            # Next chunk starts with overlap from the boundary
+            start = max(start + 1, end - overlap_chars)
 
         return chunks
 
@@ -190,7 +274,7 @@ Sammanfattning av kontexten:"""
 
         try:
             # Use lightweight model for context generation
-            response, stats = await self.llm_service.chat_complete(
+            response, _stats = await self.llm_service.chat_complete(
                 messages=messages,
                 model=self.context_model,
                 config_override={
@@ -216,7 +300,7 @@ Sammanfattning av kontexten:"""
         self,
         full_text: str,
         document_title: str = "Dokument",
-        document_metadata: Optional[dict] = None,
+        document_metadata: dict | None = None,
     ) -> list[ContextualChunk]:
         """
         Process a document with contextual retrieval
@@ -302,7 +386,7 @@ Sammanfattning av kontexten:"""
         self,
         full_text: str,
         document_title: str = "Dokument",
-        document_metadata: Optional[dict] = None,
+        document_metadata: dict | None = None,
     ) -> tuple[list[ContextualChunk], list[list[float]]]:
         """
         Complete pipeline: process document and generate embeddings

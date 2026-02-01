@@ -68,7 +68,7 @@ class ConfigSettings(BaseSettings):
     gguf_context_window: int = 32768
 
     # Response Modes
-    mode_evidence_temperature: float = 0.2
+    mode_evidence_temperature: float = 0.15
     mode_evidence_top_p: float = 0.9
     mode_evidence_repeat_penalty: float = 1.1
     mode_evidence_num_predict: int = 1024
@@ -97,6 +97,8 @@ class ConfigSettings(BaseSettings):
     reranking_model: str = "BAAI/bge-reranker-v2-m3"
     reranking_enabled: bool = True
     reranking_top_k: int = 10
+    reranking_score_threshold: float = 0.1  # Filter docs below this reranker score
+    reranking_top_n: int = 5  # Max docs to pass to LLM after reranking
 
     # Jail Warden v2
     jail_warden_enabled: bool = True
@@ -113,14 +115,17 @@ class ConfigSettings(BaseSettings):
     max_escalation_steps: int = 3
 
     # Hybrid Search & RRF Fusion
-    # BM25 weight in RRF: 1.0 = equal weight, 1.5 = favor exact legal terms
+    # BM25 weight in RRF: 1.0 = equal weight, 1.2 = slightly favor exact legal terms
     # Higher values prioritize exact SFS matches over semantic similarity
-    rrf_bm25_weight: float = 1.5
+    rrf_bm25_weight: float = 1.2
 
     # RRF k constant: lower = top results dominate, higher = flatter distribution
-    # k=60 is the original paper default, k=30 better for precise legal search
-    # where exact SFS matches at rank 1 should strongly dominate
-    rrf_k: float = 30.0
+    # k=60 is the original paper default, k=45 balances legal precision and recall
+    rrf_k: float = 45.0
+
+    # EPR hybrid search: use RAG-Fusion multi-query in EPR routing
+    epr_use_rag_fusion: bool = True
+    epr_fusion_num_queries: int = 3
 
     # CORS
     cors_origins: list[str] = [
@@ -148,16 +153,16 @@ class ConfigSettings(BaseSettings):
 
     # Structured Output & Critic→Revise Loop (Constitutional AI)
     structured_output_enabled: bool = True
-    critic_revise_enabled: bool = False  # Default False för safe rollout
-    critic_max_revisions: int = 2
+    critic_revise_enabled: bool = True  # Enabled for answer quality improvement
+    critic_max_revisions: int = 1  # Single revision pass for quality/latency balance
     critic_temperature: float = 0.1
 
     # Refusal Template
     evidence_refusal_template: str = "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats i den här sökningen. Underlag saknas för att ge ett rättssäkert svar, och jag kan därför inte spekulera. Om du vill kan du omformulera frågan eller ange vilka dokument/avsnitt du vill att jag ska söker i."
 
     # CRAG (Corrective RAG) Configuration
-    crag_enabled: bool = False  # Safe rollout - disabled by default
-    crag_grade_threshold: float = 0.3  # Relevance threshold for document grading
+    crag_enabled: bool = True  # Enabled - filters irrelevant docs before LLM generation
+    crag_grade_threshold: float = 0.25  # Relevance threshold (lowered for better edge-case recall)
     crag_max_rewrite_attempts: int = 2  # Max query rewrite attempts if no relevant docs
     crag_grader_model: str = "Qwen2.5-0.5B-Instruct-Q5_K_M.gguf"  # Lightweight model for grading
     crag_enable_self_reflection: bool = False  # Chain of Thought before answering
