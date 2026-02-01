@@ -33,7 +33,7 @@
 
 Constitutional AI was built to solve the challenge of hallucination in legal AI. By implementing a "Constitutional" framework, the system does not just retrieve information; it **grades**, **critiques**, and **refines** its own answers before presenting them to the user.
 
-The system indexes a massive corpus of Swedish legal text (ChromaDB) and uses a custom-tuned **Corrective RAG (CRAG)** pipeline to verify that every claim is backed by a citation from the source material.
+The system indexes a massive corpus of Swedish legal text (ChromaDB) and uses a custom-tuned **Corrective RAG (CRAG)** pipeline to verify that every claim is backed by a citation from the source material. Smart chunking with **SFS boundary detection** ensures that legal paragraphs (kapitel, paragraf) are preserved intact.
 
 ---
 
@@ -46,17 +46,19 @@ graph TD
     User([User Query]) --> Input[Query Processor]
     Input --> Classify{Classify Mode}
 
-    Classify --"Chat"--> LLM_Direct[LLM (Chat Mode)]
-    Classify --"Assist/Evidence"--> Retrieve[Retrieval Service]
+    Classify -- "Chat" --> LLM_Direct["LLM (Chat Mode)"]
+    Classify -- "Assist/Evidence" --> Retrieve[Retrieval Service]
 
     Retrieve --> Grade{CRAG Grading}
-    Grade --"Irrelevant"--> Rewrite[Query Rewrite] --> Retrieve
-    Grade --"Relevant"--> Generate[LLM Generation]
+    Grade -- "Irrelevant" --> Rewrite[Query Rewrite] --> Retrieve
+    Grade -- "Relevant" --> Rerank[BGE Reranking]
+
+    Rerank --> Generate[LLM Generation]
 
     Generate --> Critique{Constitutional Critic}
 
-    Critique --"Violation"--> Revise[Revise Answer] --> Critique
-    Critique --"Compliant"--> Guardrail[Jail Warden Regex]
+    Critique -- "Violation" --> Revise[Revise Answer] --> Critique
+    Critique -- "Compliant" --> Guardrail[Jail Warden Regex]
 
     Guardrail --> Output([Final Response])
     LLM_Direct --> Output
@@ -65,16 +67,20 @@ graph TD
     style Output fill:#f9f,stroke:#333,stroke-width:2px
     style Grade fill:#bbf,stroke:#333
     style Critique fill:#bbf,stroke:#333
+    style Rerank fill:#bfb,stroke:#333
 ```
 
 ---
 
 ## ✨ Key Features
 
-*   **Agentic Workflow:** Uses **LangGraph** to create cyclical flows (Retrieval → Grading → Generation → Critique) rather than a linear pipe.
-*   **Corrective RAG (CRAG):** Automatically grades retrieved documents for relevance. If documents are irrelevant, the system rewrites the search query and tries again.
+*   **Agentic Workflow:** Uses **LangGraph** to create cyclical flows (Retrieval → Grading → Reranking → Generation → Critique).
+*   **Corrective RAG (CRAG):** **Enabled by default.** Automatically grades retrieved documents for relevance. If documents are irrelevant, the system rewrites the search query and tries again.
+*   **Hybrid Search:** Uses **RAG-Fusion** with Reciprocal Rank Fusion (RRF) to combine dense vector search with multi-query expansion for better recall.
+*   **Pre-Generation Reranking:** Filters noise using BGE reranking *before* the LLM sees the context, ensuring high-quality input.
 *   **Constitutional Guardrails:**
     *   **Critic Service:** Reviews answers for Legality (Legalitet), Objectivity (Saklighet), and Transparency (Offentlighet).
+    *   **Intent-Specific Contracts:** Injects strict answer contracts into the system prompt based on user intent.
     *   **Jail Warden:** Regex-based final check to prevent prompt injection and policy violations.
 *   **Multi-Mode Operation:**
     *   **EVIDENCE:** Strict adherence to documents. Returns "Insufficient evidence" if no source is found.
@@ -202,8 +208,10 @@ The system is configured via environment variables (or `.env` file in `backend/`
 | `CONST_APP_NAME` | Name of the application | "Constitutional AI Backend" |
 | `CONST_PORT` | Backend server port | `8900` |
 | `CONST_OLLAMA_BASE_URL` | URL for Ollama instance | `http://localhost:11434` |
-| `CONST_CRAG_ENABLED` | Enable Corrective RAG grading | `False` |
+| `CONST_CRAG_ENABLED` | Enable Corrective RAG grading | `True` |
 | `CONST_CRAG_ENABLE_SELF_REFLECTION` | Enable agent self-reflection | `False` |
+| `CONST_RERANKING_SCORE_THRESHOLD` | Minimum score for reranked docs | `0.1` |
+| `CONST_RERANKING_TOP_N` | Number of docs to pass to LLM | `5` |
 | `CONST_LOG_LEVEL` | Logging verbosity | `INFO` |
 
 ---
