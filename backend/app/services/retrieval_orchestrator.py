@@ -1269,9 +1269,17 @@ class RetrievalOrchestrator:
             for rs in all_result_sets:
                 all_results.extend(rs)
 
-        # PRECISION TUNING: Filter out low-score results (min_score=0.35)
+        # PRECISION TUNING: Filter out low-score results
+        # When RRF fusion is used, filter on original_score (ChromaDB similarity, 0-1 range)
+        # because rrf_score is on a different scale (~0.01-0.04 for k=45)
         MIN_SCORE = 0.30
-        all_results = [r for r in all_results if r.get("score", 0.0) >= MIN_SCORE]
+        if len(all_result_sets) > 1:
+            # RRF path: use original ChromaDB similarity score for filtering
+            all_results = [
+                r for r in all_results if r.get("original_score", r.get("score", 0.0)) >= MIN_SCORE
+            ]
+        else:
+            all_results = [r for r in all_results if r.get("score", 0.0) >= MIN_SCORE]
         logger.info(f"EPR: After min_score filter: {len(all_results)} results")
 
         # Convert to SearchResult with tier annotation
