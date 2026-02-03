@@ -1,0 +1,193 @@
+{
+  "version": "1.0-retrieval",
+  "created": "2026-02-03",
+  "description": "Ground truth for retrieval quality evaluation. 20 questions with known source documents for recall@K measurement.",
+  "questions": [
+    {
+      "id": "F01",
+      "query": "Vad säger Regeringsformen om yttrandefrihet?",
+      "category": "FAKTAFRAGOR",
+      "description": "Direkt juridisk faktafråga om grundlagsbestämmelse",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1974:152", "partial_match": true}
+      ]
+    },
+    {
+      "id": "F02",
+      "query": "Vilka rättigheter skyddas i TF 1 kap?",
+      "category": "FAKTAFRAGOR",
+      "description": "Fråga om tryckfrihetsförordningen kapitel 1",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1949:105", "partial_match": true}
+      ]
+    },
+    {
+      "id": "F03",
+      "query": "Vad säger förvaltningslagen om serviceskyldighet?",
+      "category": "FAKTAFRAGOR",
+      "description": "Myndigheters serviceskyldighet enligt FL",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:900", "partial_match": true}
+      ]
+    },
+    {
+      "id": "F04",
+      "query": "Vad är stöld enligt Brottsbalken?",
+      "category": "FAKTAFRAGOR",
+      "description": "Definition av stöld i BrB 8 kap",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1962:700", "partial_match": true}
+      ]
+    },
+    {
+      "id": "F05",
+      "query": "Hur regleras sekretess i OSL?",
+      "category": "FAKTAFRAGOR",
+      "description": "Offentlighets- och sekretesslagen allmänt",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2009:400", "partial_match": true}
+      ]
+    },
+    {
+      "id": "F06",
+      "query": "Vad innebär YGL om radioprogram?",
+      "category": "FAKTAFRAGOR",
+      "description": "Yttrandefrihetsgrundlagen och radio/TV",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1991:1469", "partial_match": true}
+      ]
+    },
+    {
+      "id": "F07",
+      "query": "Vilka överklaganderegler finns i FPL?",
+      "category": "FAKTAFRAGOR",
+      "description": "Förvaltningsprocesslagen om överklagande",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1971:291", "partial_match": true}
+      ]
+    },
+    {
+      "id": "F08",
+      "query": "Vad säger kommunallagen om laglighetsprövning?",
+      "category": "FAKTAFRAGOR",
+      "description": "KL 13 kap om laglighetsprövning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "J01",
+      "query": "Skillnad mellan RF och TF om yttrandefrihet?",
+      "category": "JAMFORELSEFRAGOR",
+      "description": "Jämförelse mellan grundlagarna",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1974:152", "partial_match": true},
+        {"doc_type": "sfs", "identifier": "1949:105", "partial_match": true}
+      ]
+    },
+    {
+      "id": "J02",
+      "query": "Hur skiljer sig förvaltningsbesvär från laglighetsprövning?",
+      "category": "JAMFORELSEFRAGOR",
+      "description": "FL vs KL om överklagande",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:900", "partial_match": true},
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "J03",
+      "query": "Jämför sekretessreglerna i OSL kap 21 och 25",
+      "category": "JAMFORELSEFRAGOR",
+      "description": "OSL kapitel 21 vs 25",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2009:400", "partial_match": true}
+      ]
+    },
+    {
+      "id": "J04",
+      "query": "Skillnad mellan FL och FPL?",
+      "category": "JAMFORELSEFRAGOR",
+      "description": "Förvaltningslagen vs förvaltningsprocesslagen",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:900", "partial_match": true},
+        {"doc_type": "sfs", "identifier": "1971:291", "partial_match": true}
+      ]
+    },
+    {
+      "id": "J05",
+      "query": "Offentlighetsprincipen i TF vs OSL?",
+      "category": "JAMFORELSEFRAGOR",
+      "description": "Tryckfrihetsförordningen vs OSL om offentlighet",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1949:105", "partial_match": true},
+        {"doc_type": "sfs", "identifier": "2009:400", "partial_match": true}
+      ]
+    },
+    {
+      "id": "J06",
+      "query": "Jämför RF 2 kap och YGL 1 kap",
+      "category": "JAMFORELSEFRAGOR",
+      "description": "Rättigheter i RF vs YGL",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1974:152", "partial_match": true},
+        {"doc_type": "sfs", "identifier": "1991:1469", "partial_match": true}
+      ]
+    },
+    {
+      "id": "T01",
+      "query": "Hur ändrades förvaltningslagen 2017?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Ny FL 2017 vs gamla FL 1986",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:900", "partial_match": true},
+        {"doc_type": "sfs", "identifier": "1986:223", "partial_match": true}
+      ]
+    },
+    {
+      "id": "T02",
+      "query": "Ändringar i OSL 2022?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Senaste ändringar i OSL",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2009:400", "partial_match": true}
+      ]
+    },
+    {
+      "id": "T03",
+      "query": "När trädde nya PBL i kraft?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Plan- och bygglagen ikraftträdande",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2010:900", "partial_match": true}
+      ]
+    },
+    {
+      "id": "T04",
+      "query": "Hur har kommunallagen ändrats sedan 2017?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "KL ändringar efter 2017",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "T05",
+      "query": "Propositioner om yttrandefrihet 2020-2023?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Regeringspropositioner om yttrandefrihet",
+      "ground_truth_docs": [
+        {"doc_type": "proposition", "identifier": "2020/21:57", "partial_match": true}
+      ]
+    },
+    {
+      "id": "T06",
+      "query": "När ändrades BrB om sexualbrott senast?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Brottsbalken sexualbrottskapitlet ändringar",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1962:700", "partial_match": true}
+      ]
+    }
+  ]
+}
