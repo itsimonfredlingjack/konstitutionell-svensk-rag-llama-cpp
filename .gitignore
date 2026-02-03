@@ -89,6 +89,9 @@ htmlcov/
 .pytest_cache/
 .tox/
 
+# Evaluation results (generated output)
+eval/results/
+
 # Environment variables
 .env
 .env.local
