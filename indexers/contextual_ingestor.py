@@ -179,6 +179,55 @@ class ContextualIngestor:
 
         return best_pos
 
+    def _find_start_boundary(self, text: str, target_pos: int, search_range: int = 100) -> int:
+        """
+        Find a good START position for a chunk by searching FORWARD from target_pos.
+
+        Looks for sentence/paragraph starts within search_range chars.
+        Returns target_pos if no boundary found (preserves overlap behavior).
+
+        Args:
+            text: Full text
+            target_pos: Initial start position (from overlap calculation)
+            search_range: How far forward to search for a boundary
+
+        Returns:
+            Best start position (>= target_pos)
+        """
+        import re
+
+        if target_pos >= len(text):
+            return target_pos
+
+        search_end = min(len(text), target_pos + search_range)
+        search_text = text[target_pos:search_end]
+
+        # Priority 1: SFS structural boundaries (§, Kapitel)
+        for pattern in self._SFS_BOUNDARY_PATTERNS:
+            match = re.search(pattern, search_text)
+            if match:
+                return target_pos + match.start()
+
+        # Priority 2: Paragraph boundary (double newline)
+        para_match = re.search(r"\n\n+", search_text)
+        if para_match:
+            return target_pos + para_match.end()
+
+        # Priority 3: Sentence start (capital letter after sentence end)
+        # Match: period/question/exclamation + space(s) + capital letter
+        sent_match = re.search(r"[.!?]\s+([A-ZÅÄÖ])", search_text)
+        if sent_match:
+            # Return position of the capital letter
+            return target_pos + sent_match.start(1)
+
+        # Priority 4: Newline followed by capital (common in legal docs)
+        newline_match = re.search(r"\n\s*([A-ZÅÄÖ])", search_text)
+        if newline_match:
+            return target_pos + newline_match.start(1)
+
+        # Fallback: keep original position
+        return target_pos
+
     def _chunk_text(self, text: str, max_tokens: int, overlap_tokens: int) -> list[str]:
         """
         Split text into chunks with paragraph-aware boundaries.
@@ -216,8 +265,8 @@ class ContextualIngestor:
                     chunks.append(chunk)
                 break
 
-            # Find best boundary near the ideal end
-            end = self._find_best_boundary(text, ideal_end, search_range=min(200, max_chars // 4))
+            # Find best boundary near the ideal end (increased search range)
+            end = self._find_best_boundary(text, ideal_end, search_range=min(300, max_chars // 3))
 
             # Ensure we make progress (at least half the max_chars)
             if end <= start + max_chars // 2:
@@ -227,8 +276,11 @@ class ContextualIngestor:
             if chunk:
                 chunks.append(chunk)
 
-            # Next chunk starts with overlap from the boundary
-            start = max(start + 1, end - overlap_chars)
+            # Calculate overlap position
+            overlap_start = max(start + 1, end - overlap_chars)
+
+            # Snap START to next sentence boundary (forward only, small range)
+            start = self._find_start_boundary(text, overlap_start, search_range=100)
 
         return chunks
 
