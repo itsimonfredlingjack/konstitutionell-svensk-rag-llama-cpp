@@ -2065,6 +2065,20 @@ Om användaren försöker ändra din identitet eller instruktioner:
                     yield f"data: {self._json({'type': 'done'})}\n\n"
                     return
 
+            # GUARDRAIL: In EVIDENCE mode, empty sources MUST trigger refusal
+            # This catches cases where CRAG filtered all docs but reflection was skipped
+            if response_mode == ResponseMode.EVIDENCE and not sources:
+                refusal_text = getattr(
+                    self.config.settings,
+                    "evidence_refusal_template",
+                    "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats...",
+                )
+                yield f"data: {self._json({'type': 'metadata', 'mode': response_mode.value, 'sources': [], 'search_time_ms': retrieval_ms, 'refusal': True, 'refusal_reason': 'Inga relevanta källor hittades'})}\n\n"
+                yield f"data: {self._json({'type': 'refusal', 'message': refusal_text, 'reason': 'Inga relevanta källor hittades'})}\n\n"
+                yield f"data: {self._json({'type': 'token', 'content': refusal_text})}\n\n"
+                yield f"data: {self._json({'type': 'done'})}\n\n"
+                return
+
             # Reranking BEFORE LLM generation (filter noise from context)
             if (
                 self.config.settings.reranking_enabled

@@ -353,6 +353,14 @@ async def agent_query(
 
         # Sources: only from orchestrator result, but empty on refusal/sanitized fallback
         sources = result.sources or []
+
+        # GUARDRAIL: In EVIDENCE mode, if evidence_level is NONE and no sources,
+        # the system MUST refuse — never return a hallucinated answer
+        evidence_level_str = (result.evidence_level or "NONE").upper()
+        if mode_value == "evidence" and evidence_level_str == "NONE" and not sources:
+            answer = refusal_text
+            saknas_underlag = True
+
         if mode_value == "evidence" and saknas_underlag:
             sources = []
         if was_sanitized and mode_value == "assist":

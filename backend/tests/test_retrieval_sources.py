@@ -173,7 +173,43 @@ async def test_saknas_underlag_true_when_no_sources():
 
 
 # =============================================================================
-# Invariant 5: Scores are on a sane scale
+# Invariant 5: EVIDENCE mode must use refusal text when no sources
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_evidence_mode_refuses_when_no_sources():
+    """
+    In EVIDENCE mode, if no sources are found, the system must return
+    the refusal template — never generate a hallucinated answer.
+
+    This is the core guardrail for a constitutional verification tool.
+    """
+    query = "xyzzy plugh fee fie foe fum nonsense gibberish 12345"
+
+    async with httpx.AsyncClient(timeout=TIMEOUT, base_url=BASE_URL) as client:
+        response = await client.post(
+            "/api/constitutional/agent/query",
+            json={"question": query, "mode": "evidence"},
+        )
+        assert response.status_code == 200
+
+        data = response.json()
+        sources = data.get("sources", [])
+        answer = data.get("answer", "")
+
+        if len(sources) == 0:
+            # Check for refusal keywords
+            refusal_keywords = ["kan inte besvara", "underlag saknas", "spekulera"]
+            has_refusal = any(kw.lower() in answer.lower() for kw in refusal_keywords)
+            assert has_refusal, (
+                f"GUARDRAIL FAILURE: Zero sources in EVIDENCE mode but answer doesn't "
+                f"contain refusal language. Answer: {answer[:200]}..."
+            )
+
+
+# =============================================================================
+# Invariant 6: Scores are on a sane scale
 # =============================================================================
 
 
