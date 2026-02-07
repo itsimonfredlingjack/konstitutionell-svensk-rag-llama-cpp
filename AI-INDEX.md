@@ -5,9 +5,9 @@
 ## Projektets Syfte
 
 Constitutional AI är ett RAG-system (Retrieval-Augmented Generation) för svenska myndighetsdokument med:
-- 521K+ dokument från Riksdagen och svenska myndigheter
+- 1.37M+ dokument (538K legal/gov + 829K DiVA research)
 - ChromaDB som vector database
-- Ollama för lokal LLM-inferens
+- llama-server (llama.cpp) för lokal LLM-inferens (Ollama som fallback)
 - FastAPI backend + React frontend
 
 ## Viktiga Filer för AI-förståelse
@@ -39,7 +39,7 @@ Constitutional AI är ett RAG-system (Retrieval-Augmented Generation) för svens
 - `app/api/constitutional_routes.py` - API routes (550+ lines)
 - `app/services/orchestrator_service.py` - RAG orchestration
 - `app/services/retrieval_service.py` - ChromaDB retrieval
-- `app/services/llm_service.py` - Ollama integration
+- `app/services/llm_service.py` - llama-server integration (Ollama fallback)
 
 ### Frontend (`apps/`)
 - `constitutional-gpt/` - Main RAG interface (Next.js 16)
@@ -54,9 +54,9 @@ Constitutional AI är ett RAG-system (Retrieval-Augmented Generation) för svens
 ```
 User Query → Frontend → Backend API → Orchestrator
     ↓
-Retrieval Service → ChromaDB (521K docs)
+Retrieval Service → ChromaDB (1.37M+ docs)
     ↓
-LLM Service → Ollama (ministral-3:14b)
+LLM Service → llama-server (Mistral-Nemo-Instruct-2407-Q5_K_M.gguf)
     ↓
 Response → Frontend → User
 ```
@@ -64,10 +64,12 @@ Response → Frontend → User
 ## Viktiga Konfigurationer
 
 - **ChromaDB Path**: Konfigureras i `backend/app/config.py` (data exkluderas från git)
-- **Ollama Models**: `ministral-3:14b` (primary), `gpt-sw3:6.7b` (fallback)
-- **Embedding Model**: KBLab Swedish BERT (768 dimensions)
-- **API Port**: 8000
+- **LLM Models**: Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server (port 8080), gpt-sw3 (fallback)
+- **Embedding Model**: BAAI/bge-m3 (1024 dimensions)
+- **Reranker**: BAAI/bge-reranker-v2-m3
+- **API Port**: 8900
 - **Systemd Service**: `constitutional-ai-backend`
+- **CRAG**: Enabled (self-reflection + grading active)
 
 ## För AI-modeller som ska arbeta med projektet
 
@@ -81,13 +83,13 @@ Response → Frontend → User
 - **Lägg till endpoint**: Se `docs/guardrails.md` → Route Discovery
 - **Ändra modellparametrar**: Se `docs/MODEL_OPTIMIZATION.md`
 - **Uppdatera dokumentation**: Uppdatera relevant fil i `docs/`
-- **Testa backend**: `curl http://localhost:8000/api/constitutional/health`
+- **Testa backend**: `curl http://localhost:8900/api/constitutional/health`
 
 ## Projektstruktur (High-Level)
 
 ```
 09_CONSTITUTIONAL-AI/
-├── backend/              # FastAPI backend (port 8000)
+├── backend/              # FastAPI backend (port 8900)
 │   ├── app/
 │   │   ├── api/          # API routes
 │   │   ├── services/     # Business logic (12 services)
@@ -111,8 +113,9 @@ Response → Frontend → User
 
 | Service | Port | Status | Purpose |
 |--------|------|--------|---------|
-| Constitutional AI Backend | 8000 | 🟢 Active | FastAPI RAG API |
-| Ollama | 11434 | Running | Local LLM inference |
+| Constitutional AI Backend | 8900 | 🟢 Active | FastAPI RAG API |
+| llama-server | 8080 | 🟢 Running | Local LLM inference (Mistral-Nemo) |
+| Ollama (fallback) | 11434 | Optional | Fallback LLM inference |
 
 ## API Endpoints (Key)
 
@@ -125,9 +128,10 @@ Response → Frontend → User
 
 - **Backend**: FastAPI (Python 3.14)
 - **Frontend**: React + TypeScript + Vite / Next.js 16
-- **Vector DB**: ChromaDB (521K+ dokument, exkluderas från git)
-- **LLM**: Ollama (ministral-3:14b, gpt-sw3:6.7b)
-- **Embeddings**: KBLab Swedish BERT (768 dimensions)
+- **Vector DB**: ChromaDB (1.37M+ dokument: 538K legal/gov + 829K DiVA research, exkluderas från git)
+- **LLM**: Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server (port 8080), gpt-sw3 (fallback)
+- **Embeddings**: BAAI/bge-m3 (1024 dimensions)
+- **Reranker**: BAAI/bge-reranker-v2-m3
 
 ## Viktiga Noteringar
 

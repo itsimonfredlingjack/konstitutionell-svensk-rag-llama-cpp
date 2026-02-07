@@ -1,6 +1,6 @@
 # Constitutional AI
 
-> RAG-system för svenska myndighetsdokument med 521K+ dokument
+> RAG-system för svenska myndighetsdokument med 1.37M+ dokument
 
 [![Status](https://img.shields.io/badge/status-production-green)]()
 [![Backend](https://img.shields.io/badge/backend-FastAPI-blue)]()
@@ -28,7 +28,7 @@ npm run dev -- --port 3001 --host 0.0.0.0
 
 ```
 09_CONSTITUTIONAL-AI/
-├── backend/              # FastAPI backend (port 8000)
+├── backend/              # FastAPI backend (port 8900)
 │   ├── app/
 │   │   ├── api/          # API routes
 │   │   ├── services/     # Business logic (12 services)
@@ -68,9 +68,9 @@ npm run dev -- --port 3001 --host 0.0.0.0
 
 - **Backend**: FastAPI (Python 3.14)
 - **Frontend**: React + TypeScript + Vite / Next.js 16
-- **Vector DB**: ChromaDB (521K+ dokument)
-- **LLM**: Ollama (ministral-3:14b, gpt-sw3:6.7b)
-- **Embeddings**: KBLab Swedish BERT (768 dimensions)
+- **Vector DB**: ChromaDB (1.37M+ dokument)
+- **LLM**: Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server (port 8080), gpt-sw3 (fallback)
+- **Embeddings**: BAAI/bge-m3 (1024 dimensions)
 
 ## Services
 
@@ -78,7 +78,8 @@ npm run dev -- --port 3001 --host 0.0.0.0
 |--------|------|--------|
 | Constitutional AI Backend | 8900 | 🟢 Active |
 | Constitutional RAG Frontend | 3001 | 🟢 Active |
-| Ollama | 11434 | Running |
+| llama-server | 8080 | Running |
+| Ollama (fallback) | 11434 | Optional |
 
 ## API Endpoints
 
@@ -98,12 +99,14 @@ Se backend OpenAPI docs på `http://localhost:8900/docs` för fullständig lista
 
 ## Data
 
-- **Total Documents**: 521,798
-- **Collections**: 
-  - `swedish_gov_docs`: 304,871 documents
-  - `riksdag_documents_p1`: 230,143 documents
-  - `riksdag_documents`: 10 documents
+- **Total Documents**: 1.37M+ (538K legal/gov + 829K DiVA research)
+- **Collections** (all suffixed with `_bge_m3_1024`):
+  - `swedish_gov_docs_bge_m3_1024`: 304,871 documents
+  - `riksdag_documents_p1_bge_m3_1024`: 230,143 documents
+  - `riksdag_documents_bge_m3_1024`: 10 documents
+  - DiVA research collections: 829K documents
 - **Storage**: ChromaDB (data exkluderas från git)
+- **CRAG**: Enabled (self-reflection + grading active)
 
 ## Development
 
@@ -150,9 +153,9 @@ journalctl --user -u constitutional-ai-backend -f
 ```
 User Query → Frontend → Backend API → Orchestrator
     ↓
-Retrieval Service → ChromaDB (521K docs)
+Retrieval Service → ChromaDB (1.37M+ docs)
     ↓
-LLM Service → Ollama (ministral-3:14b)
+LLM Service → llama-server (Mistral-Nemo-Instruct-2407-Q5_K_M.gguf)
     ↓
 Response → Frontend → User
 ```

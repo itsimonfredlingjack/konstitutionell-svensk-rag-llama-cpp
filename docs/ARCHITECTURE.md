@@ -303,7 +303,7 @@ Return Swedish refusal: "Tyvärr kan jag inte besvara denna fråga utifrån de d
 ## API Endpoint Catalog
 
 ### Base URLs
-- **Development**: `http://localhost:8000`
+- **Development**: `http://localhost:8900`
 - **Production**: `http://localhost:8900`
 
 ### Health & Monitoring
@@ -520,7 +520,7 @@ Fetch wrapper with error handling for:
 ```bash
 # FastAPI
 FASTAPI_ENV=development
-API_BASE_URL=http://localhost:8000
+API_BASE_URL=http://localhost:8900
 
 # LLM
 CONST_LLM_BASE_URL=http://localhost:8080/v1
@@ -579,7 +579,7 @@ Available via `/metrics` and `/metrics/prometheus`:
 ```bash
 # Backend
 cd backend && pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8900
 
 # Frontend
 cd apps/constitutional-retardedantigravity

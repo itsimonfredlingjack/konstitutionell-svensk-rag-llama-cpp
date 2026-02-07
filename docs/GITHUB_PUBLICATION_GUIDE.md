@@ -72,7 +72,7 @@ Denna guide beskriver hur man strukturerar projektet för GitHub-publicering med
 ```markdown
 # Constitutional AI
 
-> RAG-system för svenska myndighetsdokument med 521K+ dokument
+> RAG-system för svenska myndighetsdokument med 1.37M+ dokument (538K legal/gov + 829K DiVA research)
 
 ## Quick Start
 
@@ -84,7 +84,7 @@ Denna guide beskriver hur man strukturerar projektet för GitHub-publicering med
 
 ```
 09_CONSTITUTIONAL-AI/
-├── backend/              # FastAPI backend (port 8000)
+├── backend/              # FastAPI backend (port 8900)
 │   ├── app/
 │   │   ├── api/          # API routes
 │   │   ├── services/     # Business logic
@@ -111,15 +111,16 @@ Denna guide beskriver hur man strukturerar projektet för GitHub-publicering med
 
 - **Backend**: FastAPI (Python 3.14)
 - **Frontend**: React + TypeScript + Vite
-- **Vector DB**: ChromaDB (521K+ dokument)
-- **LLM**: llama-server (llama.cpp, Mistral-Nemo-Instruct GGUF) with optional Ollama fallback
-- **Embeddings**: KBLab Swedish BERT
+- **Vector DB**: ChromaDB (1.37M+ dokument: 538K legal/gov + 829K DiVA research)
+- **LLM**: Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server (port 8080)
+- **Embeddings**: BAAI/bge-m3 (1024 dimensions)
+- **Reranker**: BAAI/bge-reranker-v2-m3
 
 ## Services
 
 | Tjänst | Port | Status |
 |--------|------|--------|
-| Constitutional AI Backend | 8000 | 🟢 Active |
+| Constitutional AI Backend | 8900 | 🟢 Active |
 | llama-server | 8080 | Running |
 | Ollama | 11434 | Optional (fallback) |
 
@@ -146,9 +147,9 @@ Skapa en fil som AI-modeller kan läsa först för att förstå projektet:
 ## Projektets Syfte
 
 Constitutional AI är ett RAG-system (Retrieval-Augmented Generation) för svenska myndighetsdokument med:
-- 521K+ dokument från Riksdagen och svenska myndigheter
+- 1.37M+ dokument (538K legal/gov + 829K DiVA research)
 - ChromaDB som vector database
-- llama-server (llama.cpp) för lokal LLM-inferens
+- llama-server (llama.cpp) för lokal LLM-inferens med Mistral-Nemo-Instruct-2407-Q5_K_M.gguf
 - FastAPI backend + React frontend
 
 ## Viktiga Filer för AI-förståelse
@@ -180,7 +181,7 @@ Constitutional AI är ett RAG-system (Retrieval-Augmented Generation) för svens
 - `app/api/constitutional_routes.py` - API routes (550+ lines)
 - `app/services/orchestrator_service.py` - RAG orchestration
 - `app/services/retrieval_service.py` - ChromaDB retrieval
-- `app/services/llm_service.py` - llama-server (OpenAI-compatible) integration
+- `app/services/llm_service.py` - llama-server (OpenAI-compatible) integration with Mistral-Nemo-Instruct-2407-Q5_K_M.gguf
 
 ### Frontend (`apps/`)
 - `constitutional-gpt/` - Main RAG interface (Next.js 16)
@@ -195,9 +196,9 @@ Constitutional AI är ett RAG-system (Retrieval-Augmented Generation) för svens
 ```
 User Query → Frontend → Backend API → Orchestrator
     ↓
-Retrieval Service → ChromaDB (521K docs)
+Retrieval Service → ChromaDB (1.37M+ docs)
     ↓
-LLM Service → llama-server (Mistral-Nemo-Instruct)
+LLM Service → llama-server (Mistral-Nemo-Instruct-2407-Q5_K_M.gguf)
     ↓
 Response → Frontend → User
 ```
@@ -205,10 +206,13 @@ Response → Frontend → User
 ## Viktiga Konfigurationer
 
 - **ChromaDB Path**: `/home/ai-server/.../chromadb_data/` (exkluderas från git)
-- **Ollama Models**: `ministral-3:14b` (primary), `gpt-sw3:6.7b` (fallback)
-- **Embedding Model**: KBLab Swedish BERT (768 dimensions)
-- **API Port**: 8000
+- **LLM Runtime**: llama-server (llama.cpp, port 8080) with Mistral-Nemo-Instruct-2407-Q5_K_M.gguf (primary), gpt-sw3 (fallback)
+- **Embedding Model**: BAAI/bge-m3 (1024 dimensions)
+- **Reranker**: BAAI/bge-reranker-v2-m3
+- **API Port**: 8900
 - **Systemd Service**: `constitutional-ai-backend`
+- **CRAG**: Enabled (self-reflection + grading active)
+- **Collections**: All suffixed with `_bge_m3_1024`
 
 ## För AI-modeller som ska arbeta med projektet
 
@@ -222,7 +226,7 @@ Response → Frontend → User
 - **Lägg till endpoint**: Se `docs/guardrails.md` → Route Discovery
 - **Ändra modellparametrar**: Se `docs/MODEL_OPTIMIZATION.md`
 - **Uppdatera dokumentation**: Uppdatera relevant fil i `docs/`
-- **Testa backend**: `curl http://localhost:8000/api/constitutional/health`
+- **Testa backend**: `curl http://localhost:8900/api/constitutional/health`
 ```
 
 ### 3. Uppdatera .gitignore

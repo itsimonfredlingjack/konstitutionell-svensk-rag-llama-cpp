@@ -3,8 +3,8 @@
 > Svenska myndighetsdokument - sökning, analys och RAG
 
 **Status:** Production
-**Dokument:** 521,798
-**Updated:** 2025-12-15
+**Dokument:** 1.37M+ (538K legal/gov + 829K DiVA research)
+**Updated:** 2026-02-07
 
 ---
 
@@ -12,11 +12,11 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Documents | 521,798 |
-| Vector Dimensions | 768 |
-| Embedding Model | KBLab Swedish BERT |
-| Storage | ChromaDB (migrated from Qdrant) |
-| LLM | Mistral-Nemo-Instruct-2407 (GGUF via llama-server) |
+| Total Documents | 1.37M+ (538K legal/gov + 829K DiVA research) |
+| Vector Dimensions | 1024 |
+| Embedding Model | BAAI/bge-m3 |
+| Storage | ChromaDB |
+| LLM | Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server |
 
 ---
 
@@ -55,9 +55,9 @@
          │                    │                    │
          ▼                    ▼                    ▼
 ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│   Qdrant    │      │llama-server │      │    n8n      │
-│   (6333)    │      │   (8080)    │      │   (5678)    │
-│  521K docs  │      │Mistral-Nemo │      │  Workflows  │
+│  ChromaDB   │      │llama-server │      │    n8n      │
+│    (local)  │      │   (8080)    │      │   (5678)    │
+│ 1.37M+ docs │      │Mistral-Nemo │      │  Workflows  │
 └─────────────┘      └─────────────┘      └─────────────┘
 ```
 
@@ -67,25 +67,24 @@
 
 | Service | Port | Status | Purpose |
 |---------|------|--------|---------|
-| Constitutional AI Backend | 8000 | 🟢 Active | FastAPI RAG API |
-| Qdrant | 6333 | Deprecated | Vector database (migrated to ChromaDB) |
-| RAG API | 8900 | On-demand | Search + LLM |
+| Constitutional AI Backend | 8900 | 🟢 Active | FastAPI RAG API |
+| ChromaDB | local | Active | Vector database |
 | llama-server | 8080 | Running | Local LLM inference (OpenAI-compatible) |
-| Ollama | 11434 | Optional | Legacy fallback |
+| Ollama | 11434 | Optional | Optional fallback only |
 | n8n | 5678 | Running | Workflow automation |
 
 ### Backend Service Status
 
 | Tjänst                    | Status     | Port | Autostart   |
 |---------------------------|------------|------|-------------|
-| Constitutional AI Backend | 🟢 Active  | 8000 | ✅ Enabled  |
+| Constitutional AI Backend | 🟢 Active  | 8900 | ✅ Enabled  |
 | Simons AI Backend         | 🔴 Removed | -    | ❌ Disabled |
 
 **Bekräftade Ändringar:**
 1. ✅ simons-ai-backend.service borttagen från systemd
-2. ✅ Port 8000 ägs av constitutional-ai-backend
+2. ✅ Port 8900 ägs av constitutional-ai-backend (uvicorn binds 8000, exposed as 8900)
 3. ✅ Health endpoint svarar korrekt
-4. ✅ RAG queries fungerar (ministral-3:14b, ~23s)
+4. ✅ RAG queries fungerar (Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server, CRAG enabled)
 
 **System Commands:**
 ```bash
@@ -99,19 +98,21 @@ systemctl --user restart constitutional-ai-backend
 journalctl --user -u constitutional-ai-backend -f
 ```
 
-**API Base URL:** `http://localhost:8000/api/constitutional`
+**API Base URL:** `http://localhost:8900/api/constitutional`
 
 All Constitutional AI-logik är nu fristående i `09_CONSTITUTIONAL-AI/backend/` med egen systemd service! 🚀
 
 ---
 
-## Collections (Qdrant)
+## Collections (ChromaDB)
 
-| Collection | Points | Dimensions | Use Case |
-|------------|--------|------------|----------|
-| documents | 521,798 | 768 | Main search index |
-| obs_chunks | 0 | 768 | Second brain chunks |
-| derivatives | 0 | 768 | Generated content |
+All collections are suffixed with `_bge_m3_1024`.
+
+| Collection | Documents | Dimensions | Use Case |
+|------------|-----------|------------|----------|
+| riksdag_documents_p1_bge_m3_1024 | 230K | 1024 | Riksdagen docs |
+| swedish_gov_docs_bge_m3_1024 | 308K | 1024 | Swedish gov docs |
+| diva_research_bge_m3_1024 | 829K | 1024 | DiVA research papers |
 
 ---
 
@@ -132,7 +133,7 @@ All Constitutional AI-logik är nu fristående i `09_CONSTITUTIONAL-AI/backend/`
 ├── constitutional_cli.py      # Unified CLI
 ├── constitutional              # Bash wrapper
 ├── rag_benchmark.py           # Quality testing
-├── chromadb_to_qdrant.py      # Migration tool
+├── chromadb_to_qdrant.py      # Migration tool (historical, Qdrant fully deprecated)
 ├── corpus_bridge.py           # Corpus → Second Brain
 ├── chromadb_data/             # Original ChromaDB (backup)
 ├── systemd/                   # Systemd service files
@@ -192,6 +193,6 @@ constitutional ingest ./nya_dokument/ --recursive
 ## Related
 
 - [[constitutional-cli]] - CLI documentation
-- [[migration-log]] - ChromaDB → Qdrant migration
+- [[migration-log]] - Migration history (ChromaDB is current, Qdrant fully deprecated)
 - [[rag-benchmark]] - Benchmark methodology
 - [[second-brain-architecture]] - Memory engine design

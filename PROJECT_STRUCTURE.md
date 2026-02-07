@@ -8,10 +8,10 @@
 
 **Constitutional AI** är ett svenskt RAG-system (Retrieval-Augmented Generation) för myndighetsdokument.
 
-- **538K+ dokument** i ChromaDB
-- **Agentic LangGraph pipeline** med självkorrigering
+- **1.37M+ dokument** (538K legal/gov + 829K DiVA research) i ChromaDB
+- **Agentic LangGraph pipeline** med självkorrigering (CRAG enabled)
 - **3D React-frontend** med Three.js
-- **Llama.cpp-modeller** (lokala, inga moln-tjänster)
+- **llama-server (llama.cpp)** för LLM-inferens (lokala, inga moln-tjänster)
 
 ---
 
@@ -33,8 +33,8 @@
 │       ├── index.css                    # STIL: #E7E5E4 (gråvit bakgrund)
 │       └── package.json
 │
-├── 🟢 chromadb_data/                    # 538K+ SVENSKA DOKUMENT (15GB+)
-│   └── [collections]                    # Exkluderad från git
+├── 🟢 chromadb_data/                    # 1.37M+ SVENSKA DOKUMENT (15GB+)
+│   └── [collections]                    # Exkluderad från git (all suffixed with _bge_m3_1024)
 │
 ├── 🟢 llama.cpp/                        # OFFICIELT LLAMA.CPP REPO
 │   ├── build/                           # Byggda modeller
@@ -90,20 +90,23 @@ npm run dev
 **Teknik:**
 - **FastAPI** (Python 3.14)
 - **ChromaDB** (Vector DB)
-- **Ollama** (LLM runtime)
-- **LangGraph** (Agentic pipeline)
+- **llama-server** (llama.cpp) - Primary LLM runtime
+- **Ollama** (Optional fallback)
+- **LangGraph** (Agentic pipeline with CRAG)
 
 **Modeller:**
-- Ministral-3:14b
-- GPT-sw3:6.7b
-- Qwen
+- Mistral-Nemo-Instruct-2407-Q5_K_M.gguf (primary)
+- gpt-sw3-6.7b-v2-instruct-Q5_K_M.gguf (fallback)
+- Embeddings: BAAI/bge-m3 (1024 dimensions)
+- Reranker: BAAI/bge-reranker-v2-m3
 
 **Starta:**
 ```bash
 cd backend
 pip install -r requirements.txt
 systemctl --user start constitutional-ai-backend
-# Port: 8900
+# Backend Port: 8900
+# llama-server Port: 8080
 ```
 
 **API Dokumentation:** `http://localhost:8900/docs`
@@ -154,14 +157,16 @@ python main.py
 ## 🗂️ DATA & INDEXING
 
 **Sökvägar:**
-- `chromadb_data/` - 538K+ svenska myndighetsdokument (15GB+)
+- `chromadb_data/` - 1.37M+ svenska myndighetsdokument (15GB+)
 - `scrapers/` - Webb-scrapers för dokument
 - `indexers/` - ChromaDB indexing scripts
 - `pdf_cache/` - Cache för PDF-dokument
 
-**Collections:**
-- `swedish_gov_docs`: 304,871 documents
-- `riksdag_documents_p1`: 230,143 documents
+**Collections** (all suffixed with `_bge_m3_1024`):
+- `swedish_gov_docs_bge_m3_1024`: 304,871 documents
+- `riksdag_documents_p1_bge_m3_1024`: 230,143 documents
+- DiVA research collections: 829K documents
+- **Total**: 1.37M+ documents
 
 ---
 
@@ -215,11 +220,13 @@ python main.py
 # Öppna: http://localhost:3003
 ```
 
-### 4. Ollama (LLM runtime)
+### 4. llama-server (Primary LLM runtime)
 ```bash
+# llama-server runs via llama.cpp on port 8080
+# Model: Mistral-Nemo-Instruct-2407-Q5_K_M.gguf
+
+# Ollama (Optional fallback)
 ollama list
-ollama pull ministral:3-14b
-ollama run ministral:3-14b
 ```
 
 ---
@@ -231,7 +238,8 @@ ollama run ministral:3-14b
 | Backend (FastAPI) | 8900 | 🟢 Active |
 | Frontend (React) | 3001 | 🟢 Active |
 | Nerve Center | 3003 | 🟢 Active |
-| Ollama | 11434 | 🟢 Running |
+| llama-server | 8080 | 🟢 Running |
+| Ollama (fallback) | 11434 | Optional |
 
 ---
 

@@ -2,11 +2,11 @@
 
 ## Backend API
 
-**Server:** `192.168.86.32:8000`
+**Server:** `192.168.86.32:8900`
 
 ### WebSocket Chat
 ```
-ws://192.168.86.32:8000/api/chat
+ws://192.168.86.32:8900/api/chat
 ```
 
 **Skicka meddelande:**
@@ -50,7 +50,7 @@ POST /api/profiles/{id}/warmup # Värm upp modell
 ## Exempel: Minimal klient
 
 ```javascript
-const ws = new WebSocket('ws://192.168.86.32:8000/api/chat');
+const ws = new WebSocket('ws://192.168.86.32:8900/api/chat');
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);

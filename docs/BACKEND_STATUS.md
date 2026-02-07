@@ -4,15 +4,15 @@
 
 | Tjänst                    | Status     | Port | Autostart   |
 |---------------------------|------------|------|-------------|
-| Constitutional AI Backend | 🟢 Active  | 8000 | ✅ Enabled  |
+| Constitutional AI Backend | 🟢 Active  | 8900 | ✅ Enabled  |
 | Simons AI Backend         | 🔴 Removed | -    | ❌ Disabled |
 
 ## Bekräftade Ändringar
 
 1. ✅ simons-ai-backend.service borttagen från systemd
-2. ✅ Port 8000 ägs av constitutional-ai-backend (PID 285373)
+2. ✅ Port 8900 ägs av constitutional-ai-backend
 3. ✅ Health endpoint svarar korrekt
-4. ✅ RAG queries fungerar (ministral-3:14b, ~23s)
+4. ✅ RAG queries fungerar (Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server, CRAG enabled)
 
 ## System Commands
 
@@ -33,7 +33,7 @@ systemctl --user stop constitutional-ai-backend
 ## API Base URL
 
 ```
-http://localhost:8000/api/constitutional
+http://localhost:8900/api/constitutional
 ```
 
 ## Endpoints
@@ -63,4 +63,4 @@ All Constitutional AI-logik är nu fristående i `09_CONSTITUTIONAL-AI/backend/`
 - Backend flyttad från `02_SIMONS-AI-BACKEND` till `09_CONSTITUTIONAL-AI/backend/`
 - Alla Constitutional AI-specifika services och routes är nu i eget projekt
 - Gamla `simons-ai-backend` service är disabled och borttagen
-- Port 8000 används nu av `constitutional-ai-backend`
+- Port 8900 används nu av `constitutional-ai-backend`

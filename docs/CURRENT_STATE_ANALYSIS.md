@@ -1,6 +1,6 @@
 # Nuvarande System - Faktisk Analys
 
-**Datum**: 2025-01-15  
+**Datum**: 2026-02-07
 **Baserat på**: Granskning av faktisk kod i `/backend/app/`
 
 ---
@@ -14,9 +14,10 @@
 - ✅ **Critic→Revise Loop** - Implementerat men disabled
 
 ### Embeddings & Reranking
-- ✅ **BGE-M3** (BAAI/bge-m3) - Redan implementerat!
-- ✅ **BGE reranker-v2-m3** - Redan implementerat!
+- ✅ **BAAI/bge-m3** - Redan implementerat!
+- ✅ **BAAI/bge-reranker-v2-m3** - Redan implementerat!
 - ✅ **1024 dimension embeddings** - Korrekt konfigurerat
+- ✅ **ChromaDB** - Vector database i produktion
 
 ### Retrieval Strategies (Phase 1-4)
 - ✅ **Phase 1: Parallel Collection Search**
@@ -27,7 +28,7 @@
 ### CRAG (Corrective RAG)
 - ✅ **GraderService** - Implementerad
 - ✅ **Self-Reflection** - Implementerad i CriticService
-- ⚠️ **crag_enabled: False** - Disabled by default
+- ✅ **CRAG enabled** - Aktiverat i produktion (self-reflection + grading active)
 
 ---
 
@@ -62,8 +63,8 @@
 3. Aktivera Spekulativ Avkodning (2-3 timmar)
 
 ### Kort sikt (1 vecka)
-4. Aktivera CRAG (efter testning)
-5. Aktivera Critic→Revise (efter testning)
+4. ✅ CRAG aktiverat (DONE)
+5. Fortsätt optimera Critic→Revise
 
 ### Medellång sikt (2-3 veckor)
 6. Implementera Contextual Retrieval
@@ -71,4 +72,13 @@
 
 ---
 
-**Insikt**: Du är redan långt framme! Många features är implementerade, bara disabled eller behöver konfiguration.
+## Korpus Status
+
+- ✅ **1.37M+ documents** (538K legal/gov + 829K DiVA research)
+- ✅ **Port 8900** - Backend produktion
+- ✅ **Mistral-Nemo-Instruct-2407-Q5_K_M.gguf** via llama-server (port 8080)
+- ✅ **All collections suffixed with** `_bge_m3_1024`
+
+---
+
+**Insikt**: Systemet är i produktion med state-of-the-art komponenter aktiverade!

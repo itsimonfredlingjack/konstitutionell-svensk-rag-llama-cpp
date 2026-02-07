@@ -11,7 +11,7 @@ Innan du påstår att en endpoint saknas:
 
 2. **Check OpenAPI:**
    ```bash
-   curl http://localhost:8000/docs
+   curl http://localhost:8900/docs
    ```
 
 3. **Read source:**
@@ -193,7 +193,7 @@ npm run dev  # Port 3001 already in use!
 systemctl --user restart constitutional-gpt  # NEVER without permission!
 
 # Assuming endpoint exists
-curl http://localhost:8000/api/chat  # Doesn't exist!
+curl http://localhost:8900/api/chat  # Doesn't exist!
 
 # Using Playwright without permission
 playwright codegen http://localhost:3001  # Ask first!
@@ -248,7 +248,7 @@ Don't keep trying random things - ask for help!
 3. Dokumentera ändringen i `docs/MODEL_OPTIMIZATION.md`
 
 **Best Practices:**
-- Prompts ska referera till korpusen (521K+ dokument)
+- Prompts ska referera till korpusen (1.37M+ dokument: 538K legal/gov + 829K DiVA)
 - Prompts ska instruera modellen att använda källor från ChromaDB
 - Prompts ska vara tydliga om vad modellen ska göra när källor saknas
 - Prompts ska prioritera SFS-källor (lagtext) över prop/sou

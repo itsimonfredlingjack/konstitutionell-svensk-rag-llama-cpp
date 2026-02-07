@@ -8,9 +8,9 @@
 ## 📊 Nuläge
 
 ### Backend (FastAPI) - FUNGERAR ✅
-- **URL:** http://192.168.86.32:8000
-- **Docs:** http://192.168.86.32:8000/docs
-- **WebSocket:** ws://192.168.86.32:8000/api/chat
+- **URL:** http://192.168.86.32:8900
+- **Docs:** http://192.168.86.32:8900/docs
+- **WebSocket:** ws://192.168.86.32:8900/api/chat
 
 ### Ollama-modeller installerade
 ```
@@ -74,23 +74,23 @@ ollama_client.py ← Ollama API-anrop
 
 ```bash
 # Health check
-curl http://192.168.86.32:8000/health
+curl http://192.168.86.32:8900/health
 
 # GPU stats
-curl http://192.168.86.32:8000/api/gpu/stats
+curl http://192.168.86.32:8900/api/gpu/stats
 
 # Lista profiler
-curl http://192.168.86.32:8000/api/profiles
+curl http://192.168.86.32:8900/api/profiles
 
 # Warmup en modell (ladda i VRAM)
-curl -X POST http://192.168.86.32:8000/api/profiles/gpt-oss/warmup
-curl -X POST http://192.168.86.32:8000/api/profiles/devstral/warmup
+curl -X POST http://192.168.86.32:8900/api/profiles/gpt-oss/warmup
+curl -X POST http://192.168.86.32:8900/api/profiles/devstral/warmup
 
 # Unload modeller (frigör VRAM)
-curl -X POST http://192.168.86.32:8000/api/system/unload-models
+curl -X POST http://192.168.86.32:8900/api/system/unload-models
 
 # WebSocket test (behöver wscat eller liknande)
-wscat -c ws://192.168.86.32:8000/api/chat
+wscat -c ws://192.168.86.32:8900/api/chat
 ```
 
 ---

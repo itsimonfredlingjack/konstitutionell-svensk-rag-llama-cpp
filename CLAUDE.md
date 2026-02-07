@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Constitutional AI is a RAG system for Swedish government documents (521K+ documents across Riksdagen, municipalities, and government agencies). It uses ChromaDB with KBLab Swedish BERT embeddings (768 dims) for semantic search, llama-server (llama.cpp) for local LLM inference, a FastAPI backend on port 8900, and a React+Vite+Three.js frontend on port 3001.
+Constitutional AI is a RAG system for Swedish government documents (1.37M+ documents: 538K legal/gov + 829K DiVA research across Riksdagen, municipalities, and government agencies). It uses ChromaDB with BAAI/bge-m3 embeddings (1024 dims) for semantic search, llama-server (llama.cpp) for local LLM inference, a FastAPI backend on port 8900, and a React+Vite+Three.js frontend on port 3001. CRAG is enabled (self-reflection + grading active).
 
 This is an independent git repository nested at `AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/`.
 
@@ -81,9 +81,9 @@ User Query → Frontend → POST /api/constitutional/agent/query/stream
   → OrchestratorService
     → IntentClassifier (classifies query type)
     → QueryRewriter (rewrites/expands query for better retrieval)
-    → RetrievalOrchestrator → RetrievalService → ChromaDB (521K docs)
+    → RetrievalOrchestrator → RetrievalService → ChromaDB (1.37M+ docs)
     → GraderService (grades document relevance)
-    → LLMService → llama-server
+    → LLMService → llama-server (Mistral-Nemo-Instruct-2407-Q5_K_M.gguf)
     → GuardrailService (blocks hallucinated answers in EVIDENCE mode)
   → Streaming SSE response → Frontend
 ```
@@ -103,7 +103,7 @@ The orchestrator (`orchestrator_service.py`, ~108KB) is the central coordinator.
 | `retrieval_service.py` | ChromaDB vector search |
 | `retrieval_orchestrator.py` | Advanced multi-strategy retrieval |
 | `llm_service.py` | llama-server (OpenAI-compatible) integration with streaming |
-| `embedding_service.py` | KBLab Swedish BERT embeddings |
+| `embedding_service.py` | BAAI/bge-m3 embeddings (1024 dims) |
 | `graph_service.py` | LangGraph state machine for CRAG |
 | `guardrail_service.py` | Hallucination detection, safety checks |
 | `intent_classifier.py` | Query type classification |
@@ -159,9 +159,12 @@ Conventional commits: `feat(scope): description`, `fix(scope): description`, etc
 ## Data
 
 - **ChromaDB**: `chromadb_data/` (~15GB, excluded from git)
-- **Collections**: `swedish_gov_docs` (304K docs), `riksdag_documents_p1` (230K docs)
-- **Embeddings**: KBLab Swedish BERT, 768 dimensions
-- **LLM models**: `Mistral-Nemo-Instruct-2407-Q5_K_M.gguf (primary), gpt-sw3-6.7b-v2-instruct-Q5_K_M.gguf (fallback) via llama-server on port 8080
+- **Collections** (all suffixed with `_bge_m3_1024`): `swedish_gov_docs_bge_m3_1024` (304K docs), `riksdag_documents_p1_bge_m3_1024` (230K docs), DiVA research collections (829K docs)
+- **Total Documents**: 1.37M+ (538K legal/gov + 829K DiVA research)
+- **Embeddings**: BAAI/bge-m3 (1024 dimensions)
+- **Reranker**: BAAI/bge-reranker-v2-m3
+- **LLM models**: Mistral-Nemo-Instruct-2407-Q5_K_M.gguf (primary), gpt-sw3-6.7b-v2-instruct-Q5_K_M.gguf (fallback) via llama-server on port 8080
+- **CRAG**: Enabled (self-reflection + grading active)
 
 ## Guardrails for AI Agents
 
