@@ -13,6 +13,10 @@ INVARIANTS:
 import pytest
 import httpx
 
+# These tests require a running backend on localhost:8900
+# Run with: pytest -m integration
+pytestmark = pytest.mark.integration
+
 
 # =============================================================================
 # Test Queries per Intent

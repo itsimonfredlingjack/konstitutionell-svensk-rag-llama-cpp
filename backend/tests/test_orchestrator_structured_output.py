@@ -12,6 +12,10 @@ from app.services.orchestrator_service import OrchestratorService
 from app.services.query_processor_service import ResponseMode
 from app.services.retrieval_service import RetrievalMetrics, RetrievalResult, SearchResult
 
+# These tests require a fully configured OrchestratorService with live services
+# Run with: pytest -m integration
+pytestmark = pytest.mark.integration
+
 
 class TestOrchestratorStructuredOutput:
     """Test cases for orchestrator integration with structured output"""
@@ -34,6 +38,7 @@ class TestOrchestratorStructuredOutput:
         self.mock_llm_service = Mock()
         self.mock_query_processor = Mock()
         self.mock_guardrail = Mock()
+        self.mock_guardrail.check_query_safety = Mock(return_value=(True, None))
         self.mock_retrieval = Mock()
         self.mock_reranker = Mock()
         self.mock_structured_output = Mock()

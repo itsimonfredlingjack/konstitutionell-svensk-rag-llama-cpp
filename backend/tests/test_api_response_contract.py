@@ -9,11 +9,27 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from starlette.requests import Request
+
 from app.api.constitutional_routes import AgentQueryRequest, agent_query
 from app.services.guardrail_service import WardenStatus
-from app.services.orchestrator_service import RAGPipelineMetrics, RAGResult
+from app.services.rag_models import RAGPipelineMetrics, RAGResult
 from app.services.query_processor_service import ResponseMode
 from app.services.retrieval_service import SearchResult
+
+
+def _make_request():
+    """Create a minimal Request object for slowapi compatibility."""
+    scope = {
+        "type": "http",
+        "method": "POST",
+        "path": "/api/constitutional/agent/query",
+        "headers": [],
+        "query_string": b"",
+        "root_path": "",
+        "app": None,
+    }
+    return Request(scope)
 
 
 def _make_result(
@@ -73,11 +89,22 @@ async def test_t1_evidence_success_contract():
     orchestrator = _make_orchestrator(result, refusal_text)
     request = AgentQueryRequest(question="Vad säger GDPR?", mode="evidence")
 
-    response = await agent_query(request, x_retrieval_strategy=None, orchestrator=orchestrator)
+    response = await agent_query(
+        _make_request(), request, x_retrieval_strategy=None, orchestrator=orchestrator
+    )
     payload = response.model_dump()
     raw = response.model_dump_json()
 
-    assert set(payload.keys()) == {"answer", "sources", "mode", "saknas_underlag", "evidence_level"}
+    assert set(payload.keys()) == {
+        "answer",
+        "sources",
+        "mode",
+        "saknas_underlag",
+        "evidence_level",
+        "citations",
+        "intent",
+        "routing",
+    }
     assert payload["answer"].startswith("Baserat på GDPR")
     assert payload["mode"] == "evidence"
     assert payload["saknas_underlag"] is False
@@ -99,7 +126,9 @@ async def test_t2_refusal_contract():
     orchestrator = _make_orchestrator(result, refusal_text)
     request = AgentQueryRequest(question="Olagligt ämne?", mode="evidence")
 
-    response = await agent_query(request, x_retrieval_strategy=None, orchestrator=orchestrator)
+    response = await agent_query(
+        _make_request(), request, x_retrieval_strategy=None, orchestrator=orchestrator
+    )
     payload = response.model_dump()
     raw = response.model_dump_json()
 
@@ -139,11 +168,22 @@ async def test_t3_malicious_structured_json_sanitized():
     orchestrator = _make_orchestrator(result, refusal_text)
     request = AgentQueryRequest(question="Test?", mode="evidence")
 
-    response = await agent_query(request, x_retrieval_strategy=None, orchestrator=orchestrator)
+    response = await agent_query(
+        _make_request(), request, x_retrieval_strategy=None, orchestrator=orchestrator
+    )
     payload = response.model_dump()
     raw = response.model_dump_json()
 
-    assert set(payload.keys()) == {"answer", "sources", "mode", "saknas_underlag", "evidence_level"}
+    assert set(payload.keys()) == {
+        "answer",
+        "sources",
+        "mode",
+        "saknas_underlag",
+        "evidence_level",
+        "citations",
+        "intent",
+        "routing",
+    }
     assert payload["answer"] == refusal_text
     assert payload["mode"] == "evidence"
     assert payload["saknas_underlag"] is True

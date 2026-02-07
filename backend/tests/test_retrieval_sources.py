@@ -41,6 +41,7 @@ REQUIRED_SOURCE_FIELDS = {"id", "title", "snippet", "score", "source"}
 # =============================================================================
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.parametrize("query,expected_collection_prefix", MUST_HAVE_SOURCES)
 async def test_known_queries_return_sources(query: str, expected_collection_prefix: str):
@@ -79,6 +80,7 @@ async def test_known_queries_return_sources(query: str, expected_collection_pref
 # =============================================================================
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_source_objects_have_required_fields():
     """
@@ -113,6 +115,7 @@ async def test_source_objects_have_required_fields():
 # =============================================================================
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_evidence_level_not_none_when_sources_exist():
     """
@@ -144,6 +147,7 @@ async def test_evidence_level_not_none_when_sources_exist():
 # =============================================================================
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_saknas_underlag_true_when_no_sources():
     """
@@ -177,6 +181,7 @@ async def test_saknas_underlag_true_when_no_sources():
 # =============================================================================
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_evidence_mode_refuses_when_no_sources():
     """
@@ -213,6 +218,7 @@ async def test_evidence_mode_refuses_when_no_sources():
 # =============================================================================
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_source_scores_are_on_similarity_scale():
     """

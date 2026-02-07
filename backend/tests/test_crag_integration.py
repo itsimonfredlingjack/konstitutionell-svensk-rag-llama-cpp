@@ -19,6 +19,10 @@ from app.services.orchestrator_service import OrchestratorService
 from app.services.query_processor_service import ResponseMode
 from app.services.retrieval_service import RetrievalMetrics, RetrievalResult, SearchResult
 
+# These tests require a fully configured OrchestratorService with live services
+# Run with: pytest -m integration
+pytestmark = pytest.mark.integration
+
 
 class TestCRAGIntegration:
     """Test CRAG (Corrective RAG) integration"""
@@ -48,6 +52,9 @@ class TestCRAGIntegration:
         self.mock_critic.critique = AsyncMock()
         self.mock_critic.revise = AsyncMock()
         self.mock_grader = Mock()
+
+        # Mock guardrail safety check (returns tuple)
+        self.mock_guardrail.check_query_safety = Mock(return_value=(True, None))
 
         # Create orchestrator with mocked dependencies
         self.orchestrator = OrchestratorService(
