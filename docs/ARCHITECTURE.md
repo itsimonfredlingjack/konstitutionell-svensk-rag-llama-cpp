@@ -523,9 +523,9 @@ FASTAPI_ENV=development
 API_BASE_URL=http://localhost:8000
 
 # LLM
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=qwen2.5-coder:3b
-OLLAMA_TIMEOUT_MS=60000
+CONST_LLM_BASE_URL=http://localhost:8080/v1
+CONST_CONSTITUTIONAL_MODEL=Mistral-Nemo-Instruct-2407-Q5_K_M.gguf
+CONST_LLM_TIMEOUT=60000
 
 # ChromaDB
 CHROMA_PATH=chromadb_data

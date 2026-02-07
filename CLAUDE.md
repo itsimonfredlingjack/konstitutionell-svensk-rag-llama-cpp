@@ -4,96 +4,170 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Swedish RAG system for government documents (1M+ indexed docs from Riksdagen, SFS, Swedish government). FastAPI backend with CRAG pipeline (LangGraph), React + Three.js frontend. Runs on RTX 4070 (12GB VRAM).
+Constitutional AI is a RAG system for Swedish government documents (521K+ documents across Riksdagen, municipalities, and government agencies). It uses ChromaDB with KBLab Swedish BERT embeddings (768 dims) for semantic search, llama-server (llama.cpp) for local LLM inference, a FastAPI backend on port 8900, and a React+Vite+Three.js frontend on port 3001.
 
-## Commands
+This is an independent git repository nested at `AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/`.
+
+## Development Commands
+
+### Backend (port 8900)
 
 ```bash
-# Backend
-cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8900
-systemctl --user start constitutional-ai-backend   # Production
-
-# Frontend (THE ONLY FRONTEND - never create new frontend apps or use Streamlit)
-cd apps/constitutional-retardedantigravity
-npm run dev -- --port 3001 --host 0.0.0.0
-
-# Full system (llama-server + backend + frontend)
-./start_system.sh
-
-# Testing (from backend/)
 cd backend
-pytest tests/ -v                              # All tests
-pytest tests/test_file.py -v                  # Single file
-pytest tests/test_file.py::test_function -v   # Single test
-pytest -k "test_search" -v                    # Pattern match
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8900
 
-# Lint (run from repo root)
-ruff check . --fix && ruff format .
+# Tests
+pytest tests/ -v                          # all tests
+pytest tests/test_constitution.py -v      # single file
+pytest tests/test_constitution.py::test_name  # single test
+pytest -m unit                            # unit tests only (no network/GPU)
+pytest -m "not slow"                      # skip slow tests
 
-# Health check
-curl -s http://localhost:8900/api/constitutional/health | jq .
+# Integration/Ollama tests are opt-in:
+RUN_INTEGRATION_TESTS=1 pytest -m integration
+RUN_OLLAMA_TESTS=1 pytest -m ollama
+
+# Lint & format
+ruff check .
+ruff check --fix .
+ruff format .
 ```
+
+### Frontend (port 3001)
+
+**The only real frontend is `apps/constitutional-retardedantigravity/`.** Never create new frontend apps. Ignore any `/frontend/` directory.
+
+```bash
+cd apps/constitutional-retardedantigravity
+npm install
+npm run dev       # dev server on :3001
+npm run build     # tsc -b && vite build
+npm run lint      # eslint
+```
+
+The frontend connects to `VITE_BACKEND_URL` (defaults to `http://localhost:8900`).
+
+### Systemd Services
+
+```bash
+systemctl --user status constitutional-ai-backend
+systemctl --user restart constitutional-ai-backend
+journalctl --user -u constitutional-ai-backend -f
+```
+
+Never restart services without explicit user permission. Always check `lsof -i :PORT` before starting anything.
+
+### Health Check / Quick Test
+
+```bash
+curl http://localhost:8900/api/constitutional/health | jq .
+
+# RAG query
+curl -X POST http://localhost:8900/api/constitutional/agent/query \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Vad säger GDPR om personuppgifter?","mode":"assist"}' | jq .
+```
+
+API docs: `http://localhost:8900/docs` (Swagger) and `/redoc`.
 
 ## Architecture
 
-### Three Services
-
-| Service | Port | What |
-|---------|------|------|
-| llama-server (llama.cpp, NOT Ollama) | 8080 | LLM inference, OpenAI-compatible API |
-| Backend API (FastAPI) | 8900 | RAG pipeline, all business logic |
-| Frontend (React + Vite) | 3001 | `apps/constitutional-retardedantigravity/` |
-
-### Inference: llama.cpp with Speculative Decoding
-
-- **Primary model**: Mistral-Nemo-Instruct-2407 (Q5_K_M) - generation
-- **Draft model**: Qwen2.5-0.5B (Q8_0) - speculative decoding
-- **Grading model**: Qwen2.5-0.5B (Q5_K_M) - CRAG document relevance
-- Config: `start_system.sh` (runtime), `backend/app/services/config_service.py` (all thresholds/models)
-
-### RAG Pipeline Data Flow
+### RAG Pipeline
 
 ```
-Query → FastAPI → OrchestratorService → RetrievalOrchestrator (EPR + RAG-Fusion) → ChromaDB
-  → BGE Reranker (score threshold + top-N filter) → GraderService/CRAG (Qwen 0.5B)
-  → LLMService → llama-server → Mistral-Nemo → Critic→Revise
-  → GuardrailService → Response with sources
+User Query → Frontend → POST /api/constitutional/agent/query/stream
+  → OrchestratorService
+    → IntentClassifier (classifies query type)
+    → QueryRewriter (rewrites/expands query for better retrieval)
+    → RetrievalOrchestrator → RetrievalService → ChromaDB (521K docs)
+    → GraderService (grades document relevance)
+    → LLMService → llama-server
+    → GuardrailService (blocks hallucinated answers in EVIDENCE mode)
+  → Streaming SSE response → Frontend
 ```
 
-Key pipeline features: EPR intent-based routing with RAG-Fusion multi-query (RRF merge, k=45), BGE reranker-v2-m3 **before** LLM generation (score threshold 0.1, top-5 filter), CRAG document grading (enabled by default), Critic→Revise loop, intent-specific answer contracts, SFS/PRIORITET legal statute prioritization.
+Three query modes with different LLM parameters:
+- **EVIDENCE** (temp 0.2): Strict source-grounded answers from the corpus
+- **ASSIST** (temp 0.4): Guided help using sources as context
+- **CHAT** (temp 0.7): Conversational, less strict
 
-### Embeddings
+### Backend Service Layer (`backend/app/services/`)
 
-BAAI/bge-m3 (1024 dimensions, hybrid dense+sparse). All ChromaDB collection names end with `_bge_m3_1024` - using wrong suffix causes dimension mismatch errors.
+The orchestrator (`orchestrator_service.py`, ~108KB) is the central coordinator. Key services:
 
-### ChromaDB
+| Service | Purpose |
+|---------|---------|
+| `orchestrator_service.py` | Main RAG pipeline coordinator |
+| `retrieval_service.py` | ChromaDB vector search |
+| `retrieval_orchestrator.py` | Advanced multi-strategy retrieval |
+| `llm_service.py` | llama-server (OpenAI-compatible) integration with streaming |
+| `embedding_service.py` | KBLab Swedish BERT embeddings |
+| `graph_service.py` | LangGraph state machine for CRAG |
+| `guardrail_service.py` | Hallucination detection, safety checks |
+| `intent_classifier.py` | Query type classification |
+| `query_rewriter.py` | Query expansion/reformulation |
+| `grader_service.py` | Document relevance grading |
+| `bm25_service.py` | Sparse keyword retrieval |
+| `rag_fusion.py` | Multi-query result fusion |
+| `source_hierarchy.py` | SFS > prop/SOU source prioritization |
 
-Location: `chromadb_data/` (~16GB, git-excluded). Three collections totaling 1,075,956 documents.
+Services are singletons obtained via `get_*_service()` factory functions.
 
-## API
+### Frontend Architecture (`apps/constitutional-retardedantigravity/`)
 
-There is NO `/search` endpoint. Use `/agent/query` for search.
+React 19 + Vite 7 + TypeScript 5.9 + Three.js (React Three Fiber/Drei) + Tailwind CSS 4 + Zustand.
 
-- `POST /api/constitutional/agent/query` - RAG query (sync)
-- `POST /api/constitutional/agent/query/stream` - RAG query (SSE streaming)
-- `GET /api/constitutional/health` - Health check
-- Full docs: `http://localhost:8900/docs`
+- `src/App.tsx` — Main app with 3D canvas background
+- `src/stores/useAppStore.ts` — Zustand store; manages query state, streaming SSE consumption, pipeline visualization
+- `src/components/3d/` — Three.js 3D visualization components
+- `src/components/ui/` — UI components (HeroSection, ResultsSection, SourcesPanel, PipelineVisualizer, TrustHull)
+
+### API Routes
+
+All routes prefixed with `/api/constitutional` (defined in `backend/app/api/constitutional_routes.py`):
+
+- `GET /health` — Health check
+- `GET /stats/overview` — Collection statistics
+- `GET /collections` — List ChromaDB collections
+- `POST /agent/query` — RAG query (JSON response)
+- `POST /agent/query/stream` — RAG query (SSE streaming, used by frontend)
+- `POST /search` — Document search
+- `WS /ws/harvest` — Live harvest progress WebSocket
+
+### Configuration
+
+Backend settings in `backend/app/config.py` via pydantic-settings. Environment variables prefixed with `CONST_` (e.g., `CONST_DEBUG=true`, `CONST_LOG_LEVEL=DEBUG`). Loads `.env` automatically.
+
+Key settings: `CONST_CRAG_ENABLED`, `CONST_OLLAMA_BASE_URL`, `CONST_LLM_BASE_URL`.
 
 ## Code Style
 
-- **Python**: ruff (line-length 100, double quotes, `py310` target). Type hints required on function signatures. `B008` ignored (FastAPI `Depends`).
-- **TypeScript**: ESLint, functional components, TailwindCSS.
-- **Commits**: Conventional commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`).
-- **pytest**: `asyncio_mode = "auto"`. Markers: `integration`, `unit`, `slow`, `ollama`.
+### Python
 
-## Environment Variables
+Ruff: line-length 100, target py310. Configured in `pyproject.toml`. All functions require type hints. Import order: stdlib → third-party → local. Pytest: `asyncio_mode = "auto"`.
 
-Prefix: `CONST_`. Key vars: `CONST_PORT` (8900), `RAG_SIMILARITY_THRESHOLD` (0.5), `CONST_CRAG_ENABLED`, `CONST_LOG_LEVEL`.
+### TypeScript/React
 
-## Common Gotchas
+Functional components only. Use `import type` for type-only imports. Tailwind CSS with `clsx`/`tailwind-merge` for conditional classes. Zustand for state management.
 
-- Verify ports are free before starting services: `lsof -i :8080 :8900 :3001`
-- Collection names MUST use `_bge_m3_1024` suffix or you get dimension mismatch
-- `config_service.py` has 32K context default but `start_system.sh` overrides to 16,384 at runtime
-- Search returning nothing? Lower `RAG_SIMILARITY_THRESHOLD` from 0.5
-- Frontend CORS issues? Check port config in `backend/app/config.py`
+### Commits
+
+Conventional commits: `feat(scope): description`, `fix(scope): description`, etc.
+
+## Data
+
+- **ChromaDB**: `chromadb_data/` (~15GB, excluded from git)
+- **Collections**: `swedish_gov_docs` (304K docs), `riksdag_documents_p1` (230K docs)
+- **Embeddings**: KBLab Swedish BERT, 768 dimensions
+- **LLM models**: `Mistral-Nemo-Instruct-2407-Q5_K_M.gguf (primary), gpt-sw3-6.7b-v2-instruct-Q5_K_M.gguf (fallback) via llama-server on port 8080
+
+## Guardrails for AI Agents
+
+- **Never** modify `constitutional_routes.py`, systemd files, or model parameters without asking first
+- **Never** use Playwright/Selenium without explicit permission
+- **Never** delete ChromaDB data
+- **Always** do route discovery (grep routes, check OpenAPI) before claiming an endpoint doesn't exist
+- Model parameter changes must be documented in `docs/MODEL_OPTIMIZATION.md`
+- System prompt changes must be tested with diverse queries before deployment

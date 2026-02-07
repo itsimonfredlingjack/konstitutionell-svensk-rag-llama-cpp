@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [
     {name = "Constitutional AI", email = "constitutional@example.com"}
 ]
-keywords = ["rag", "legal", "swedish", "chromadb", "fastapi", "ollama"]
+keywords = ["rag", "legal", "swedish", "chromadb", "fastapi", "llama-cpp"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

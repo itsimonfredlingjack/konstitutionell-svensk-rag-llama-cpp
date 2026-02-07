@@ -15,8 +15,8 @@
 | Total Documents | 521,798 |
 | Vector Dimensions | 768 |
 | Embedding Model | KBLab Swedish BERT |
-| Storage | Qdrant |
-| LLM | Qwen 14B / Gemma 27B |
+| Storage | ChromaDB (migrated from Qdrant) |
+| LLM | Mistral-Nemo-Instruct-2407 (GGUF via llama-server) |
 
 ---
 
@@ -55,9 +55,9 @@
          │                    │                    │
          ▼                    ▼                    ▼
 ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│   Qdrant    │      │   Ollama    │      │    n8n      │
-│   (6333)    │      │   (11434)   │      │   (5678)    │
-│  521K docs  │      │  Qwen 14B   │      │  Workflows  │
+│   Qdrant    │      │llama-server │      │    n8n      │
+│   (6333)    │      │   (8080)    │      │   (5678)    │
+│  521K docs  │      │Mistral-Nemo │      │  Workflows  │
 └─────────────┘      └─────────────┘      └─────────────┘
 ```
 
@@ -68,9 +68,10 @@
 | Service | Port | Status | Purpose |
 |---------|------|--------|---------|
 | Constitutional AI Backend | 8000 | 🟢 Active | FastAPI RAG API |
-| Qdrant | 6333 | Running | Vector database |
+| Qdrant | 6333 | Deprecated | Vector database (migrated to ChromaDB) |
 | RAG API | 8900 | On-demand | Search + LLM |
-| Ollama | 11434 | Running | Local LLM inference |
+| llama-server | 8080 | Running | Local LLM inference (OpenAI-compatible) |
+| Ollama | 11434 | Optional | Legacy fallback |
 | n8n | 5678 | Running | Workflow automation |
 
 ### Backend Service Status

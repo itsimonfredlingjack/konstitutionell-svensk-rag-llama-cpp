@@ -28,14 +28,14 @@ curl http://localhost:8000/api/health   # Backend health check
 - **CLI Framework**: Rich terminal UI with Typer for all command-line interfaces
 - **Testing**: Comprehensive pytest suites, especially for Swedish document processing
 - **Document Processing**: Specialized pipelines for Swedish government documents (SFS, propositioner, etc.)
-- **AI Integration**: Ollama local models with Swedish optimization (KBLab embeddings)
+- **AI Integration**: llama-server (llama.cpp) local models with Swedish optimization (KBLab embeddings)
 
 ### Architecture Patterns
 - **Agentic RAG**: Direct RAG pattern with two-model architecture:
   - **Gemma 3 12B (BRAIN)**: Faktasvar, RAG, juridisk analys
   - **GPT-SW3 6.7B (VOICE)**: Chat, style pass, naturlig svenska
 - **Response Modes**: CHAT (GPT-SW3 only), ASSIST (Gemma → GPT-SW3), EVIDENCE (Gemma only)
-- **Structured Outputs**: Ollama `format` parameter med JSON Schema
+- **Structured Outputs**: OpenAI-compatible JSON mode via llama-server med JSON Schema
 - **Swedish Processing**: Rate limiting for government APIs, Swedish text processing, ChromaDB vector operations
 - **Error Handling**: Graceful degradation for document parsing, comprehensive logging for scraping operations
 - **State Management**: React hooks for frontend, SQLite for scraper state tracking
@@ -46,9 +46,9 @@ curl http://localhost:8000/api/health   # Backend health check
 - **Swedish Terms**: Use proper Swedish terminology (myndighetsdokument, propositioner, riksdagen)
 
 ### Critical Notes
-- **Model Configuration**: Two-model system via Ollama (port 11434):
-  - Gemma 3 12B = BRAIN (faktasvar)
-  - GPT-SW3 6.7B = VOICE (naturlig svenska)
+- **Model Configuration**: Two-model system via llama-server with OpenAI-compatible API (port 8080):
+  - Gemma 3 12B = BRAIN (GGUF format) (faktasvar)
+  - GPT-SW3 6.7B = VOICE (GGUF format) (naturlig svenska)
 - **Rate Limiting**: Always respect Swedish government site limits (5-10s between requests)
 - **ChromaDB**: 535K+ documents indexed, use semantic search for legal document retrieval
 - **Git Workflow**: This is NOT a git repository, use direct file operations

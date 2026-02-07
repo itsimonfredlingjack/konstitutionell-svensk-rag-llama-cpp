@@ -8,12 +8,12 @@
 
 ## Översikt
 
-Constitutional AI använder Ollama med lokala modeller för att svara på frågor baserat på en korpus med över 521 000 svenska myndighetsdokument.
+Constitutional AI använder llama-server (llama.cpp) med lokala modeller för att svara på frågor baserat på en korpus med över 521 000 svenska myndighetsdokument.
 
 ### Modeller
 
-- **Primär modell:** `ministral-3:14b` (Mistral AI)
-- **Fallback modell:** `gpt-sw3:6.7b` (AI Sweden GPT-SW3)
+- **Primär modell:** `ministral-3:14b` (Mistral AI) - GGUF format via llama-server
+- **Fallback modell:** `gpt-sw3:6.7b` (AI Sweden GPT-SW3) - GGUF format via llama-server
 - **Timeout:** 60 sekunder (fallback vid timeout)
 
 ---
@@ -216,7 +216,7 @@ Svara i ren text utan formatering.
 
 #### ASSIST Mode
 ```bash
-curl -X POST http://localhost:8000/api/constitutional/agent/query \
+curl -X POST http://localhost:8900/api/constitutional/agent/query \
   -H "Content-Type: application/json" \
   -d '{
     "question": "Vad säger GDPR om personuppgifter?",
@@ -232,7 +232,7 @@ curl -X POST http://localhost:8000/api/constitutional/agent/query \
 
 #### EVIDENCE Mode
 ```bash
-curl -X POST http://localhost:8000/api/constitutional/agent/query \
+curl -X POST http://localhost:8900/api/constitutional/agent/query \
   -H "Content-Type: application/json" \
   -d '{
     "question": "Vad säger förvaltningslagen 2017:900 om beslut?",
@@ -248,7 +248,7 @@ curl -X POST http://localhost:8000/api/constitutional/agent/query \
 
 #### CHAT Mode
 ```bash
-curl -X POST http://localhost:8000/api/constitutional/agent/query \
+curl -X POST http://localhost:8900/api/constitutional/agent/query \
   -H "Content-Type: application/json" \
   -d '{
     "question": "Hej, vad kan du hjälpa mig med?",
@@ -285,7 +285,8 @@ curl -X POST http://localhost:8000/api/constitutional/agent/query \
 
 ## Referenser
 
-- Ollama API: https://github.com/ollama/ollama/blob/main/docs/api.md
+- llama.cpp server API: https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md
+- Ollama (fallback/optional): https://github.com/ollama/ollama/blob/main/docs/api.md
 - Mistral AI: https://mistral.ai/
 - AI Sweden GPT-SW3: https://huggingface.co/fcole90/ai-sweden-gpt-sw3-6.7b
 - ChromaDB: https://www.trychroma.com/

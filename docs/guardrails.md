@@ -21,7 +21,7 @@ Innan du påstår att en endpoint saknas:
 
 4. **Verify endpoint exists:**
    ```bash
-   curl -X POST http://localhost:8000/api/constitutional/search \
+   curl -X POST http://localhost:8900/api/constitutional/search \
      -H "Content-Type: application/json" \
      -d '{"query":"test","limit":10}'
    ```
@@ -32,24 +32,27 @@ Innan du påstår att en endpoint saknas:
 
 | Tjänst                    | Status     | Port | Autostart   |
 |---------------------------|------------|------|-------------|
-| Constitutional AI Backend | 🟢 Active  | 8000 | ✅ Enabled  |
+| Constitutional AI Backend | 🟢 Active  | 8900 | ✅ Enabled  |
 | Simons AI Backend         | 🔴 Removed | -    | ❌ Disabled |
 
 ### Before Starting Anything
 
 ```bash
 # Check what's running
-lsof -i :8000    # Backend
+lsof -i :8900    # Backend
 lsof -i :3001    # Frontend
-lsof -i :11434   # Ollama
+lsof -i :8080    # llama-server
 
 # Check systemd services
 systemctl --user status constitutional-ai-backend
 systemctl --user status constitutional-gpt
 
-# Check Ollama models
-ollama list
-ollama ps
+# Check llama-server health
+curl localhost:8080/health
+
+# (Optional) Check Ollama if used as fallback:
+# curl localhost:8080/health    # llama-server status
+# Check loaded model info
 ```
 
 ### System Commands
@@ -71,7 +74,7 @@ systemctl --user stop constitutional-ai-backend
 ### API Base URL
 
 ```
-http://localhost:8000/api/constitutional
+http://localhost:8900/api/constitutional
 ```
 
 ### Rules
@@ -130,15 +133,15 @@ http://localhost:8000/api/constitutional
 
 ```bash
 # Health check
-curl http://localhost:8000/api/health | jq .
+curl http://localhost:8900/api/health | jq .
 
 # Search test
-curl -X POST http://localhost:8000/api/constitutional/search \
+curl -X POST http://localhost:8900/api/constitutional/search \
   -H "Content-Type: application/json" \
   -d '{"query":"regeringsformen","limit":5}' | jq .
 
 # GPU stats
-curl http://localhost:8000/api/gpu/stats | jq .
+curl http://localhost:8900/api/gpu/stats | jq .
 ```
 
 ### Frontend Testing

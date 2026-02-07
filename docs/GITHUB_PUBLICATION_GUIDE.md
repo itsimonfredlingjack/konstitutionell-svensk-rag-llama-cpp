@@ -112,7 +112,7 @@ Denna guide beskriver hur man strukturerar projektet för GitHub-publicering med
 - **Backend**: FastAPI (Python 3.14)
 - **Frontend**: React + TypeScript + Vite
 - **Vector DB**: ChromaDB (521K+ dokument)
-- **LLM**: Ollama (ministral-3:14b, gpt-sw3:6.7b)
+- **LLM**: llama-server (llama.cpp, Mistral-Nemo-Instruct GGUF) with optional Ollama fallback
 - **Embeddings**: KBLab Swedish BERT
 
 ## Services
@@ -120,7 +120,8 @@ Denna guide beskriver hur man strukturerar projektet för GitHub-publicering med
 | Tjänst | Port | Status |
 |--------|------|--------|
 | Constitutional AI Backend | 8000 | 🟢 Active |
-| Ollama | 11434 | Running |
+| llama-server | 8080 | Running |
+| Ollama | 11434 | Optional (fallback) |
 
 ## API Endpoints
 
@@ -147,7 +148,7 @@ Skapa en fil som AI-modeller kan läsa först för att förstå projektet:
 Constitutional AI är ett RAG-system (Retrieval-Augmented Generation) för svenska myndighetsdokument med:
 - 521K+ dokument från Riksdagen och svenska myndigheter
 - ChromaDB som vector database
-- Ollama för lokal LLM-inferens
+- llama-server (llama.cpp) för lokal LLM-inferens
 - FastAPI backend + React frontend
 
 ## Viktiga Filer för AI-förståelse
@@ -179,7 +180,7 @@ Constitutional AI är ett RAG-system (Retrieval-Augmented Generation) för svens
 - `app/api/constitutional_routes.py` - API routes (550+ lines)
 - `app/services/orchestrator_service.py` - RAG orchestration
 - `app/services/retrieval_service.py` - ChromaDB retrieval
-- `app/services/llm_service.py` - Ollama integration
+- `app/services/llm_service.py` - llama-server (OpenAI-compatible) integration
 
 ### Frontend (`apps/`)
 - `constitutional-gpt/` - Main RAG interface (Next.js 16)
@@ -196,7 +197,7 @@ User Query → Frontend → Backend API → Orchestrator
     ↓
 Retrieval Service → ChromaDB (521K docs)
     ↓
-LLM Service → Ollama (ministral-3:14b)
+LLM Service → llama-server (Mistral-Nemo-Instruct)
     ↓
 Response → Frontend → User
 ```
