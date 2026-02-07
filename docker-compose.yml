@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+  # ═══════════════════════════════════════════════════════════════════
+  # ChromaDB — Vector Database
+  # ═══════════════════════════════════════════════════════════════════
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8100:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════════
+  # llama-server — Local LLM Inference (llama.cpp, GPU)
+  # ═══════════════════════════════════════════════════════════════════
+  llama-server:
+    image: ghcr.io/ggerganov/llama.cpp:server-cuda
+    ports:
+      - "8080:8080"
+    volumes:
+      - llama_models:/models
+    command: >
+      /llama-server
+      -m /models/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf
+      --host 0.0.0.0 --port 8080
+      -c 32768 -ngl 99
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════════
+  # Backend — FastAPI RAG Pipeline
+  # ═══════════════════════════════════════════════════════════════════
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "${CONST_PORT:-8900}:8900"
+    env_file:
+      - ./backend/.env
+    environment:
+      - CONST_HOST=0.0.0.0
+      - CONST_PORT=8900
+      - CONST_LLM_BASE_URL=http://llama-server:8080/v1
+      - CONST_CHROMADB_PATH=/data/chromadb
+      - CONST_LOG_JSON=true
+    volumes:
+      - chromadb_data:/data/chromadb:ro
+      - pdf_cache:/data/pdf_cache
+    depends_on:
+      chromadb:
+        condition: service_healthy
+      llama-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8900/api/constitutional/health').raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  chromadb_data:
+    driver: local
+  llama_models:
+    driver: local
+  pdf_cache:
+    driver: local
