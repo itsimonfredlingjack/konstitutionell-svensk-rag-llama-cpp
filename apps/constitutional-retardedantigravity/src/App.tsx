@@ -4,6 +4,7 @@ import { Substrate } from './components/3d/Substrate';
 import { TrustHull } from './components/ui/TrustHull';
 import { EffectComposer, Noise, Vignette, Bloom, TiltShift2 } from '@react-three/postprocessing';
 import { COLORS } from './theme/colors';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { SourceViewer3D } from './components/3d/SourceViewer3D';
 import { ConnectorLogic } from './components/3d/ConnectorLogic';
@@ -21,33 +22,35 @@ function App() {
     <div className="w-screen h-screen overflow-hidden relative" style={{ backgroundColor: COLORS.background }}>
       {/* ===== LAYER 0: 3D Background (Fixed, Z-0) ===== */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <Canvas
-          dpr={isHighPerformance ? [1, 2] : [1, 1.5]} // Cap DPR on lower end
-          camera={{ position: [0, 2, 8], fov: 50 }}
-          gl={{ antialias: true, powerPreference: "high-performance" }}
-        >
-          <color attach="background" args={[COLORS.background]} />
-          <fog attach="fog" args={[COLORS.background, 5, 25]} />
+        <ErrorBoundary>
+          <Canvas
+            dpr={isHighPerformance ? [1, 2] : [1, 1.5]} // Cap DPR on lower end
+            camera={{ position: [0, 2, 8], fov: 50 }}
+            gl={{ antialias: true, powerPreference: "high-performance" }}
+          >
+            <color attach="background" args={[COLORS.background]} />
+            <fog attach="fog" args={[COLORS.background, 5, 25]} />
 
-          <ambientLight intensity={0.8} />
-          <pointLight position={[10, 10, 10]} intensity={0.6} color={COLORS.accentPrimary} />
-          <pointLight position={[-10, 5, -10]} intensity={0.4} color={COLORS.accentSecondary} />
+            <ambientLight intensity={0.8} />
+            <pointLight position={[10, 10, 10]} intensity={0.6} color={COLORS.accentPrimary} />
+            <pointLight position={[-10, 5, -10]} intensity={0.4} color={COLORS.accentSecondary} />
 
-          <Suspense fallback={null}>
-            <Substrate />
+            <Suspense fallback={null}>
+              <Substrate />
 
-            {/* 3D Source Visualization (Left side) */}
-            <SourceViewer3D />
-            <ConnectorLogic />
-          </Suspense>
+              {/* 3D Source Visualization (Left side) */}
+              <SourceViewer3D />
+              <ConnectorLogic />
+            </Suspense>
 
-          <EffectComposer multisampling={isHighPerformance ? 4 : 0} enableNormalPass={isHighPerformance}>
-            <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.2} radius={0.2} />
-            <Vignette eskil={false} offset={0.1} darkness={0.4} />
-            {isHighPerformance ? <Noise opacity={0.01} /> : <></>}
-            <TiltShift2 blur={0.05} />
-          </EffectComposer>
-        </Canvas>
+            <EffectComposer multisampling={isHighPerformance ? 4 : 0} enableNormalPass={isHighPerformance}>
+              <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.2} radius={0.2} />
+              <Vignette eskil={false} offset={0.1} darkness={0.4} />
+              {isHighPerformance ? <Noise opacity={0.01} /> : <></>}
+              <TiltShift2 blur={0.05} />
+            </EffectComposer>
+          </Canvas>
+        </ErrorBoundary>
       </div>
 
       {/* ===== LAYER 1: UI Overlay (Relative, Z-10) ===== */}

@@ -127,6 +127,7 @@ interface AppState {
   setQuery: (q: string) => void;
   setActiveMode: (mode: "verify" | "summarize" | "compare") => void;
   startSearch: (mode?: BackendMode, uiMode?: QueryResultMode) => Promise<void>;
+  retryQuery: (queryResultId: string) => void;
   setFocusedQuery: (id: string | null) => void;
   setHoveredSource: (id: string | null) => void;
   toggleLockedSource: (id: string) => void;
@@ -213,7 +214,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         {
           ts: now,
           stage: "query_classification",
-          message: "Classify: starting pipeline…",
+          message: "Klassificera: startar pipeline…",
         },
       ],
       searchStage: "searching",
@@ -605,6 +606,23 @@ export const useAppStore = create<AppState>((set, get) => ({
         activeAbortController = null;
       }
     }
+  },
+
+  retryQuery: (queryResultId) => {
+    const queryResult = get().queries.find((q) => q.id === queryResultId);
+    if (!queryResult) return;
+    // Remove the failed query and re-run with same parameters
+    set((state) => ({
+      queries: state.queries.filter((q) => q.id !== queryResultId),
+      query: queryResult.query,
+    }));
+    // Map UI mode back to backend mode
+    const modeMap: Record<QueryResultMode, BackendMode> = {
+      verify: "evidence",
+      summarize: "chat",
+      compare: "auto",
+    };
+    get().startSearch(modeMap[queryResult.mode], queryResult.mode);
   },
 
   setHoveredSource: (id) =>

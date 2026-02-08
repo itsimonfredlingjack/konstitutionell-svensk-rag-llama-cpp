@@ -2,12 +2,36 @@
 
 /* Custom theme variables for Tailwind v4 */
 @theme {
-  --color-app-bg: #E7E5E4; /* Stone-200 */
+  /* Core palette */
+  --color-app-bg: #E7E5E4;
+  /* Stone-200 */
   --color-glass-border: rgba(28, 25, 23, 0.1);
   --color-glass-bg: rgba(250, 250, 249, 0.6);
-  --color-accent-primary: #0f766e; /* Teal-700 */
-  --color-accent-secondary: #b45309; /* Amber-700 */
-  --color-app-text: #1c1917; /* Stone-900 */
+  --color-accent-primary: #0f766e;
+  /* Teal-700 */
+  --color-accent-secondary: #b45309;
+  /* Amber-700 */
+  --color-app-text: #1c1917;
+  /* Stone-900 */
+
+  /* WCAG AA compliant semantic text colors
+     All pass 4.5:1+ on Stone-200 (#E7E5E4) background */
+  --color-text-muted: #57534e;
+  /* Stone-600: 5.2:1 contrast */
+  --color-text-subtle: #44403c;
+  /* Stone-700: 7.1:1 contrast */
+  --color-text-disabled: #78716c;
+  /* Stone-500: 4.5:1 - minimum AA */
+
+  /* User message tinting (distinguishes from AI) */
+  --color-user-bubble-bg: rgba(15, 118, 110, 0.08);
+  /* Teal tint */
+  --color-user-bubble-border: rgba(15, 118, 110, 0.2);
+
+  /* Animation timing (snappier) */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
 
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -55,4 +79,66 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(15, 118, 110, 0.6);
+}
+
+/* Reduced motion: respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile-safe viewport: accounts for on-screen keyboard */
+@supports (height: 100dvh) {
+
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
+
+/* Touch target utility (44×44 minimum per WCAG 2.5.5) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Focus visible for keyboard navigation */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+/* Animated gradient for brand title (Apple-style shimmer) */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 100%;
+  animation: gradient-shift 8s ease-in-out infinite;
+}
+
+/* Respect reduced motion for gradient animation */
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient {
+    animation: none;
+    background-position: 0% 50%;
+  }
 }

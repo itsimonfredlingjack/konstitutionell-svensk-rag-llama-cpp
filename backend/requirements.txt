@@ -43,3 +43,6 @@ numpy>=1.24.0
 # LangGraph for state machine architecture
 langgraph>=1.0.0
 langchain-core>=1.2.0
+
+# Rate limiting
+slowapi>=0.1.9

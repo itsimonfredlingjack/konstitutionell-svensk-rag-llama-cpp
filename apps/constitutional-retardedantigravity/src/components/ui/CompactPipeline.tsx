@@ -19,17 +19,17 @@ import type { QueryResult } from "../../types/queryResult";
 import type { PipelineStage } from "../../stores/useAppStore";
 
 const stages: { id: PipelineStage; label: string; icon: LucideIcon }[] = [
-    { id: "query_classification", label: "Classify", icon: Brain },
-    { id: "decontextualization", label: "Decontext", icon: RefreshCw },
-    { id: "retrieval", label: "Retrieval", icon: Database },
-    { id: "grading", label: "Grade", icon: Filter },
-    { id: "self_reflection", label: "Reflect", icon: Lightbulb },
-    { id: "generation", label: "Generate", icon: Sparkles },
-    { id: "guardrail_validation", label: "Validate", icon: ShieldCheck },
+    { id: "query_classification", label: "Tolka", icon: Brain },
+    { id: "decontextualization", label: "Förenkla", icon: RefreshCw },
+    { id: "retrieval", label: "Sök", icon: Database },
+    { id: "grading", label: "Bedöm", icon: Filter },
+    { id: "self_reflection", label: "Granska", icon: Lightbulb },
+    { id: "generation", label: "Generera", icon: Sparkles },
+    { id: "guardrail_validation", label: "Validera", icon: ShieldCheck },
 ];
 
-// Minimum time each stage should display (ms) for visual smoothness
-const MIN_STAGE_DISPLAY_MS = 400;
+// Minimum time each stage should display (ms) - snappier feel
+const MIN_STAGE_DISPLAY_MS = 250;
 
 interface CompactPipelineProps {
     queryResult: QueryResult;
@@ -39,6 +39,10 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
     queryResult,
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+
+    // Track which stage is selected for detailed view. Null means default view (all/recent logs).
+    const [activeDetailStage, setActiveDetailStage] = useState<PipelineStage | null>(null);
+
     const { searchStage, pipelineStage, pipelineLog, error } = queryResult;
 
     const isIdle = searchStage === "idle";
@@ -64,6 +68,8 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
             queryIdRef.current = queryResult.id;
             setCompletedStages(new Set());
             setCurrentDisplayStage(0);
+            setActiveDetailStage(null);
+            setIsExpanded(false);
         }
     }, [queryResult.id]);
 
@@ -126,23 +132,37 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
 
     const progressPercent = ((currentDisplayStage + 1) / stages.length) * 100;
 
+    // Filter logs based on selection
     const visibleLogs = useMemo(() => {
+        if (activeDetailStage) {
+            return pipelineLog.filter(l => l.stage === activeDetailStage);
+        }
         return pipelineLog.slice(-8);
-    }, [pipelineLog]);
+    }, [pipelineLog, activeDetailStage]);
+
+    const handleStageClick = (e: React.MouseEvent, stageId: PipelineStage) => {
+        e.stopPropagation(); // Prevent toggling the main drawer if we click a specific stage
+        if (activeDetailStage === stageId) {
+            // Toggle off if clicking same
+            setActiveDetailStage(null);
+            setIsExpanded(false);
+        } else {
+            setActiveDetailStage(stageId);
+            setIsExpanded(true); // Auto-open drawer to show details
+        }
+    };
 
     if (isIdle) return null;
 
     return (
         <div className="w-full">
             {/* Compact bar */}
-            <button
-                type="button"
-                onClick={() => setIsExpanded(!isExpanded)}
+            <div
                 className={clsx(
                     "w-full rounded-xl border px-4 py-2.5 flex items-center gap-3",
                     "bg-stone-100/60 backdrop-blur-sm",
-                    "border-stone-300/50 hover:border-stone-400/60 transition-colors",
-                    "cursor-pointer select-none"
+                    "border-stone-300/50 transition-colors",
+                    "select-none"
                 )}
             >
                 {/* Progress indicator */}
@@ -152,17 +172,24 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                         const isCurrent = index === currentDisplayStage;
                         const isDone = isComplete || isBefore;
                         const isFailed = isError && isCurrent;
+                        const isActiveDetail = activeDetailStage === stage.id;
                         const Icon = stage.icon;
 
                         return (
-                            <motion.div
+                            <motion.button
                                 key={stage.id}
-                                className="flex-1 flex flex-col items-center gap-1"
+                                onClick={(e) => handleStageClick(e, stage.id)}
+                                className={clsx(
+                                    "flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer group",
+                                    "min-h-[44px] min-w-[44px] rounded-lg py-1 transition-colors hover:bg-stone-200/50",
+                                    "focus-ring",
+                                    isActiveDetail && "bg-stone-200/80 ring-1 ring-stone-300"
+                                )}
                                 initial={false}
                                 animate={{
                                     scale: isCurrent && runState === "running" ? 1.05 : 1,
                                 }}
-                                transition={{ duration: 0.2 }}
+                                transition={{ duration: 0.15 }}
                             >
                                 <motion.div
                                     className={clsx(
@@ -233,7 +260,7 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                                 animate={{ opacity: 1 }}
                                             >
                                                 <Icon
-                                                    className="w-3 h-3 text-stone-400"
+                                                    className="w-3 h-3 text-text-muted group-hover:text-stone-600 transition-colors"
                                                     strokeWidth={1.5}
                                                 />
                                             </motion.div>
@@ -247,18 +274,24 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                             ? "text-teal-700"
                                             : isCurrent
                                                 ? "text-stone-700 font-semibold"
-                                                : "text-stone-400"
+                                                : "text-text-muted group-hover:text-stone-600"
                                     )}
                                 >
                                     {stage.label}
                                 </span>
-                            </motion.div>
+                            </motion.button>
                         );
                     })}
                 </div>
 
-                {/* Expand indicator */}
-                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                {/* Expand indicator (General click to toggle drawer) */}
+                <div
+                    className="flex items-center gap-2 shrink-0 ml-2 cursor-pointer hover:opacity-70 transition-opacity"
+                    onClick={() => {
+                        setIsExpanded(!isExpanded);
+                        setActiveDetailStage(null); // Reset detail filter when toggling general view
+                    }}
+                >
                     <motion.span
                         key={runState}
                         initial={{ opacity: 0, y: -4 }}
@@ -269,24 +302,24 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                 ? "text-red-600"
                                 : runState === "complete"
                                     ? "text-teal-700"
-                                    : "text-stone-500"
+                                    : "text-text-muted"
                         )}
                     >
                         {runState === "error"
-                            ? "ERROR"
+                            ? "FEL"
                             : runState === "complete"
-                                ? "DONE"
+                                ? "KLART"
                                 : `${Math.round(progressPercent)}%`}
                     </motion.span>
                     <ChevronDown
                         className={clsx(
-                            "w-3.5 h-3.5 text-stone-400 transition-transform",
+                            "w-3.5 h-3.5 text-text-muted transition-transform",
                             isExpanded && "rotate-180"
                         )}
                         strokeWidth={1.5}
                     />
                 </div>
-            </button>
+            </div>
 
             {/* Expanded logs drawer */}
             <AnimatePresence initial={false}>
@@ -295,18 +328,33 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: 0.15 }}
                         className="overflow-hidden"
                     >
                         <div className="mt-2 rounded-xl border border-stone-300/50 bg-stone-100/50 px-4 py-3 max-h-48 overflow-y-auto">
+                            {/* Header for detail view */}
+                            {activeDetailStage && (
+                                <div className="flex items-center justify-between mb-2 pb-2 border-b border-stone-200/50">
+                                    <span className="text-xs font-semibold text-stone-700 uppercase tracking-wider font-mono">
+                                        Detaljer: {stages.find(s => s.id === activeDetailStage)?.label}
+                                    </span>
+                                    <button
+                                        onClick={() => setActiveDetailStage(null)}
+                                        className="text-[10px] text-text-muted hover:text-stone-600 focus-ring rounded px-1"
+                                    >
+                                        RENSA FILTER
+                                    </button>
+                                </div>
+                            )}
+
                             {error && (
                                 <div className="text-sm text-red-700 font-mono mb-2">
-                                    Error: {error}
+                                    Fel: {error}
                                 </div>
                             )}
                             {visibleLogs.length === 0 ? (
-                                <div className="text-sm text-stone-500 font-mono">
-                                    No logs yet.
+                                <div className="text-sm text-text-muted font-mono">
+                                    {activeDetailStage ? "Inga loggar för detta steg." : "Inga loggar än."}
                                 </div>
                             ) : (
                                 <div className="space-y-1">
@@ -315,11 +363,11 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                             key={`${log.ts}-${i}`}
                                             className="text-xs text-stone-600 font-mono"
                                         >
-                                            <span className="text-stone-400">
+                                            <span className="text-text-muted">
                                                 {new Date(log.ts).toLocaleTimeString("sv-SE", {
                                                     hour: "2-digit",
                                                     minute: "2-digit",
-                                                    second: "2-digit",
+                                                    second: "2-digit"
                                                 })}
                                             </span>{" "}
                                             {log.message}

@@ -75,11 +75,12 @@ class Settings(BaseSettings):
     ws_heartbeat_interval: int = 30
     ws_max_message_size: int = 65536
 
-    class Config:
-        env_prefix = "CONST_"
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"  # VIKTIGT: Förhindrar krasch vid okända env vars
+    model_config = {
+        "env_prefix": "CONST_",
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 @lru_cache()

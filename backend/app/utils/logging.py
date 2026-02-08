@@ -1,12 +1,35 @@
 """
 Structured logging configuration
 Colored console output with JSON support for production
+Auto-includes request_id from middleware context
 """
 
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
+
+
+class RequestContextFilter(logging.Filter):
+    """
+    Filter that automatically adds request_id to log records
+    from the request context if available.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Try to get request_id from context
+        try:
+            from ..middleware import get_request_id
+
+            request_id = get_request_id()
+            if request_id:
+                record.request_id = request_id
+        except (ImportError, RuntimeError):
+            # Not in request context or middleware not available
+            pass
+
+        # Always allow the record through
+        return True
 
 
 class ColoredFormatter(logging.Formatter):
@@ -28,11 +51,17 @@ class ColoredFormatter(logging.Formatter):
         level_color = self.COLORS.get(record.levelname, "")
         record.levelname = f"{level_color}{record.levelname}{self.RESET}"
 
-        # Add timestamp
-        record.timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        # Add timestamp (UTC, timezone-aware)
+        record.timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
 
         # Format module name
         record.module_name = record.name.split(".")[-1]
+
+        # Add request_id prefix if available
+        if hasattr(record, "request_id"):
+            record.request_prefix = f"[{record.request_id[:8]}] "
+        else:
+            record.request_prefix = ""
 
         return super().format(record)
 
@@ -44,7 +73,7 @@ class JSONFormatter(logging.Formatter):
         import json
 
         log_data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -57,6 +86,10 @@ class JSONFormatter(logging.Formatter):
             log_data["profile"] = record.profile
         if hasattr(record, "model"):
             log_data["model"] = record.model
+        if hasattr(record, "user_id"):
+            log_data["user_id"] = record.user_id
+        if hasattr(record, "endpoint"):
+            log_data["endpoint"] = record.endpoint
 
         # Add exception info if present
         if record.exc_info:
@@ -82,16 +115,20 @@ def setup_logging(
     # Clear existing handlers
     root_logger.handlers.clear()
 
+    # Add request context filter to all handlers
+    context_filter = RequestContextFilter()
+
     # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG)
+    console_handler.addFilter(context_filter)
 
     if json_output:
         console_handler.setFormatter(JSONFormatter())
     else:
         console_handler.setFormatter(
             ColoredFormatter(
-                fmt="%(timestamp)s │ %(levelname)-8s │ %(module_name)-15s │ %(message)s"
+                fmt="%(timestamp)s │ %(levelname)-8s │ %(module_name)-15s │ %(request_prefix)s%(message)s"
             )
         )
 
@@ -101,6 +138,7 @@ def setup_logging(
     if log_file:
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
+        file_handler.addFilter(context_filter)
         file_handler.setFormatter(JSONFormatter())
         root_logger.addHandler(file_handler)
 
@@ -133,7 +171,7 @@ class RequestLogger:
 
     def _log(self, level: int, msg: str, **kwargs) -> None:
         extra = {"request_id": self.request_id, **self.extra, **kwargs}
-        self.logger.log(level, f"[{self.request_id[:8]}] {msg}", extra=extra)
+        self.logger.log(level, msg, extra=extra)
 
     def debug(self, msg: str, **kwargs) -> None:
         self._log(logging.DEBUG, msg, **kwargs)

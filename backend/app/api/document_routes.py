@@ -15,7 +15,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Header, Query, status
-from pydantic import BaseModel, Field, field_validator
+from ..core.auth import require_write_access
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..core.exceptions import (
     ResourceNotFoundError,
@@ -138,8 +139,8 @@ class DocumentResponse(BaseModel):
     created_at: Optional[str] = Field(None, description="Creation timestamp (ISO format)")
     updated_at: Optional[str] = Field(None, description="Last update timestamp (ISO format)")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "doc_123",
                 "content": "This is the document content...",
@@ -154,6 +155,7 @@ class DocumentResponse(BaseModel):
                 "updated_at": "2024-01-15T10:30:00Z",
             }
         }
+    )
 
 
 class DocumentListItem(BaseModel):
@@ -175,8 +177,8 @@ class PaginatedDocumentsResponse(BaseModel):
     limit: int = Field(..., ge=1, le=100, description="Items per page")
     pages: int = Field(..., ge=0, description="Total number of pages")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "items": [
                     {
@@ -192,6 +194,7 @@ class PaginatedDocumentsResponse(BaseModel):
                 "pages": 10,
             }
         }
+    )
 
 
 class ErrorResponse(BaseModel):
@@ -202,8 +205,8 @@ class ErrorResponse(BaseModel):
     status_code: int = Field(..., description="HTTP status code")
     details: Optional[Dict[str, Any]] = Field(None, description="Additional error details")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "error": "Document not found",
                 "type": "resource_not_found",
@@ -211,6 +214,7 @@ class ErrorResponse(BaseModel):
                 "details": {"document_id": "doc_123", "collection": "legal_documents"},
             }
         }
+    )
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -471,6 +475,7 @@ async def get_document(
 async def create_document(
     document: DocumentCreate,
     x_api_version: Optional[str] = Header(None, alias="X-API-Version"),
+    _api_key: str = Depends(require_write_access),
     retrieval_service: RetrievalService = Depends(get_retrieval_service_dependency),
 ) -> DocumentResponse:
     """
@@ -562,6 +567,7 @@ async def update_document(
     document: DocumentUpdate,
     collection: Optional[str] = Query(None, description="Collection name", max_length=200),
     x_api_version: Optional[str] = Header(None, alias="X-API-Version"),
+    _api_key: str = Depends(require_write_access),
     retrieval_service: RetrievalService = Depends(get_retrieval_service_dependency),
 ) -> DocumentResponse:
     """
@@ -685,6 +691,7 @@ async def delete_document(
     document_id: str,
     collection: Optional[str] = Query(None, description="Collection name", max_length=200),
     x_api_version: Optional[str] = Header(None, alias="X-API-Version"),
+    _api_key: str = Depends(require_write_access),
     retrieval_service: RetrievalService = Depends(get_retrieval_service_dependency),
 ):
     """

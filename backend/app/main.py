@@ -11,13 +11,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from .middleware import RequestIDMiddleware
 from fastapi.responses import StreamingResponse
+from slowapi.errors import RateLimitExceeded
 
 from .api.constitutional_routes import harvest_websocket
 from .api.constitutional_routes import router as constitutional_router
 from .api.document_routes import router as document_router
 from .config import settings
 from .core.error_handlers import register_exception_handlers
+from .core.rate_limiter import limiter, rate_limit_exceeded_handler
 from .services.orchestrator_service import get_orchestrator_service
 from .utils.logging import get_logger, setup_logging
 
@@ -80,13 +83,20 @@ app = FastAPI(
 # Register exception handlers
 register_exception_handlers(app)
 
-# CORS middleware
+# Rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# Request ID middleware for distributed tracing
+app.add_middleware(RequestIDMiddleware)
+
+# CORS middleware — restricted methods and headers (was wildcard)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=settings.cors_allow_credentials,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key", "X-Request-ID"],
 )
 
 # Include REST API routes

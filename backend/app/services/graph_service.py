@@ -616,7 +616,7 @@ def should_continue_after_critique(state: GraphState) -> Literal["generate", "fa
     # If failed and we have retries left, loop back
     if critique_failed and loop_count < 3:
         logger.info(
-            f"🔄 Decision: Correction needed. Looping back to generate (loop_count={loop_count} -> {loop_count+1})"
+            f"🔄 Decision: Correction needed. Looping back to generate (loop_count={loop_count} -> {loop_count + 1})"
         )
         return "generate"
 
@@ -630,7 +630,7 @@ def should_continue_after_critique(state: GraphState) -> Literal["generate", "fa
     # Default: if we're not sure and haven't hit max loops, try once more
     if loop_count < 2:
         logger.info(
-            f"🔄 Decision: Unclear critique status, retrying (loop_count={loop_count} -> {loop_count+1})"
+            f"🔄 Decision: Unclear critique status, retrying (loop_count={loop_count} -> {loop_count + 1})"
         )
         return "generate"
 

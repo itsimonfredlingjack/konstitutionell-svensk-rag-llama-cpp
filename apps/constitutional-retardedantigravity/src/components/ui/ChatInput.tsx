@@ -12,9 +12,9 @@ const MODE_CONFIG: {
     label: string;
     backendMode: BackendMode;
 }[] = [
-        { id: "verify", icon: Shield, label: "V", backendMode: "evidence" },
-        { id: "summarize", icon: BookOpen, label: "S", backendMode: "chat" },
-        { id: "compare", icon: GitCompare, label: "C", backendMode: "assist" },
+        { id: "verify", icon: Shield, label: "Verifiera", backendMode: "evidence" },
+        { id: "summarize", icon: BookOpen, label: "Sammanfatta", backendMode: "chat" },
+        { id: "compare", icon: GitCompare, label: "Jämför", backendMode: "assist" },
     ];
 
 export const ChatInput: React.FC = () => {
@@ -101,7 +101,7 @@ export const ChatInput: React.FC = () => {
                                         ? "bg-teal-700 border-teal-700 text-white shadow-sm"
                                         : "bg-stone-100 border-stone-300/60 text-stone-600 hover:bg-stone-200/70 hover:border-stone-400/60"
                                 )}
-                                title={mode.id.charAt(0).toUpperCase() + mode.id.slice(1)}
+                                title={mode.label}
                             >
                                 <Icon className="w-4 h-4" strokeWidth={1.5} />
                             </button>
@@ -147,6 +147,7 @@ export const ChatInput: React.FC = () => {
                     type="button"
                     onClick={handleSubmit}
                     disabled={isSearching}
+                    aria-label="Skicka"
                     className={clsx(
                         "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
                         "transition-all duration-200",

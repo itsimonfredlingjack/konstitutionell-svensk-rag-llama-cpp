@@ -5,17 +5,20 @@ Refactored with Service Layer Architecture
 
 import asyncio
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Header, WebSocket
+from fastapi import APIRouter, Depends, Header, Request, WebSocket
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 # Import services
-from ..services.orchestrator_service import OrchestratorService, RAGResult, get_orchestrator_service
+from ..services.orchestrator_service import OrchestratorService, get_orchestrator_service
+from ..services.rag_models import RAGResult
 from ..services.retrieval_service import RetrievalStrategy, get_retrieval_service
 
 router = APIRouter(prefix="/api/constitutional", tags=["constitutional"])
+
+from ..core.rate_limiter import limiter
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -26,6 +29,21 @@ router = APIRouter(prefix="/api/constitutional", tags=["constitutional"])
 class HealthResponse(BaseModel):
     status: str
     services: Dict[str, str]
+    timestamp: str
+
+
+class ServiceCheck(BaseModel):
+    """Health check result for a single service."""
+
+    status: str  # "ok", "degraded", "error"
+    details: Optional[Dict[str, Any]] = None
+
+
+class ReadinessResponse(BaseModel):
+    """Deep readiness check response with dependency status."""
+
+    status: str  # "ready" or "not_ready"
+    checks: Dict[str, ServiceCheck]
     timestamp: str
 
 
@@ -150,6 +168,22 @@ class AgentQueryResponse(BaseModel):
     routing: Optional[RoutingInfo] = None
 
 
+class MetricsResponse(BaseModel):
+    """RAG pipeline metrics response."""
+
+    total_requests: int
+    total_saknas_underlag: int
+    total_parse_errors: int
+    saknas_underlag_rate: float
+    parse_error_rate: float
+    requests_last_1min: int
+    requests_last_5min: int
+    requests_last_1hour: int
+    mode_breakdown: Dict[str, int]
+    top_saknas_questions: List[str]
+    top_error_questions: List[str]
+
+
 def _looks_like_structured_json(answer: str) -> bool:
     stripped = answer.lstrip()
     return stripped.startswith("{") and '"mode"' in stripped and '"svar"' in stripped
@@ -204,7 +238,119 @@ async def health_check(
     )
 
 
-@router.get("/metrics")
+@router.get("/ready", response_model=ReadinessResponse)
+async def readiness_check(
+    orchestrator: OrchestratorService = Depends(get_orchestrator_service),
+):
+    """
+    Deep readiness check with dependency verification.
+
+    Verifies:
+    - ChromaDB connection and collections
+    - LLM service availability and model status
+    - Embedding service status
+
+    Returns detailed status for each dependency.
+    """
+    checks = {}
+    all_ready = True
+
+    try:
+        # Check ChromaDB via retrieval service
+        if hasattr(orchestrator, "retrieval") and orchestrator.retrieval:
+            try:
+                chromadb_healthy = await orchestrator.retrieval.health_check()
+                if chromadb_healthy and hasattr(orchestrator.retrieval, "_chromadb_client"):
+                    client = orchestrator.retrieval._chromadb_client
+                    if client:
+                        collections = (
+                            client.list_collections() if hasattr(client, "list_collections") else []
+                        )
+                        checks["chromadb"] = ServiceCheck(
+                            status="ok",
+                            details={"collections": len(collections) if collections else 0},
+                        )
+                    else:
+                        checks["chromadb"] = ServiceCheck(
+                            status="error", details={"error": "Client not initialized"}
+                        )
+                        all_ready = False
+                else:
+                    checks["chromadb"] = ServiceCheck(
+                        status="degraded", details={"healthy": chromadb_healthy}
+                    )
+                    all_ready = False
+            except Exception as e:
+                checks["chromadb"] = ServiceCheck(status="error", details={"error": str(e)})
+                all_ready = False
+        else:
+            checks["chromadb"] = ServiceCheck(
+                status="error", details={"error": "Retrieval service not available"}
+            )
+            all_ready = False
+    except Exception as e:
+        checks["chromadb"] = ServiceCheck(status="error", details={"error": str(e)})
+        all_ready = False
+
+    try:
+        # Check LLM service
+        if hasattr(orchestrator, "llm") and orchestrator.llm:
+            try:
+                llm_healthy = await orchestrator.llm.health_check()
+                model_name = getattr(orchestrator.llm, "model_name", "unknown")
+                if llm_healthy:
+                    checks["llm_service"] = ServiceCheck(status="ok", details={"model": model_name})
+                else:
+                    checks["llm_service"] = ServiceCheck(
+                        status="degraded", details={"model": model_name}
+                    )
+                    all_ready = False
+            except Exception as e:
+                checks["llm_service"] = ServiceCheck(status="error", details={"error": str(e)})
+                all_ready = False
+        else:
+            checks["llm_service"] = ServiceCheck(
+                status="error", details={"error": "LLM service not available"}
+            )
+            all_ready = False
+    except Exception as e:
+        checks["llm_service"] = ServiceCheck(status="error", details={"error": str(e)})
+        all_ready = False
+
+    try:
+        # Check embedding service via retrieval
+        if hasattr(orchestrator, "retrieval") and orchestrator.retrieval:
+            if hasattr(orchestrator.retrieval, "_embedding_service"):
+                embedding_svc = orchestrator.retrieval._embedding_service
+                if embedding_svc and hasattr(embedding_svc, "is_initialized"):
+                    if embedding_svc.is_initialized:
+                        checks["embedding_service"] = ServiceCheck(status="ok", details={})
+                    else:
+                        checks["embedding_service"] = ServiceCheck(
+                            status="error", details={"error": "Not initialized"}
+                        )
+                        all_ready = False
+                else:
+                    checks["embedding_service"] = ServiceCheck(status="degraded", details={})
+            else:
+                checks["embedding_service"] = ServiceCheck(status="unknown", details={})
+        else:
+            checks["embedding_service"] = ServiceCheck(
+                status="error", details={"error": "Retrieval service not available"}
+            )
+            all_ready = False
+    except Exception as e:
+        checks["embedding_service"] = ServiceCheck(status="error", details={"error": str(e)})
+        all_ready = False
+
+    return ReadinessResponse(
+        status="ready" if all_ready else "not_ready",
+        checks=checks,
+        timestamp=datetime.now().isoformat(),
+    )
+
+
+@router.get("/metrics", response_model=MetricsResponse)
 async def get_rag_metrics_endpoint():
     """
     Get RAG pipeline metrics for observability.
@@ -218,7 +364,9 @@ async def get_rag_metrics_endpoint():
     from ..utils.metrics import get_rag_metrics
 
     metrics = get_rag_metrics()
-    return metrics.get_full_metrics()
+    full_metrics = metrics.get_full_metrics()
+
+    return MetricsResponse(**full_metrics)
 
 
 @router.get("/metrics/prometheus")
@@ -283,8 +431,10 @@ async def get_collections():
 
 
 @router.post("/agent/query", response_model=AgentQueryResponse)
+@limiter.limit("30/minute")
 async def agent_query(
-    request: AgentQueryRequest,
+    request: Request,
+    body: AgentQueryRequest,
     x_retrieval_strategy: Optional[str] = Header(default=None, alias="X-Retrieval-Strategy"),
     orchestrator: OrchestratorService = Depends(get_orchestrator_service),
 ):
@@ -305,16 +455,16 @@ async def agent_query(
         retrieval_strategy = strategy_map.get(strategy_key, RetrievalStrategy.PARALLEL_V1)
 
         # Convert history for OrchestratorService
-        history = [{"role": msg.role, "content": msg.content} for msg in request.history or []]
+        history = [{"role": msg.role, "content": msg.content} for msg in body.history or []]
 
         # Process query via OrchestratorService
         result: RAGResult = await orchestrator.process_query(
-            question=request.question,
-            mode=request.mode,
+            question=body.question,
+            mode=body.mode,
             k=10,
             retrieval_strategy=retrieval_strategy,
             history=history,
-            use_agent=request.use_agent,  # NEW: Pass agent flag
+            use_agent=body.use_agent,  # NEW: Pass agent flag
         )
 
         mode_value = result.mode.value if hasattr(result.mode, "value") else str(result.mode)
@@ -393,8 +543,10 @@ async def agent_query(
 
 
 @router.post("/agent/query/stream")
+@limiter.limit("20/minute")
 async def agent_query_stream(
-    request: AgentQueryRequest,
+    request: Request,
+    body: AgentQueryRequest,
     x_retrieval_strategy: Optional[str] = Header(default=None, alias="X-Retrieval-Strategy"),
     orchestrator: OrchestratorService = Depends(get_orchestrator_service),
 ):
@@ -426,13 +578,13 @@ async def agent_query_stream(
     retrieval_strategy = strategy_map.get(retrieval_key, RetrievalStrategy.ADAPTIVE)
 
     # Convert history for OrchestratorService
-    history = [{"role": msg.role, "content": msg.content} for msg in request.history or []]
+    history = [{"role": msg.role, "content": msg.content} for msg in body.history or []]
 
     # Stream via OrchestratorService
     async def generate():
         async for event in orchestrator.stream_query(
-            question=request.question,
-            mode=request.mode,
+            question=body.question,
+            mode=body.mode,
             k=10,
             retrieval_strategy=retrieval_strategy,
             history=history,

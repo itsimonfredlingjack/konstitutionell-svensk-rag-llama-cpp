@@ -3,11 +3,11 @@ import {
   Search,
   Map,
   Shield,
-  FileText,
   Zap,
   ChevronRight,
   CornerDownLeft,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { useAppStore } from "../../stores/useAppStore";
 import { useState, useRef, useEffect } from "react";
@@ -30,9 +30,9 @@ const COLOR_CLASSES = {
 
 const PLACEHOLDER_BY_MODE: Record<"verify" | "summarize" | "compare", string> =
 {
-  verify: "Enter query to verify against constitutional framework...",
-  summarize: "Enter text to summarize...",
-  compare: "Enter documents to compare...",
+  verify: "Klistra in ett påstående för att verifiera...",
+  summarize: "Ange text eller dokument att sammanfatta...",
+  compare: "Ange vad du vill jämföra...",
 };
 
 const GLASS_CARDS = [
@@ -42,21 +42,33 @@ const GLASS_CARDS = [
     text: "Klistra in ett påstående, få styrkta källor + osäkerheter.",
     icon: Shield,
     color: "cyan" as const,
+    mode: "verify" as const,
+    example: "Är det grundlagsskyddat att demonstrera utan tillstånd?",
   },
   {
-    id: "trace",
+    id: "summarize",
     title: "Källspårning",
-    text: "Visa var varje mening kommer ifrån (citations + hover preview).",
+    text: "Visa var varje mening kommer ifrån med detaljerade citat.",
     icon: Map,
     color: "emerald" as const,
+    mode: "summarize" as const, // Using summarize for trace intent for now based on backend map
+    example: "Sammanfatta SOU 2023:25 om AI-förordningen.",
   },
   {
-    id: "bias",
-    title: "Risk & bias-check",
-    text: "Flagga tveksamma slutsatser och saknade motkällor.",
+    id: "compare",
+    title: "Risk & Bevis",
+    text: "Jämför dokument och flagga tveksamma slutsatser.",
     icon: Zap,
     color: "orange" as const,
+    mode: "compare" as const,
+    example: "Jämför RF 2 kap. med EKMR artikel 10.",
   },
+];
+
+const EXAMPLE_QUESTIONS = [
+  "Är det tillåtet att bränna koranen enligt svensk lag?",
+  "Vad krävs för att ändra en grundlag?",
+  "Jämför yttrandefriheten i RF med USA:s First Amendment."
 ];
 
 export function HeroSection() {
@@ -85,8 +97,8 @@ export function HeroSection() {
     return value;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     const valueToSubmit = getValueToSubmit();
     if (!valueToSubmit) return;
     if (
@@ -111,6 +123,20 @@ export function HeroSection() {
     textareaRef.current?.blur();
   };
 
+  const handleCardClick = (card: typeof GLASS_CARDS[0]) => {
+    setActiveMode(card.mode);
+    setQuery(card.example);
+    // Optional: focus textarea
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  };
+
+  const handleExampleClick = (q: string) => {
+    setQuery(q);
+    // Auto-submit or just fill? Let's just fill for now to let user confirm.
+    // But user requested "onramp", so maybe just filling is safer.
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  };
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -121,39 +147,48 @@ export function HeroSection() {
 
   return (
     <motion.div
-      className="flex flex-col items-center justify-center w-full max-w-4xl mx-auto mt-[10vh]"
+      className="flex flex-col items-center justify-start w-full max-w-4xl mx-auto pt-[min(10vh,4rem)] px-4 sm:px-6"
       animate={{
         opacity: isSearching ? 0.4 : 1,
         scale: isSearching ? 0.98 : 1,
         filter: isSearching ? "blur(2px)" : "blur(0px)"
       }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: 0.15 }}
     >
       {/* 1. Hero Search */}
       <div className="w-full relative z-20 group">
-        <div className="flex items-center justify-between mb-4 px-2">
-          <h1 className="text-2xl font-light tracking-widest text-stone-900">
-            CONSTITUTIONAL AI{" "}
-            <span className="text-teal-700 font-mono text-xs ml-2">v3.0</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 px-1">
+          {/* Brand with subtle gradient accent */}
+          <h1 className="text-xl sm:text-2xl font-light tracking-widest text-stone-900">
+            <span className="bg-gradient-to-r from-stone-900 via-teal-800 to-stone-900 bg-clip-text text-transparent animate-gradient">KONSTITUTIONELLA SWERAG</span>{" "}
+            <span className="text-teal-700 font-mono text-[10px] sm:text-xs ml-1 sm:ml-2">v3.0</span>
           </h1>
 
-          {/* Mode Selector */}
-          <div className="flex items-center gap-1 bg-white/40 rounded-lg p-1 border border-stone-300 shadow-sm backdrop-blur-sm">
-            {(["verify", "summarize", "compare"] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setActiveMode(mode)}
-                className={`px-3 py-1 text-xs font-mono rounded-md transition-all ${activeMode === mode
-                  ? "bg-stone-100 shadow-sm text-teal-800 border border-stone-200 font-medium"
-                  : "text-stone-500 hover:text-stone-900"
-                  }`}
-              >
-                {mode.charAt(0).toUpperCase() + mode.slice(1)}
-              </button>
-            ))}
+          {/* Mode Selector - Touch-friendly */}
+          <div className="flex items-center gap-1 bg-white/40 rounded-lg p-1 border border-stone-300 shadow-sm backdrop-blur-sm self-start sm:self-auto">
+            {(["verify", "summarize", "compare"] as const).map((mode) => {
+              const labels: Record<typeof mode, string> = {
+                verify: "Verifiera",
+                summarize: "Sammanfatta",
+                compare: "Jämför",
+              };
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setActiveMode(mode)}
+                  className={`min-h-[44px] px-3 py-2 text-xs font-mono rounded-md transition-all focus-ring ${activeMode === mode
+                    ? "bg-stone-100 shadow-sm text-teal-800 border border-stone-200 font-medium"
+                    : "text-text-muted hover:text-stone-900"
+                    }`}
+                >
+                  {labels[mode]}
+                </button>
+              );
+            })}
           </div>
         </div>
 
+        {/* Input Area */}
         <form onSubmit={handleSubmit} className="relative">
           <div className="absolute inset-0 bg-teal-500/10 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -171,11 +206,11 @@ export function HeroSection() {
               aria-label="Search query"
               placeholder={PLACEHOLDER_BY_MODE[activeMode]}
               rows={1}
-              className="flex-1 bg-transparent border-none text-lg text-stone-900 font-medium placeholder-stone-400 p-4 focus:ring-0 focus:outline-none tracking-wide resize-none overflow-hidden"
-              style={{ minHeight: "60px" }}
+              className="flex-1 bg-transparent border-none text-base sm:text-lg text-stone-900 font-medium placeholder-text-muted p-4 focus:ring-0 focus:outline-none tracking-wide resize-none overflow-hidden"
+              style={{ minHeight: "56px" }}
             />
-            <div className="mr-4 flex items-center gap-3 self-start mt-3">
-              <span className="text-[10px] font-mono text-stone-500 bg-stone-100 px-2 py-1 rounded border border-stone-200 hidden md:block">
+            <div className="mr-2 sm:mr-4 flex items-center gap-2 sm:gap-3 self-start mt-2 sm:mt-3">
+              <span className="text-[10px] font-mono text-text-muted bg-stone-100 px-2 py-1 rounded border border-stone-200 hidden md:block">
                 Enter{" "}
                 <CornerDownLeft
                   className="w-3 h-3 inline ml-1 text-stone-700 opacity-50"
@@ -186,7 +221,8 @@ export function HeroSection() {
                 type="submit"
                 disabled={isSearching}
                 onMouseDown={handleSubmitButtonMouseDown}
-                className="p-2 bg-teal-50 rounded-xl text-stone-700 hover:bg-teal-100 transition-all hover:scale-105 active:scale-95 border border-teal-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Skicka fråga"
+                className="min-w-[44px] min-h-[44px] p-2.5 bg-teal-50 rounded-xl text-stone-700 hover:bg-teal-100 transition-colors active:scale-95 border border-teal-100 disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
               >
                 {isSearching ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -197,57 +233,66 @@ export function HeroSection() {
             </div>
           </div>
         </form>
+
+        {/* Example Questions (Replaces Pulse) */}
+        {!query && (
+          <>
+            <h2 className="sr-only">Exempelfrågor</h2>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {EXAMPLE_QUESTIONS.map((q, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleExampleClick(q)}
+                  className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-full bg-stone-100/50 hover:bg-white border border-stone-200 hover:border-teal-300 text-xs text-text-muted hover:text-teal-800 transition-colors cursor-pointer focus-ring"
+                >
+                  <Sparkles className="w-3 h-3 opacity-60" />
+                  <span className="hidden sm:inline">{q}</span>
+                  <span className="sm:hidden">{q.length > 35 ? q.slice(0, 35) + "…" : q}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* 2. Quick Actions */}
-      <div className="flex gap-4 my-8">
-        {[
-          { label: "Verifiera påstående", icon: Shield },
-          { label: "Sammanfatta källa", icon: FileText },
-          { label: "Jämför dokument", icon: Map },
-        ].map((action, i) => (
-          <button
-            key={i}
-            className="flex items-center gap-2 text-xs font-mono text-stone-600 hover:text-teal-800 transition-colors px-4 py-2 rounded-lg hover:bg-white/60 border border-transparent hover:border-stone-300"
-          >
-            <action.icon className="w-3 h-3 text-stone-700" strokeWidth={1.5} />
-            {action.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 3. Glass Card Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-4">
+      {/* 2. Quick Actions / Interactive Cards */}
+      <h2 className="sr-only">Kom igång</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full mt-8 sm:mt-12">
         {GLASS_CARDS.map((card, i) => (
           <motion.button
             key={card.id}
             type="button"
-            initial={{ opacity: 0, y: 20 }}
+            onClick={() => handleCardClick(card)}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 + i * 0.1 }}
+            transition={{ delay: 0.05 + i * 0.05, duration: 0.2 }}
             className="group relative bg-white/70 hover:bg-white border border-stone-200 hover:border-teal-500/30 p-6 rounded-2xl backdrop-blur-md transition-all cursor-pointer hover:-translate-y-1 shadow-sm hover:shadow-lg text-left w-full"
           >
             {/* Top Shine */}
             <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-stone-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-            <div
-              className={`w-10 h-10 rounded-xl ${COLOR_CLASSES[card.color].bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 border border-white/50`}
-            >
-              <card.icon className="w-5 h-5 text-stone-700" strokeWidth={1.5} />
+            <div className="flex items-start justify-between mb-4">
+              <div
+                className={`w-10 h-10 rounded-xl ${COLOR_CLASSES[card.color].bg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/50`}
+              >
+                <card.icon className="w-5 h-5 text-stone-700" strokeWidth={1.5} />
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
+                <ChevronRight
+                  className="w-4 h-4 text-stone-400"
+                  strokeWidth={1.5}
+                />
+              </div>
             </div>
 
             <h3 className="text-stone-900 font-medium mb-2 group-hover:text-teal-800 transition-colors">
               {card.title}
             </h3>
-            <p className="text-sm text-stone-600 leading-relaxed font-light">
+            <p className="text-sm text-text-muted leading-relaxed font-light mb-3">
               {card.text}
             </p>
-
-            <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-              <ChevronRight
-                className="w-4 h-4 text-stone-700"
-                strokeWidth={1.5}
-              />
+            <div className="text-[10px] font-mono text-text-muted bg-stone-50 inline-block px-2 py-1 rounded border border-stone-100">
+              Ex: {card.example.slice(0, 30)}…
             </div>
           </motion.button>
         ))}

@@ -1,0 +1,20 @@
+[Unit]
+Description=Constitutional AI Frontend
+After=network.target constitutional-ai-backend.service
+Wants=constitutional-ai-backend.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/apps/constitutional-retardedantigravity
+Environment="PATH=/home/ai-server/.nvm/versions/node/v22.21.1/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/ai-server/.nvm/versions/node/v22.21.1/bin/npm run dev -- --host 0.0.0.0 --port 3003
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+TimeoutStopSec=15
+KillMode=mixed
+
+[Install]
+WantedBy=default.target

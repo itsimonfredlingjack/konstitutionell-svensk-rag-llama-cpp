@@ -1,0 +1,29 @@
+[Unit]
+Description=Constitutional AI LLM (llama-server with Mistral-Nemo)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI
+ExecStart=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/llama.cpp/build/bin/llama-server \
+    -m models/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf \
+    --model-draft models/Qwen2.5-0.5B-Instruct-Q8_0.gguf \
+    -c 16384 \
+    -ngl 60 \
+    -ctk q8_0 -ctv q8_0 \
+    --port 8080 \
+    --host 0.0.0.0 \
+    --ctx-size 16384 \
+    --parallel 2 \
+    -fa on
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Give model time to unload on stop
+TimeoutStopSec=30
+KillMode=mixed
+
+[Install]
+WantedBy=default.target
