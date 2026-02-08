@@ -7,18 +7,17 @@ This document describes the code style and contribution guidelines for the Const
 ```
 09_CONSTITUTIONAL-AI/
 ├── apps/                    # TypeScript/React applications
-│   ├── constitutional-gpt/      # Main agentic RAG interface (Next.js 16)
-│   └── constitutional-gpt-database/ # Database interface
+│   └── constitutional-retardedantigravity/  # Main RAG interface (Vite + React + Three.js)
+├── backend/                 # FastAPI backend (port 8900)
 ├── scrapers/                # Python web scrapers (~100 files)
-├── juridik-ai/              # Python legal AI pipelines
 ├── scripts/                 # Python utility scripts
-├── indexers/                # ChromaDB/Qdrant indexing
+├── indexers/                # ChromaDB indexing
 └── data/                    # Document storage
 ```
 
 ## Language Guidelines
 
-### Python (scrapers/, juridik-ai/, scripts/, indexers/)
+### Python (backend/, scrapers/, scripts/, indexers/)
 
 #### Type Hints (Required)
 
@@ -231,8 +230,8 @@ ruff format .
 Each app has its own ESLint configuration:
 
 ```bash
-# In constitutional-gpt
-cd apps/constitutional-gpt && npm run lint
+# In constitutional-retardedantigravity
+cd apps/constitutional-retardedantigravity && npm run lint
 ```
 
 ## Commit Guidelines
@@ -261,7 +260,7 @@ Examples:
 feat(scrapers): add Bolagsverket scraper
 fix(indexers): handle empty PDF content
 docs(readme): update installation instructions
-refactor(juridik-ai): extract common parsing logic
+refactor(backend): extract common parsing logic
 ```
 
 ## Testing
@@ -269,14 +268,14 @@ refactor(juridik-ai): extract common parsing logic
 ### Python Tests
 
 ```bash
-cd juridik-ai
+cd backend
 python -m pytest tests/ -v
 ```
 
 ### TypeScript Tests
 
 ```bash
-cd apps/constitutional-gpt
+cd apps/constitutional-retardedantigravity
 npm test
 ```
 

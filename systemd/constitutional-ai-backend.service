@@ -7,8 +7,6 @@ Wants=constitutional-ai-llm.service
 Type=simple
 WorkingDirectory=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/backend
 Environment="PATH=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/backend/venv/bin:/usr/local/bin:/usr/bin:/bin"
-Environment="LLM_API_BASE=http://localhost:8080/v1"
-Environment="LLM_MODEL=Mistral-Nemo-Instruct-2407-Q5_K_M.gguf"
 Environment="RAG_SIMILARITY_THRESHOLD=0.01"
 ExecStart=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/backend/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8900
 Restart=always

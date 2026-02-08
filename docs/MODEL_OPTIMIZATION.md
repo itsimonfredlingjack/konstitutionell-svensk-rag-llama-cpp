@@ -2,7 +2,7 @@
 
 > Dokumentation av modellparametrar, system prompts och best practices för prompt engineering
 
-**Senast uppdaterad:** 2025-12-15
+**Senast uppdaterad:** 2026-02-08
 
 ---
 
@@ -13,13 +13,15 @@ Constitutional AI använder llama-server (llama.cpp) med lokala modeller för at
 ### Modeller
 
 - **Primär modell:** Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server (port 8080)
-- **Fallback modell:** gpt-sw3 (optional fallback)
+- **Fallback modell:** Samma som primär (ingen separat fallback-modell nedladdad)
+- **Grader-modell:** Qwen2.5-0.5B-Instruct-Q5_K_M.gguf (CRAG document grading)
+- **Draft-modell:** Qwen2.5-0.5B-Q8_0.gguf (speculative decoding)
 - **Embedding modell:** BAAI/bge-m3 (1024 dimensions)
 - **Reranker:** BAAI/bge-reranker-v2-m3
 - **Vector DB:** ChromaDB
-- **CRAG:** Enabled (self-reflection + grading active)
+- **CRAG:** Enabled (grading active, self-reflection disabled)
 - **Collections:** All suffixed with `_bge_m3_1024`
-- **Timeout:** 60 sekunder (fallback vid timeout)
+- **Timeout:** 120 sekunder (llama-server timeout)
 
 ---
 
@@ -30,7 +32,7 @@ Constitutional AI använder llama-server (llama.cpp) med lokala modeller för at
 #### EVIDENCE Mode (Juridisk expert, formell)
 ```python
 {
-    "temperature": 0.2,      # Mycket låg - fokuserat och exakt
+    "temperature": 0.15,     # Mycket låg - fokuserat och exakt
     "top_p": 0.9,            # Fokuserad sampling
     "repeat_penalty": 1.1,   # Undviker repetitioner
     "num_predict": 1024      # Längre svar för detaljerade citationer
@@ -285,14 +287,12 @@ curl -X POST http://localhost:8900/api/constitutional/agent/query \
 - Lade till top_p och repeat_penalty parametrar
 - Ökade num_predict för ASSIST/EVIDENCE modes
 - Förbättrade källformatering med doc_type och score
-- Justerade temperature per mode (EVIDENCE: 0.2, ASSIST: 0.4, CHAT: 0.7)
+- Justerade temperature per mode (EVIDENCE: 0.15, ASSIST: 0.4, CHAT: 0.7)
 
 ---
 
 ## Referenser
 
 - llama.cpp server API: https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md
-- Ollama (fallback/optional): https://github.com/ollama/ollama/blob/main/docs/api.md
 - Mistral AI: https://mistral.ai/
-- AI Sweden GPT-SW3: https://huggingface.co/fcole90/ai-sweden-gpt-sw3-6.7b
 - ChromaDB: https://www.trychroma.com/

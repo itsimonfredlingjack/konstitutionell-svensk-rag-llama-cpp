@@ -56,6 +56,7 @@ class ConfigSettings(BaseSettings):
 
     # LLM Configuration (Constitutional AI)
     constitutional_model: str = "Mistral-Nemo-Instruct-2407-Q5_K_M.gguf"
+    # Intentionally same as primary — no separate fallback model downloaded
     constitutional_fallback: str = "Mistral-Nemo-Instruct-2407-Q5_K_M.gguf"
     llm_timeout: float = 60.0
 
