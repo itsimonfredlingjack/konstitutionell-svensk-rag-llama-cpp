@@ -242,7 +242,13 @@ class ConfidenceCalculator:
             score = doc.get("score") or doc.get("rrf_score") or 0.0
             # ChromaDB uses _distance (lower is better), convert to similarity
             if "_distance" in doc:
-                score = 1.0 / (1.0 + doc["_distance"])
+                space = doc.get("_space", "l2")
+                if space == "cosine":
+                    score = 1.0 - doc["_distance"]
+                elif space == "ip":
+                    score = doc["_distance"]
+                else:
+                    score = 1.0 / (1.0 + doc["_distance"])
             scores.append(float(score))
 
         if not scores:

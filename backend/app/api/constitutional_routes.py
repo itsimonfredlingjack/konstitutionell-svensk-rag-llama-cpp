@@ -4,6 +4,7 @@ Refactored with Service Layer Architecture
 """
 
 import asyncio
+import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -17,6 +18,7 @@ from ..services.rag_models import RAGResult
 from ..services.retrieval_service import RetrievalStrategy, get_retrieval_service
 
 router = APIRouter(prefix="/api/constitutional", tags=["constitutional"])
+logger = logging.getLogger(__name__)
 
 from ..core.rate_limiter import limiter
 
@@ -401,32 +403,43 @@ async def get_stats_overview():
 
 
 @router.get("/collections", response_model=List[CollectionInfo])
-async def get_collections():
+async def get_collections(
+    orchestrator: OrchestratorService = Depends(get_orchestrator_service),
+):
     """
     Get list of ChromaDB collections with metadata.
     Returns CollectionInfo list for frontend.
     """
     try:
-        # Get retrieval service directly
-        retrieval = get_retrieval_service()
-        client = retrieval._chromadb_client
+        # Access the initialized retrieval service via orchestrator
+        if not hasattr(orchestrator, "retrieval") or not orchestrator.retrieval:
+            return []
+        client = orchestrator.retrieval._chromadb_client
         if not client:
             return []
 
         collections = client.list_collections()
         result = []
         for coll in collections:
-            result.append(
-                CollectionInfo(
-                    name=coll.name,
-                    document_count=coll.count(),
-                    metadata_fields=list(coll.metadata.get("metadata_fields", []))
-                    if coll.metadata
-                    else [],
+            # Skip leftover test collections
+            if coll.name.startswith("test_"):
+                continue
+            try:
+                result.append(
+                    CollectionInfo(
+                        name=coll.name,
+                        document_count=coll.count(),
+                        metadata_fields=list(coll.metadata.get("metadata_fields", []))
+                        if coll.metadata
+                        else [],
+                    )
                 )
-            )
+            except Exception:
+                # Skip collections that fail to count (e.g. corrupted)
+                continue
         return result
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to list collections: {e}")
         return []
 
 

@@ -20,7 +20,7 @@ from .embedding_service import get_embedding_service
 logger = get_logger(__name__)
 
 # RAG Similarity Threshold - Direct env var (no config dependency)
-SCORE_THRESHOLD = float(os.getenv("RAG_SIMILARITY_THRESHOLD", "0.5"))
+SCORE_THRESHOLD = float(os.getenv("RAG_SIMILARITY_THRESHOLD", "0.35"))
 
 # ═════════════════════════════════════════════════════════════════════════
 # RETRIEVAL ORCHESTRATOR IMPORT (Module level for visibility in methods)
@@ -653,13 +653,25 @@ class RetrievalService(BaseService):
                         documents_list = query_results.get("documents", [{}])[0]
                         distances_list = query_results.get("distances", [{}])[0]
 
+                        # Detect distance metric from collection metadata
+                        space = (
+                            collection.metadata.get("hnsw:space", "l2")
+                            if collection.metadata
+                            else "l2"
+                        )
+
                         for i in range(len(ids_list)):
                             doc_id = ids_list[i]
                             metadata = metadatas_list[i] if i < len(metadatas_list) else {}
                             document = documents_list[i] if i < len(documents_list) else ""
                             distance = distances_list[i] if i < len(distances_list) else 1.0
 
-                            score = 1.0 / (1.0 + distance)
+                            if space == "cosine":
+                                score = 1.0 - distance  # cosine distance -> similarity
+                            elif space == "ip":
+                                score = distance  # inner product already similarity-like
+                            else:  # l2
+                                score = 1.0 / (1.0 + distance)
                             snippet = document[:1500] + "..." if len(document) > 1500 else document
 
                             results.append(

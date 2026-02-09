@@ -252,6 +252,9 @@ async def search_single_collection(
 
         # Parse results
         if query_results and query_results.get("ids") and len(query_results["ids"]) > 0:
+            # Detect distance metric from collection metadata
+            space = collection.metadata.get("hnsw:space", "l2") if collection.metadata else "l2"
+
             for i in range(len(query_results["ids"][0])):
                 doc_id = query_results["ids"][0][i]
                 metadata = (
@@ -265,7 +268,12 @@ async def search_single_collection(
                 )
 
                 # Convert distance to score (0-1, higher is better)
-                score = 1.0 / (1.0 + distance)
+                if space == "cosine":
+                    score = 1.0 - distance  # cosine distance -> similarity
+                elif space == "ip":
+                    score = distance  # inner product already similarity-like
+                else:  # l2
+                    score = 1.0 / (1.0 + distance)
 
                 # Use page_content from metadata if available (for contextual retrieval),
                 # otherwise fallback to document field
@@ -282,6 +290,7 @@ async def search_single_collection(
                         "doc_type": metadata.get("doc_type"),
                         "date": metadata.get("date"),
                         "collection": collection.name,
+                        "_space": space,
                     }
                 )
 
