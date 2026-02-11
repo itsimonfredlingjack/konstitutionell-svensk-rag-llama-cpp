@@ -94,6 +94,16 @@ class IntentClassifier:
         r"\bforskningsläge(t)?\b",
         r"\bmeta-?analys\b",
         r"\bvetenskaplig(a|t)?\s+(stöd|belägg)\b",
+        r"\bakademisk(a)?\s+(forskning|studie|rapport)\b",
+        r"\bavhandling(ar|en)?\b",
+        r"\buppsats(er|en)?\b",
+        r"\bdoktorsavhandling(ar)?\b",
+        r"\bempirisk(a)?\s+(studie|undersökning|data)\b",
+        r"\bundersökning(ar|en)?\s+(visar|om)\b",
+        r"\blitteraturöversikt(en)?\b",
+        r"\bsystematisk\s+översikt\b",
+        r"\bforskningsresultat(en|et)?\b",
+        r"\bvad\s+visar\s+forskning(en)?\b",
     ]
 
     # Procedural patterns (PRACTICAL_PROCESS, was PRAXIS)
@@ -163,7 +173,8 @@ class IntentClassifier:
             "swedish_gov_docs_bge_m3_1024",
         ],
         QueryIntent.RESEARCH_SYNTHESIS: [
-            "swedish_gov_docs_bge_m3_1024",  # Primary: SOU, research reports
+            "diva_research_bge_m3_1024",  # Primary: akademisk forskning
+            "swedish_gov_docs_bge_m3_1024",
             "riksdag_documents_p1_bge_m3_1024",
         ],
         QueryIntent.PRACTICAL_PROCESS: [

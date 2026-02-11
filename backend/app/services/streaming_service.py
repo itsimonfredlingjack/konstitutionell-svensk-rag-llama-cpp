@@ -5,6 +5,7 @@ Extracted from orchestrator_service.py (Sprint 2, Task #19).
 Handles the streaming version of the RAG pipeline with Server-Sent Events.
 """
 
+import asyncio
 import json
 import time
 from typing import Any, AsyncGenerator, List, Optional
@@ -61,7 +62,13 @@ async def stream_query(
         classification = query_processor.classify_query(question)
         response_mode = resolve_mode_fn(mode, classification.mode)
 
+        # Prefetch examples while retrieval runs (only depends on question + mode)
+        examples_task = asyncio.ensure_future(
+            retrieve_examples_fn(query=question, mode=response_mode.value, k=2)
+        )
+
         if response_mode == ResponseMode.CHAT:
+            examples_task.cancel()
             yield f"data: {_json({'type': 'metadata', 'mode': 'chat'})}\n\n"
             async for token, _ in llm_service.chat_stream(
                 messages=[
@@ -134,6 +141,7 @@ async def stream_query(
             yield f"data: {_json({'type': 'thought_chain', 'content': thought_chain})}\n\n"
 
             if not reflection.has_sufficient_evidence and response_mode == ResponseMode.EVIDENCE:
+                examples_task.cancel()
                 refusal_text = getattr(
                     config.settings,
                     "evidence_refusal_template",
@@ -144,7 +152,7 @@ async def stream_query(
                     if reflection.missing_evidence
                     else "Underlag saknas"
                 )
-                yield f"data: {_json({'type': 'metadata', 'mode': response_mode.value, 'sources': [], 'search_time_ms': retrieval_ms, 'refusal': True, 'refusal_reason': refusal_reason})}\n\n"
+                yield f"data: {_json({'type': 'metadata', 'mode': response_mode.value, 'sources': [], 'search_time_ms': retrieval_ms, 'refusal': True, 'refusal_reason': refusal_reason, 'evidence_level': 'NONE'})}\n\n"
                 yield f"data: {_json({'type': 'refusal', 'message': refusal_text, 'reason': refusal_reason})}\n\n"
                 yield f"data: {_json({'type': 'token', 'content': refusal_text})}\n\n"
                 yield f"data: {_json({'type': 'done'})}\n\n"
@@ -152,12 +160,13 @@ async def stream_query(
 
         # EVIDENCE mode with no sources: force refusal
         if response_mode == ResponseMode.EVIDENCE and not sources:
+            examples_task.cancel()
             refusal_text = getattr(
                 config.settings,
                 "evidence_refusal_template",
                 "Tyvärr kan jag inte besvara frågan utifrån de dokument som har hämtats...",
             )
-            yield f"data: {_json({'type': 'metadata', 'mode': response_mode.value, 'sources': [], 'search_time_ms': retrieval_ms, 'refusal': True})}\n\n"
+            yield f"data: {_json({'type': 'metadata', 'mode': response_mode.value, 'sources': [], 'search_time_ms': retrieval_ms, 'refusal': True, 'evidence_level': 'NONE'})}\n\n"
             yield f"data: {_json({'type': 'token', 'content': refusal_text})}\n\n"
             yield f"data: {_json({'type': 'done'})}\n\n"
             return
@@ -200,6 +209,12 @@ async def stream_query(
                         )
             sources = filtered
 
+        # Compute evidence level from final (reranked) sources
+        evidence_level = query_processor.determine_evidence_level(
+            sources=[{"score": s.score, "doc_type": s.doc_type} for s in sources],
+            answer="",
+        )
+
         # Emit metadata with sources
         sources_metadata = [
             {
@@ -211,11 +226,11 @@ async def stream_query(
             }
             for s in sources
         ]
-        yield f"data: {_json({'type': 'metadata', 'mode': response_mode.value, 'sources': sources_metadata, 'search_time_ms': retrieval_ms})}\n\n"
+        yield f"data: {_json({'type': 'metadata', 'mode': response_mode.value, 'sources': sources_metadata, 'search_time_ms': retrieval_ms, 'evidence_level': evidence_level.value.upper()})}\n\n"
 
         # Step 4: Build context and stream LLM response
         context_text = build_llm_context_fn(sources)
-        examples = await retrieve_examples_fn(query=question, mode=response_mode.value, k=2)
+        examples = await examples_task
         examples_text = format_examples_fn(examples)
 
         system_prompt = build_system_prompt_fn(

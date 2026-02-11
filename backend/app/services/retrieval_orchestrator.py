@@ -684,64 +684,74 @@ class RetrievalOrchestrator:
         metrics.num_queries = len(expanded.queries)
         metrics.query_variants = expanded.queries
 
-        # Step 3: Batch embed all queries
-        embed_start = time.perf_counter()
-        query_embeddings = self.embed_fn(expanded.queries)
-        embed_latency = (time.perf_counter() - embed_start) * 1000
-
-        logger.info(f"Batch embedding: {len(expanded.queries)} queries in {embed_latency:.1f}ms")
-
-        # Step 4: Search each embedding in parallel (with semaphore)
+        # Step 3+4: Embed+dense search and BM25 search in parallel
         collection_names = collections or self._default_collections
 
-        async def search_single_embedding(embedding: List[float]) -> List[Dict]:
-            """Search with semaphore to prevent self-DDoS."""
-            async with self._query_semaphore:
-                results, _ = await parallel_collection_search(
-                    client=self.client,
-                    query_embedding=embedding,
-                    collection_names=collection_names,
-                    n_results_per_collection=k,
-                    where_filter=where_filter,
-                    timeout_seconds=self.default_timeout,
-                )
-                return results
+        async def _embed_and_dense_search():
+            """Embed queries and run dense search."""
+            embed_start = time.perf_counter()
+            query_embeddings = self.embed_fn(expanded.queries)
+            embed_latency = (time.perf_counter() - embed_start) * 1000
+            logger.info(
+                f"Batch embedding: {len(expanded.queries)} queries in {embed_latency:.1f}ms"
+            )
 
-        # Execute all dense searches in parallel
-        tasks = [search_single_embedding(emb) for emb in query_embeddings]
-        result_sets = await asyncio.gather(*tasks, return_exceptions=True)
+            async def search_single_embedding(embedding):
+                async with self._query_semaphore:
+                    results, _ = await parallel_collection_search(
+                        client=self.client,
+                        query_embedding=embedding,
+                        collection_names=collection_names,
+                        n_results_per_collection=k,
+                        where_filter=where_filter,
+                        timeout_seconds=self.default_timeout,
+                    )
+                    return results
 
-        # Filter out exceptions
-        valid_result_sets = []
-        for i, result in enumerate(result_sets):
-            if isinstance(result, Exception):
-                logger.error(f"Query {i} failed: {result}")
-                valid_result_sets.append([])  # Empty result set
-            else:
-                valid_result_sets.append(result)
+            tasks = [search_single_embedding(emb) for emb in query_embeddings]
+            result_sets = await asyncio.gather(*tasks, return_exceptions=True)
 
-        metrics.per_query_result_counts = [len(rs) for rs in valid_result_sets]
+            valid_result_sets = []
+            for i, result in enumerate(result_sets):
+                if isinstance(result, Exception):
+                    logger.error(f"Query {i} failed: {result}")
+                    valid_result_sets.append([])
+                else:
+                    valid_result_sets.append(result)
 
-        # Step 4b: BM25 search (parallel with dense, uses lexical_query if available)
-        bm25_results = []
-        if self._bm25_service and self._bm25_service.is_available():
+            metrics.per_query_result_counts = [len(rs) for rs in valid_result_sets]
+            return valid_result_sets
+
+        async def _bm25_search_async():
+            """Run BM25 search (doesn't need embeddings)."""
+            if not (self._bm25_service and self._bm25_service.is_available()):
+                return []
             try:
                 bm25_start = time.perf_counter()
-                # Use lexical_query from rewrite if available, otherwise original query
                 bm25_query = search_query
                 if rewrite_result and hasattr(rewrite_result, "lexical_query"):
                     bm25_query = rewrite_result.lexical_query or search_query
-
-                bm25_results = self._bm25_service.search(bm25_query, k=k * 2)
+                loop = asyncio.get_event_loop()
+                results = await loop.run_in_executor(
+                    None, lambda: self._bm25_service.search(bm25_query, k=k * 2)
+                )
                 metrics.bm25_latency_ms = (time.perf_counter() - bm25_start) * 1000
-                metrics.bm25_result_count = len(bm25_results)
+                metrics.bm25_result_count = len(results)
                 logger.info(
-                    f"BM25 search: '{bm25_query[:30]}...' → {len(bm25_results)} results "
+                    f"BM25 search: '{bm25_query[:30]}...' → {len(results)} results "
                     f"in {metrics.bm25_latency_ms:.1f}ms"
                 )
+                return results
             except Exception as e:
                 logger.warning(f"BM25 search failed (continuing with dense only): {e}")
                 metrics.bm25_timeout = True
+                return []
+
+        # Run embed+dense and BM25 in parallel
+        valid_result_sets, bm25_results = await asyncio.gather(
+            _embed_and_dense_search(),
+            _bm25_search_async(),
+        )
 
         # Step 5: Merge with Hybrid RRF (dense + BM25)
         rrf_start = time.perf_counter()

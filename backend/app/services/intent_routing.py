@@ -47,14 +47,14 @@ INTENT_ROUTING = {
     QueryIntent.PARLIAMENT_TRACE: IntentRoutingConfig(
         primary=["riksdag_documents_p1_bge_m3_1024", "swedish_gov_docs_bge_m3_1024"],
         support=["sfs_lagtext_bge_m3_1024"],
-        secondary=[],
-        secondary_budget=0,
+        secondary=["diva_research_bge_m3_1024"],
+        secondary_budget=2,
     ),
     QueryIntent.POLICY_ARGUMENTS: IntentRoutingConfig(
         primary=["riksdag_documents_p1_bge_m3_1024", "swedish_gov_docs_bge_m3_1024"],
         support=["sfs_lagtext_bge_m3_1024"],
-        secondary=[],
-        secondary_budget=0,
+        secondary=["diva_research_bge_m3_1024"],
+        secondary_budget=2,
         require_separation=True,
     ),
     QueryIntent.RESEARCH_SYNTHESIS: IntentRoutingConfig(
@@ -76,8 +76,8 @@ INTENT_ROUTING = {
             "swedish_gov_docs_bge_m3_1024",
         ],
         support=[],
-        secondary=[],
-        secondary_budget=0,
+        secondary=["diva_research_bge_m3_1024"],
+        secondary_budget=2,
     ),
     # EDGE cases - same routing as LEGAL_TEXT
     QueryIntent.EDGE_ABBREVIATION: IntentRoutingConfig(

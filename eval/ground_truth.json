@@ -1,7 +1,7 @@
 {
   "version": "1.0-retrieval",
   "created": "2026-02-03",
-  "description": "Ground truth for retrieval quality evaluation. 20 questions with known source documents for recall@K measurement.",
+  "description": "Ground truth for retrieval quality evaluation. 55 questions with known source documents for recall@K measurement. Covers: faktafrågor, jämförelsefrågor, temporala frågor, DiVA forskning, korskollektion, and kommun.",
   "questions": [
     {
       "id": "F01",
@@ -187,6 +187,332 @@
       "description": "Brottsbalken sexualbrottskapitlet ändringar",
       "ground_truth_docs": [
         {"doc_type": "sfs", "identifier": "1962:700", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D01",
+      "query": "Vad visar forskningen om integration av nyanlända i Sverige?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om nyanländas integration",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "integration_nyanlanda", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D02",
+      "query": "Vilken forskning finns om klimatförändringarnas påverkan på svensk infrastruktur?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om klimatförändring och infrastruktur",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "klimat_infrastruktur", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D03",
+      "query": "Vad säger forskningen om psykisk hälsa bland ungdomar i Sverige?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om ungdomars psykiska hälsa",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "psykisk_halsa_ungdomar", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D04",
+      "query": "Hur har digitaliseringen påverkat den svenska arbetsmarknaden enligt forskningen?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om digitalisering och arbetsmarknad",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "digitalisering_arbetsmarknad", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D05",
+      "query": "Vilka forskningsresultat finns om skolsegregationens konsekvenser i Sverige?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om skolsegregation",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "skolsegregation", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D06",
+      "query": "Vad visar forskningen om antibiotikaresistens i svenska sjukvården?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om antibiotikaresistens",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "antibiotikaresistens", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D07",
+      "query": "Vilken forskning finns om jämställdhet i svenska bolagsstyrelser?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om jämställdhet i bolagsstyrelser",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "jamstalldhet_bolagsstyrelser", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D08",
+      "query": "Vad säger forskningen om vindkraftens miljöpåverkan i Sverige?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om vindkraft och miljöpåverkan",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "vindkraft_miljopaverkan", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D09",
+      "query": "Vilka forskningsresultat finns om äldreomsorgens kvalitet efter privatisering?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om privatisering av äldreomsorg",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "aldreomsorg_privatisering", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D10",
+      "query": "Hur påverkar bostadsbristen ungas livschanser enligt svensk forskning?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om bostadsbrist och unga",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "bostadsbrist_unga", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D11",
+      "query": "Vad visar forskningen om AI och automatisering i svensk industri?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om AI och automatisering i industri",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "ai_automatisering_industri", "partial_match": true}
+      ]
+    },
+    {
+      "id": "D12",
+      "query": "Vilken forskning finns om barnfattigdom i Sverige?",
+      "category": "DIVA_FORSKNING",
+      "description": "DiVA forskning om barnfattigdom",
+      "ground_truth_docs": [
+        {"doc_type": "diva_research", "identifier": "barnfattigdom", "partial_match": true}
+      ]
+    },
+    {
+      "id": "X01",
+      "query": "Hur förhåller sig miljöbalken till forskningen om klimatanpassning?",
+      "category": "KORSKOLLEKTION",
+      "description": "Cross-collection test — miljöbalken + klimatforskning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1998:808", "partial_match": true},
+        {"doc_type": "diva_research", "identifier": "klimatanpassning", "partial_match": true}
+      ]
+    },
+    {
+      "id": "X02",
+      "query": "Vad säger forskningen om effekterna av skollagen på likvärdighet?",
+      "category": "KORSKOLLEKTION",
+      "description": "Cross-collection test — skollagen + likvärdighet forskning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2010:800", "partial_match": true},
+        {"doc_type": "diva_research", "identifier": "likvardighet_skola", "partial_match": true}
+      ]
+    },
+    {
+      "id": "X03",
+      "query": "Hur väl stämmer diskrimineringslagen överens med forskning om diskriminering?",
+      "category": "KORSKOLLEKTION",
+      "description": "Cross-collection test — diskrimineringslagen + diskrimineringsforskning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2008:567", "partial_match": true},
+        {"doc_type": "diva_research", "identifier": "diskriminering", "partial_match": true}
+      ]
+    },
+    {
+      "id": "X04",
+      "query": "Vilken forskning stödjer utformningen av socialtjänstlagen?",
+      "category": "KORSKOLLEKTION",
+      "description": "Cross-collection test — socialtjänstlagen + socialt arbete forskning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2001:453", "partial_match": true},
+        {"doc_type": "diva_research", "identifier": "socialtjanst", "partial_match": true}
+      ]
+    },
+    {
+      "id": "X05",
+      "query": "Hur förhåller sig patientsäkerhetslagen till forskning om vårdkvalitet?",
+      "category": "KORSKOLLEKTION",
+      "description": "Cross-collection test — patientsäkerhetslagen + vårdkvalitet forskning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2010:659", "partial_match": true},
+        {"doc_type": "diva_research", "identifier": "vardkvalitet", "partial_match": true}
+      ]
+    },
+    {
+      "id": "X06",
+      "query": "Vad säger forskningen om arbetsrättens effekter på sysselsättning?",
+      "category": "KORSKOLLEKTION",
+      "description": "Cross-collection test — LAS + arbetsmarknadsforskning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1982:80", "partial_match": true},
+        {"doc_type": "diva_research", "identifier": "arbetsratt_sysselsattning", "partial_match": true}
+      ]
+    },
+    {
+      "id": "X07",
+      "query": "Hur stödjer forskning de förändringar som gjorts i plan- och bygglagen?",
+      "category": "KORSKOLLEKTION",
+      "description": "Cross-collection test — PBL + stadsutveckling forskning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2010:900", "partial_match": true},
+        {"doc_type": "diva_research", "identifier": "stadsutveckling", "partial_match": true}
+      ]
+    },
+    {
+      "id": "X08",
+      "query": "Vilka forskningsresultat ligger bakom hälso- och sjukvårdslagen?",
+      "category": "KORSKOLLEKTION",
+      "description": "Cross-collection test — HSL + vårdforskning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:30", "partial_match": true},
+        {"doc_type": "diva_research", "identifier": "halso_sjukvard", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K01",
+      "query": "Vad innebär den kommunala självstyrelsen enligt kommunallagen?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om kommunal självstyrelse",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K02",
+      "query": "Hur organiseras nämnder i en kommun enligt kommunallagen?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om nämndorganisation",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K03",
+      "query": "Vilka regler gäller för laglighetsprövning av kommunala beslut?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om laglighetsprövning",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K04",
+      "query": "Vad säger kommunallagen om kommunal revision?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om revision",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K05",
+      "query": "Hur regleras fullmäktiges sammansättning och arbetsformer i kommunallagen?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om fullmäktige",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K06",
+      "query": "Vilka befogenheter har kommunstyrelsen enligt kommunallagen?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om kommunstyrelsens befogenheter",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K07",
+      "query": "Vad gäller för kommunala bolag och deras styrning enligt kommunallagen?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om kommunala bolag",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K08",
+      "query": "Hur regleras medborgarförslag i kommunallagen?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om medborgarförslag",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K09",
+      "query": "Vad säger kommunallagen om delegation av beslutanderätt?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om delegation",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "K10",
+      "query": "Vilka överklaganderegler gäller för kommunala beslut?",
+      "category": "KOMMUN_JURIDIK",
+      "description": "Kommunallagen om överklagande av beslut",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2017:725", "partial_match": true}
+      ]
+    },
+    {
+      "id": "TP01",
+      "query": "När fick barnkonventionen status som svensk lag och vad innebär det?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Temporal fråga om barnkonventionens inkorporering",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2018:1197", "partial_match": true}
+      ]
+    },
+    {
+      "id": "TP02",
+      "query": "Hur har dataskyddslagstiftningen utvecklats i Sverige?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Temporal fråga om PUL till GDPR",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "2018:218", "partial_match": true},
+        {"doc_type": "sfs", "identifier": "1998:204", "partial_match": true}
+      ]
+    },
+    {
+      "id": "TP03",
+      "query": "Vilka stora förändringar har skett i miljölagstiftningen sedan 1999?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Temporal fråga om miljöbalkens utveckling",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1998:808", "partial_match": true},
+        {"doc_type": "sfs", "identifier": "2017:720", "partial_match": true}
+      ]
+    },
+    {
+      "id": "TP04",
+      "query": "När och hur ändrades sexualbrottslagstiftningen till samtyckesbaserad?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Temporal fråga om samtyckeslagen 2018",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1962:700", "partial_match": true}
+      ]
+    },
+    {
+      "id": "TP05",
+      "query": "Hur har reglerna om tvångsvård förändrats över tid i Sverige?",
+      "category": "TEMPORALA_FRAGOR",
+      "description": "Temporal fråga om LPT och LVM utveckling",
+      "ground_truth_docs": [
+        {"doc_type": "sfs", "identifier": "1991:1128", "partial_match": true},
+        {"doc_type": "sfs", "identifier": "1988:870", "partial_match": true}
       ]
     }
   ]

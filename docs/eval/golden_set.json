@@ -1,7 +1,7 @@
 {
   "version": "1.0-P0",
   "created": "2025-12-21",
-  "description": "Golden set for Constitutional-AI RAG evaluation. 20 questions covering SFS primary sources, government practice, edge cases, and smalltalk.",
+  "description": "Golden set for Constitutional-AI RAG evaluation. 55 questions covering SFS primary sources, government practice, edge cases, smalltalk, DiVA research, cross-collection, kommun, and temporal questions.",
   "questions": [
     {
       "id": "sfs_01",
@@ -199,6 +199,316 @@
       "ground_truth": "Jag kan inte visa klockan, men jag kan hjälpa dig med juridiska frågor om svenska lagar och myndigheter.",
       "evidence_level": "none",
       "should_search": false
+    },
+    {
+      "id": "diva_01",
+      "query": "Vad visar forskningen om integration av nyanlända i Sverige?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning visar att integration av nyanlända påverkas av faktorer som språkkunskaper, arbetsmarknadsanknytning, boendesegregation och sociala nätverk. Etableringsinsatser och SFI-undervisning är centrala verktyg.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_02",
+      "query": "Vilken forskning finns om klimatförändringarnas påverkan på svensk infrastruktur?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Svensk forskning undersöker hur ökade temperaturer, havsnivåhöjning och extremväder påverkar vägar, järnvägar, VA-system och byggnader. Klimatanpassning av infrastruktur är ett växande forskningsområde.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_03",
+      "query": "Vad säger forskningen om psykisk hälsa bland ungdomar i Sverige?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning visar ökande psykisk ohälsa bland svenska ungdomar, särskilt ångest och depression. Faktorer inkluderar skolpress, sociala medier, ekonomisk utsatthet och bristande tillgång till BUP.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_04",
+      "query": "Hur har digitaliseringen påverkat den svenska arbetsmarknaden enligt forskningen?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning visar att digitalisering leder till omvandling av arbetsmarknaden med automatisering av rutinuppgifter, ökade krav på digital kompetens och framväxt av nya yrkesroller i tekniksektorn.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_05",
+      "query": "Vilka forskningsresultat finns om skolsegregationens konsekvenser i Sverige?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning visar att skolsegregation förstärker ojämlikhet i utbildningsresultat, påverkar elevers sociala utveckling negativt och har koppling till boendesegregation och det fria skolvalet.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_06",
+      "query": "Vad visar forskningen om antibiotikaresistens i svenska sjukvården?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Sverige har relativt låg antibiotikaresistens internationellt sett tack vare Strama och restriktiv förskrivning, men forskning varnar för ökande resistens vid importerade infektioner och inom specifika bakteriegrupper.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_07",
+      "query": "Vilken forskning finns om jämställdhet i svenska bolagsstyrelser?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning undersöker effekterna av ökad kvinnorepresentation i styrelser, kvoteringsdebatten och sambandet mellan könsdiversitet och företagsresultat. Sverige har relativt hög andel kvinnor i styrelser jämfört med andra länder.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_08",
+      "query": "Vad säger forskningen om vindkraftens miljöpåverkan i Sverige?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning belyser vindkraftens påverkan på fåglar, fladdermöss, rennäring och landskapsbild, men också dess roll som förnybar energikälla för att minska koldioxidutsläpp och bidra till klimatmålen.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_09",
+      "query": "Vilka forskningsresultat finns om äldreomsorgens kvalitet efter privatisering?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning visar blandade resultat av privatisering av äldreomsorgen. Studier undersöker personaltäthet, brukarnöjdhet, vårdkvalitet och kostnadseffektivitet i privat vs kommunal regi.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_10",
+      "query": "Hur påverkar bostadsbristen ungas livschanser enligt svensk forskning?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning visar att bostadsbrist försenar ungas etablering, påverkar familjebildning, studier och karriärmöjligheter. Trångboddhet och höga bostadskostnader drabbar unga oproportionerligt.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_11",
+      "query": "Vad visar forskningen om AI och automatisering i svensk industri?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning undersöker hur AI och automatisering transformerar svensk tillverkningsindustri, med fokus på produktivitetsvinster, kompetensbehov och omställningsutmaningar för arbetskraften.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "diva_12",
+      "query": "Vilken forskning finns om barnfattigdom i Sverige?",
+      "intent": "RESEARCH_SYNTHESIS",
+      "expected_sources": ["diva_research"],
+      "ground_truth": "Forskning visar att barnfattigdom i Sverige är kopplad till utländsk bakgrund, ensamstående föräldrar och boendesegregation. Effekterna inkluderar sämre skolresultat, hälsa och framtida arbetsmarknadsutfall.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "cross_01",
+      "query": "Hur förhåller sig miljöbalken till forskningen om klimatanpassning?",
+      "intent": "POLICY_ARGUMENTS",
+      "expected_sources": ["sfs_lagtext", "diva_research"],
+      "ground_truth": "Miljöbalken (1998:808) ställer krav på hänsynstagande till miljö och hälsa, men forskning visar att klimatanpassningsåtgärder ofta kräver starkare regleringsmekanismer än vad balken idag erbjuder.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "cross_02",
+      "query": "Vad säger forskningen om effekterna av skollagen på likvärdighet?",
+      "intent": "POLICY_ARGUMENTS",
+      "expected_sources": ["sfs_lagtext", "diva_research"],
+      "ground_truth": "Skollagen (2010:800) föreskriver likvärdig utbildning, men forskning visar att det fria skolvalet och skolsegregation motverkar lagens likvärdighetsmål i praktiken.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "cross_03",
+      "query": "Hur väl stämmer diskrimineringslagen överens med forskning om diskriminering?",
+      "intent": "POLICY_ARGUMENTS",
+      "expected_sources": ["sfs_lagtext", "diva_research"],
+      "ground_truth": "Diskrimineringslagen (2008:567) förbjuder diskriminering på sju grunder, men forskning visar att strukturell diskriminering ofta är svår att bevisa och att lagen har begränsningar i praktisk tillämpning.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "cross_04",
+      "query": "Vilken forskning stödjer utformningen av socialtjänstlagen?",
+      "intent": "POLICY_ARGUMENTS",
+      "expected_sources": ["sfs_lagtext", "diva_research"],
+      "ground_truth": "Socialtjänstlagen (2001:453) bygger på forskning om socialt arbete, men studier visar utmaningar kring resursbrist, rättssäkerhet i barnavårdsärenden och ojämn kvalitet mellan kommuner.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "cross_05",
+      "query": "Hur förhåller sig patientsäkerhetslagen till forskning om vårdkvalitet?",
+      "intent": "POLICY_ARGUMENTS",
+      "expected_sources": ["sfs_lagtext", "diva_research"],
+      "ground_truth": "Patientsäkerhetslagen (2010:659) reglerar vårdgivarens ansvar för patientsäkerhet. Forskning stödjer lagens inriktning mot systemtänkande och händelseanalys framför individuell skuld.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "cross_06",
+      "query": "Vad säger forskningen om arbetsrättens effekter på sysselsättning?",
+      "intent": "POLICY_ARGUMENTS",
+      "expected_sources": ["sfs_lagtext", "diva_research"],
+      "ground_truth": "Lagen om anställningsskydd (1982:80) och arbetsrättslagstiftningen debatteras i forskning, där studier visar motstridiga resultat om turordningsreglernas effekter på sysselsättning och rörlighet.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "cross_07",
+      "query": "Hur stödjer forskning de förändringar som gjorts i plan- och bygglagen?",
+      "intent": "POLICY_ARGUMENTS",
+      "expected_sources": ["sfs_lagtext", "diva_research"],
+      "ground_truth": "Plan- och bygglagen (2010:900) har reviderats baserat på forskning om stadsutveckling, bostadsbyggande och klimatanpassning. Studier belyser konflikter mellan förtätning och hållbarhet.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "cross_08",
+      "query": "Vilka forskningsresultat ligger bakom hälso- och sjukvårdslagen?",
+      "intent": "POLICY_ARGUMENTS",
+      "expected_sources": ["sfs_lagtext", "diva_research"],
+      "ground_truth": "Hälso- och sjukvårdslagen (2017:30) bygger på forskning om vårdens tillgänglighet, jämlikhet och kvalitet. Studier visar att regionala skillnader i vård kvarstår trots lagens krav på lika vård.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "kommun_01",
+      "query": "Vad innebär den kommunala självstyrelsen enligt kommunallagen?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "Kommunal självstyrelse innebär att kommuner och regioner sköter lokala och regionala angelägenheter av allmänt intresse på den kommunala självstyrelsens grund, enligt KL 1 kap. Självstyrelsen har grundlagsskydd i RF 14 kap.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "kommun_02",
+      "query": "Hur organiseras nämnder i en kommun enligt kommunallagen?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "Fullmäktige bestämmer nämndorganisationen. Varje kommun ska ha en kommunstyrelse. Nämnderna bereder fullmäktiges ärenden och ansvarar för verkställighet inom sina respektive områden enligt KL 6 kap.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "kommun_03",
+      "query": "Vilka regler gäller för laglighetsprövning av kommunala beslut?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "Laglighetsprövning enligt KL 13 kap. innebär att kommunmedlemmar kan överklaga beslut till förvaltningsrätten. Prövningen gäller om beslutet tillkommit i laga ordning, inte om det är lämpligt.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "kommun_04",
+      "query": "Vad säger kommunallagen om kommunal revision?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "Fullmäktige utser revisorer som granskar nämndernas verksamhet. Revisorerna prövar om verksamheten sköts ändamålsenligt och ekonomiskt, om räkenskaperna är rättvisande och om den kontroll som nämnderna gör är tillräcklig, enligt KL 12 kap.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "kommun_05",
+      "query": "Hur regleras fullmäktiges sammansättning och arbetsformer i kommunallagen?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "Fullmäktige är kommunens högsta beslutande organ. Ledamöterna väljs i allmänna val för fyra år. Fullmäktige beslutar i ärenden av principiell beskaffenhet eller större vikt, enligt KL 5 kap.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "kommun_06",
+      "query": "Vilka befogenheter har kommunstyrelsen enligt kommunallagen?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "Kommunstyrelsen leder och samordnar förvaltningen, har uppsikt över nämndernas verksamhet och ansvarar för att fullmäktiges beslut verkställs. Styrelsen har en särskild ställning som ledande förvaltningsorgan enligt KL 6 kap.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "kommun_07",
+      "query": "Vad gäller för kommunala bolag och deras styrning enligt kommunallagen?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "Kommuner får driva verksamhet genom bolag. Fullmäktige ska fastställa ändamål, utse styrelseledamöter och tillse att bolaget ger fullmäktige insyn. Offentlighetsprincipen gäller för kommunala bolag enligt KL 10 kap.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "kommun_08",
+      "query": "Hur regleras medborgarförslag i kommunallagen?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "Den som är folkbokförd i kommunen får väcka medborgarförslag i fullmäktige. Fullmäktige ska besluta om förslaget inom ett år. Förslagsrätten regleras i KL 8 kap.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "kommun_09",
+      "query": "Vad säger kommunallagen om delegation av beslutanderätt?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "En nämnd får delegera beslutanderätt till presidiet, ett utskott, en ledamot eller en anställd. Vissa beslut får inte delegeras, t.ex. ärenden som rör verksamhetens mål och inriktning enligt KL 7 kap.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "kommun_10",
+      "query": "Vilka överklaganderegler gäller för kommunala beslut?",
+      "intent": "LEGAL_TEXT",
+      "expected_sfs": "2017:725",
+      "ground_truth": "Kommunala beslut kan överklagas genom laglighetsprövning (KL 13 kap.) av kommunmedlemmar. Beslut kan upphävas om de inte tillkommit i laga ordning, beslutet hänför sig till något som inte är en angelägenhet för kommunen, eller om beslutet strider mot lag.",
+      "evidence_level": "green_or_yellow",
+      "should_search": true
+    },
+    {
+      "id": "temporal_01",
+      "query": "När fick barnkonventionen status som svensk lag och vad innebär det?",
+      "intent": "LEGAL_TEXT",
+      "ground_truth": "Barnkonventionen blev svensk lag den 1 januari 2020 genom lag (2018:1197). Det innebär att konventionens artiklar kan åberopas direkt i svenska domstolar och att barnets bästa ska ges tyngd i rättstillämpningen.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "temporal_02",
+      "query": "Hur har dataskyddslagstiftningen utvecklats i Sverige?",
+      "intent": "LEGAL_TEXT",
+      "ground_truth": "Sverige hade personuppgiftslagen (1998:204) som ersattes av GDPR (EU 2016/679) och kompletterande dataskyddslag (2018:218) den 25 maj 2018. Utvecklingen innebar stärkta rättigheter för den enskilde och hårdare sanktioner.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "temporal_03",
+      "query": "Vilka stora förändringar har skett i miljölagstiftningen sedan 1999?",
+      "intent": "LEGAL_TEXT",
+      "ground_truth": "Miljöbalken (1998:808) trädde i kraft 1999 och samlade 15 tidigare miljölagar. Sedan dess har balken uppdaterats med stärkt artskydd, klimatlag (2017:720) och anpassningar till EU-direktiv om vatten och luft.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "temporal_04",
+      "query": "När och hur ändrades sexualbrottslagstiftningen till samtyckesbaserad?",
+      "intent": "LEGAL_TEXT",
+      "ground_truth": "Den 1 juli 2018 infördes samtyckeslagen genom ändringar i BrB 6 kap. Frivillighet blev det centrala rekvisitet istället för tvång. Den som genomför samlag med någon som inte deltar frivilligt döms för våldtäkt.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
+    },
+    {
+      "id": "temporal_05",
+      "query": "Hur har reglerna om tvångsvård förändrats över tid i Sverige?",
+      "intent": "LEGAL_TEXT",
+      "ground_truth": "Tvångsvård regleras i LPT (1991:1128) och LVM (1988:870). Lagstiftningen har skärpt kraven på rättssäkerhet med starkare patienträttigheter, tidsbegränsningar och domstolsprövning av tvångsåtgärder.",
+      "evidence_level": "yellow_ok",
+      "should_search": true
     }
   ]
 }
