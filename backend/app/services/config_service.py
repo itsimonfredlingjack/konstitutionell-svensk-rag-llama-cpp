@@ -163,7 +163,7 @@ class ConfigSettings(BaseSettings):
 
     # CRAG (Corrective RAG) Configuration
     crag_enabled: bool = True  # Enabled - filters irrelevant docs before LLM generation
-    crag_grade_threshold: float = 0.25  # Relevance threshold (lowered for better edge-case recall)
+    crag_grade_threshold: float = 0.15  # Relevance threshold (lowered for better edge-case recall)
     crag_max_rewrite_attempts: int = 2  # Max query rewrite attempts if no relevant docs
     crag_grader_model: str = "Qwen2.5-0.5B-Instruct-Q5_K_M.gguf"  # Lightweight model for grading
     crag_enable_self_reflection: bool = False  # Chain of Thought before answering

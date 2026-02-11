@@ -410,6 +410,7 @@ class GuardrailService(BaseService):
         Determine evidence level based on source quality.
 
         HIGH: Multiple high-scoring SFS/prop sources
+        MEDIUM: Multiple sources with reasonable quality
         LOW: Some relevant sources but lower scores
         NONE: No relevant sources found
 
@@ -418,22 +419,24 @@ class GuardrailService(BaseService):
             answer: Generated answer (for future verification)
 
         Returns:
-            Evidence level string (HIGH/LOW/NONE)
+            Evidence level string (HIGH/MEDIUM/LOW/NONE)
         """
         if not sources:
             return "NONE"
 
-        # Count high-quality sources (score > 0.7, SFS or prop type)
+        # Count high-quality sources (score > 0.55, SFS or prop type)
         high_quality = sum(
-            1 for s in sources if s.get("score", 0) > 0.7 and s.get("doc_type") in ["sfs", "prop"]
+            1 for s in sources if s.get("score", 0) > 0.55 and s.get("doc_type") in ["sfs", "prop"]
         )
 
         # Average score
         avg_score = sum(s.get("score", 0) for s in sources) / len(sources)
 
-        if high_quality >= 2 or avg_score > 0.75:
+        if high_quality >= 2 or avg_score > 0.60:
             return "HIGH"
-        elif len(sources) > 0 and avg_score > 0.4:
+        elif len(sources) >= 3 or (len(sources) >= 2 and avg_score > 0.45):
+            return "MEDIUM"
+        elif len(sources) > 0 and avg_score > 0.3:
             return "LOW"
         else:
             return "NONE"

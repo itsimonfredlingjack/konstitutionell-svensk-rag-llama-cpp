@@ -21,6 +21,7 @@ Adaptive Retrieval (Phase 4):
 
 import asyncio
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -1333,12 +1334,18 @@ class RetrievalOrchestrator:
         seen_doc_ids = set()
         unique_results = []
         for r in search_results:
-            # Try to extract doc_id from chunk id (format: doc_id:chunk_num or doc_id_chunk_num)
+            # Extract doc_id for deduplication
             doc_id = r.id
-            if ":" in doc_id:
-                doc_id = doc_id.split(":")[0]
-            elif "_chunk_" in doc_id:
+            # Strip _v2/_v3 re-index suffixes (same paragraph, different index run)
+            doc_id = re.sub(r"_v\d+$", "", doc_id)
+            if "_chunk_" in doc_id:
                 doc_id = doc_id.split("_chunk_")[0]
+            elif ":" in doc_id:
+                # Only split on ":" if the right side is purely numeric (chunk index)
+                # SFS IDs like "2001:453_4_kap_1_§" contain ":" as part of the number
+                parts = doc_id.rsplit(":", 1)
+                if len(parts) == 2 and parts[1].isdigit():
+                    doc_id = parts[0]
 
             # Keep first occurrence only (already sorted by tier+score)
             if doc_id not in seen_doc_ids:

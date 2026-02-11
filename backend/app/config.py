@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     # Maps to CONST_CRAG_ENABLED and CONST_CRAG_ENABLE_SELF_REFLECTION
     crag_enabled: bool = False
     crag_enable_self_reflection: bool = False
+    crag_grade_threshold: float = 0.15
 
     # Backwards compatibility for typo "CAG" (Maps to CONST_CAG_...)
     cag_enabled: bool = False
@@ -63,6 +64,8 @@ class Settings(BaseSettings):
         "http://localhost:8000",
         "http://127.0.0.1:8000",
         "http://192.168.86.32:8000",
+        "https://swerag.fredlingautomation.dev",
+        "https://swerag-api.fredlingautomation.dev",
     ]
     cors_allow_credentials: bool = True
 
