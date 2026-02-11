@@ -237,13 +237,13 @@ class GraderService(BaseService):
                         timeout=self.grade_timeout,
                     )
 
-                    # Process results
-                    for result in batch_results:
+                    # Process results (gather preserves order)
+                    for doc, result in zip(batch_docs, batch_results):
                         if isinstance(result, Exception):
-                            self.logger.warning(f"Grading failed: {result}")
-                            # Create fallback grade
+                            self.logger.warning(f"Grading failed for {doc.id}: {result}")
+                            # Create fallback grade with actual doc ID
                             grade_result = GradeResult(
-                                doc_id="error_doc",
+                                doc_id=doc.id,
                                 relevant=False,
                                 reason=f"Grading error: {str(result)[:50]}",
                                 score=0.0,
@@ -260,12 +260,12 @@ class GraderService(BaseService):
                         if not task.done():
                             task.cancel()
 
-                    # Add timeout placeholders for the batch
-                    for _ in batch_docs:
+                    # Add timeout placeholders with actual doc IDs
+                    for doc in batch_docs:
                         grade_result = GradeResult(
-                            doc_id="timeout_doc",
+                            doc_id=doc.id,
                             relevant=False,
-                            reason="Grading timeout - treated as irrelevant",
+                            reason=f"Timeout grading document {doc.id}",
                             score=0.0,
                             confidence=0.0,
                             latency_ms=self.grade_timeout * 1000,

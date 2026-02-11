@@ -51,6 +51,39 @@ from .intent_routing import get_routing_for_intent
 
 logger = logging.getLogger("constitutional.retrieval")
 
+# Pre-compiled regex for stripping re-index suffixes (_v2, _v3, etc.)
+_REINDEX_SUFFIX_RE = re.compile(r"_v\d+$")
+
+
+def get_canonical_doc_id(doc_id: str) -> str:
+    """
+    Normalize a document ID for deduplication.
+
+    Strips re-index suffixes (_v2/_v3), chunk indices (_chunk_N),
+    and numeric colon-suffixes (id:42) while preserving SFS numbers
+    like "2001:453_4_kap_1_§".
+
+    Args:
+        doc_id: Raw document ID from ChromaDB
+
+    Returns:
+        Canonical document ID for dedup comparison
+    """
+    canonical = _REINDEX_SUFFIX_RE.sub("", doc_id)
+    if "_chunk_" in canonical:
+        canonical = canonical.split("_chunk_")[0]
+    elif ":" in canonical:
+        # Only strip ":" suffix if the right side is purely numeric (chunk index)
+        # SFS IDs like "2001:453_4_kap_1_§" contain ":" as part of the number
+        parts = canonical.rsplit(":", 1)
+        if len(parts) == 2 and parts[1].isdigit():
+            canonical = parts[0]
+
+    if canonical != doc_id:
+        logger.debug(f"Canonical doc ID: '{doc_id}' → '{canonical}'")
+
+    return canonical
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # METRICS & INSTRUMENTATION
@@ -478,6 +511,7 @@ class RetrievalOrchestrator:
         bm25_service: Optional[BM25Service] = None,  # Hybrid search: BM25 sidecar
         bm25_weight: float = 1.5,  # Weight for BM25 in RRF (1.0 = equal, 1.5 = favor exact terms)
         rrf_k: float = 30.0,  # RRF k constant (lower = top results dominate)
+        score_threshold: float = 0.35,  # Min similarity score for EPR results
     ):
         self.client = chromadb_client
         self.embed_fn = embedding_function
@@ -491,6 +525,7 @@ class RetrievalOrchestrator:
         self._bm25_service = bm25_service
         self._bm25_weight = bm25_weight
         self._rrf_k = rrf_k
+        self._score_threshold = score_threshold
         # EPR RAG-Fusion settings
         self._use_epr_fusion = True
         self._epr_fusion_num_queries = 3
@@ -1292,14 +1327,14 @@ class RetrievalOrchestrator:
         # PRECISION TUNING: Filter out low-score results
         # When RRF fusion is used, filter on original_score (ChromaDB similarity, 0-1 range)
         # because rrf_score is on a different scale (~0.01-0.04 for k=45)
-        MIN_SCORE = 0.30
+        min_score = self._score_threshold
         if len(all_result_sets) > 1:
             # RRF path: use original ChromaDB similarity score for filtering
             all_results = [
-                r for r in all_results if r.get("original_score", r.get("score", 0.0)) >= MIN_SCORE
+                r for r in all_results if r.get("original_score", r.get("score", 0.0)) >= min_score
             ]
         else:
-            all_results = [r for r in all_results if r.get("score", 0.0) >= MIN_SCORE]
+            all_results = [r for r in all_results if r.get("score", 0.0) >= min_score]
         logger.info(f"EPR: After min_score filter: {len(all_results)} results")
 
         # Convert to SearchResult with tier annotation
@@ -1339,27 +1374,13 @@ class RetrievalOrchestrator:
         # Limit to k results
         search_results = search_results[:k]
 
-        # PRECISION TUNING: Deduplicate by doc_id (keep first occurrence, which has best tier)
-        # This prevents same doc from taking up multiple slots
+        # PRECISION TUNING: Deduplicate by canonical doc_id (keep first = best tier)
         seen_doc_ids = set()
         unique_results = []
         for r in search_results:
-            # Extract doc_id for deduplication
-            doc_id = r.id
-            # Strip _v2/_v3 re-index suffixes (same paragraph, different index run)
-            doc_id = re.sub(r"_v\d+$", "", doc_id)
-            if "_chunk_" in doc_id:
-                doc_id = doc_id.split("_chunk_")[0]
-            elif ":" in doc_id:
-                # Only split on ":" if the right side is purely numeric (chunk index)
-                # SFS IDs like "2001:453_4_kap_1_§" contain ":" as part of the number
-                parts = doc_id.rsplit(":", 1)
-                if len(parts) == 2 and parts[1].isdigit():
-                    doc_id = parts[0]
-
-            # Keep first occurrence only (already sorted by tier+score)
-            if doc_id not in seen_doc_ids:
-                seen_doc_ids.add(doc_id)
+            canonical = get_canonical_doc_id(r.id)
+            if canonical not in seen_doc_ids:
+                seen_doc_ids.add(canonical)
                 unique_results.append(r)
 
         logger.info(

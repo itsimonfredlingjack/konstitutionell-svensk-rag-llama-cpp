@@ -301,311 +301,347 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     };
 
-    try {
-      const response = await fetch(API_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        ...(currentAbortController
-          ? { signal: currentAbortController.signal }
-          : {}),
-        body: JSON.stringify({
-          question: query,
-          mode: mode,
-          history: [],
-        }),
-      });
+    // Retry config: exponential backoff for network errors only
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS = [1000, 2000, 4000];
+    let lastNetworkError: Error | null = null;
 
-      if (!response.ok)
-        throw new Error(`Backend request failed: ${response.status}`);
-      if (!response.body) throw new Error("No response body");
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      // Wait before retry (skip delay on first attempt)
+      if (attempt > 0 && lastNetworkError) {
+        const delay = RETRY_DELAYS[attempt - 1] ?? 4000;
+        console.warn(
+          `[startSearch] Retry ${attempt}/${MAX_RETRIES} after ${delay}ms`,
+          lastNetworkError.message,
+        );
+        await new Promise((r) => setTimeout(r, delay));
         if (get().currentSearchId !== searchId) break;
-        if (done) break;
+        if (currentAbortController?.signal.aborted) break;
+        lastNetworkError = null;
+      }
 
-        const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
-        const events = buffer.split("\n\n");
-        buffer = events.pop() || "";
+      try {
+        const response = await fetch(API_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          ...(currentAbortController
+            ? { signal: currentAbortController.signal }
+            : {}),
+          body: JSON.stringify({
+            question: query,
+            mode: mode,
+            history: [],
+          }),
+        });
 
-        for (const eventBlock of events) {
-          if (!eventBlock.trim()) continue;
-          const dataMatch = eventBlock.match(/^data:\s*(.+)$/m);
-          if (!dataMatch) continue;
+        // Server errors (4xx/5xx) are not retried
+        if (!response.ok)
+          throw new Error(`Backend request failed: ${response.status}`);
+        if (!response.body) throw new Error("No response body");
 
-          try {
-            const data = JSON.parse(dataMatch[1]);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
 
-            switch (data.type) {
-              case "metadata": {
-                if (data.sources)
-                  get().updateQueryResult(queryResultId, {
-                    sources: normalizeSources(data.sources),
-                  });
-                if (data.evidence_level)
-                  get().updateQueryResult(queryResultId, {
-                    evidenceLevel: data.evidence_level,
-                  });
-                updateStageWithDelay(() => {
-                  const active = get().queries.find(
-                    (q) => q.id === queryResultId,
-                  );
-                  if (!active) return;
-                  get().updateQueryResult(queryResultId, {
-                    pipelineLog: [
-                      ...active.pipelineLog,
-                      {
-                        ts: Date.now(),
-                        stage: "retrieval",
-                        message: `Retrieval: fetched ${data.sources?.length ?? 0} sources`,
-                      },
-                    ].slice(-MAX),
-                    pipelineStage: "grading",
-                    searchStage: "reading",
-                  });
-                  armGradingWatchdog();
-                }, METADATA_STAGE_DELAY_MS);
-                break;
-              }
+        while (true) {
+          const { done, value } = await reader.read();
+          if (get().currentSearchId !== searchId) break;
+          if (done) break;
 
-              case "grading": {
-                clearGradingWatchdog();
-                const relevant = data.relevant ?? data.relevant_count ?? 0;
-                const total = data.total ?? data.total_count ?? 0;
-                const active = get().queries.find(
-                  (q) => q.id === queryResultId,
-                );
-                const shouldAdvance = active?.pipelineStage === "grading";
-                updateStageWithDelay(() => {
-                  const cur = get().queries.find((q) => q.id === queryResultId);
-                  if (!cur) return;
-                  get().updateQueryResult(queryResultId, {
-                    pipelineLog: [
-                      ...cur.pipelineLog,
-                      {
-                        ts: Date.now(),
-                        stage: "grading",
-                        message:
-                          typeof data.message === "string"
-                            ? data.message
-                            : `Grading: ${relevant}/${total} documents relevant`,
-                      },
-                    ].slice(-MAX),
-                    pipelineStage: shouldAdvance
-                      ? "self_reflection"
-                      : cur.pipelineStage,
-                  });
-                }, GRADING_STAGE_DELAY_MS);
-                break;
-              }
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || "";
 
-              case "thought_chain":
-                clearGradingWatchdog();
-                get().updateQueryResult(queryResultId, {
-                  thoughtChain: data.content,
-                });
-                updateStageWithDelay(() => {
-                  const active = get().queries.find(
-                    (q) => q.id === queryResultId,
-                  );
-                  if (!active) return;
-                  get().updateQueryResult(queryResultId, {
-                    pipelineLog: [
-                      ...active.pipelineLog,
-                      {
-                        ts: Date.now(),
-                        stage: "self_reflection",
-                        message:
-                          "Reflection: analyzing evidence sufficiency...",
-                      },
-                    ].slice(-MAX),
-                    pipelineStage: "generation",
-                    searchStage: "reasoning",
-                  });
-                }, GRADING_STAGE_DELAY_MS);
-                break;
+          for (const eventBlock of events) {
+            if (!eventBlock.trim()) continue;
+            const dataMatch = eventBlock.match(/^data:\s*(.+)$/m);
+            if (!dataMatch) continue;
 
-              case "token":
-                clearGradingWatchdog();
-                if (data.content) {
-                  if (!generationLogged) {
-                    generationLogged = true;
-                    const active = get().queries.find(
-                      (q) => q.id === queryResultId,
-                    );
-                    if (active)
-                      get().updateQueryResult(queryResultId, {
-                        pipelineLog: [
-                          ...active.pipelineLog,
-                          {
-                            ts: Date.now(),
-                            stage: "generation",
-                            message: "Generate: composing answer…",
-                          },
-                        ].slice(-MAX),
-                      });
-                  }
-                  tokenBuffer.push(data.content);
-                  scheduleTokenFlush(() => {
-                    const buffered = tokenBuffer.join("");
-                    tokenBuffer = [];
+            try {
+              const data = JSON.parse(dataMatch[1]);
+
+              switch (data.type) {
+                case "metadata": {
+                  if (data.sources)
+                    get().updateQueryResult(queryResultId, {
+                      sources: normalizeSources(data.sources),
+                    });
+                  if (data.evidence_level)
+                    get().updateQueryResult(queryResultId, {
+                      evidenceLevel: data.evidence_level,
+                    });
+                  updateStageWithDelay(() => {
                     const active = get().queries.find(
                       (q) => q.id === queryResultId,
                     );
                     if (!active) return;
                     get().updateQueryResult(queryResultId, {
-                      answer: active.answer + buffered,
+                      pipelineLog: [
+                        ...active.pipelineLog,
+                        {
+                          ts: Date.now(),
+                          stage: "retrieval",
+                          message: `Retrieval: fetched ${data.sources?.length ?? 0} sources`,
+                        },
+                      ].slice(-MAX),
+                      pipelineStage: "grading",
+                      searchStage: "reading",
+                    });
+                    armGradingWatchdog();
+                  }, METADATA_STAGE_DELAY_MS);
+                  break;
+                }
+
+                case "grading": {
+                  clearGradingWatchdog();
+                  const relevant = data.relevant ?? data.relevant_count ?? 0;
+                  const total = data.total ?? data.total_count ?? 0;
+                  const active = get().queries.find(
+                    (q) => q.id === queryResultId,
+                  );
+                  const shouldAdvance = active?.pipelineStage === "grading";
+                  updateStageWithDelay(() => {
+                    const cur = get().queries.find(
+                      (q) => q.id === queryResultId,
+                    );
+                    if (!cur) return;
+                    get().updateQueryResult(queryResultId, {
+                      pipelineLog: [
+                        ...cur.pipelineLog,
+                        {
+                          ts: Date.now(),
+                          stage: "grading",
+                          message:
+                            typeof data.message === "string"
+                              ? data.message
+                              : `Grading: ${relevant}/${total} documents relevant`,
+                        },
+                      ].slice(-MAX),
+                      pipelineStage: shouldAdvance
+                        ? "self_reflection"
+                        : cur.pipelineStage,
+                    });
+                  }, GRADING_STAGE_DELAY_MS);
+                  break;
+                }
+
+                case "thought_chain":
+                  clearGradingWatchdog();
+                  get().updateQueryResult(queryResultId, {
+                    thoughtChain: data.content,
+                  });
+                  updateStageWithDelay(() => {
+                    const active = get().queries.find(
+                      (q) => q.id === queryResultId,
+                    );
+                    if (!active) return;
+                    get().updateQueryResult(queryResultId, {
+                      pipelineLog: [
+                        ...active.pipelineLog,
+                        {
+                          ts: Date.now(),
+                          stage: "self_reflection",
+                          message:
+                            "Reflection: analyzing evidence sufficiency...",
+                        },
+                      ].slice(-MAX),
                       pipelineStage: "generation",
                       searchStage: "reasoning",
                     });
-                  });
-                }
-                break;
+                  }, GRADING_STAGE_DELAY_MS);
+                  break;
 
-              case "corrections": {
-                clearGradingWatchdog();
-                const active = get().queries.find(
-                  (q) => q.id === queryResultId,
-                );
-                if (active)
-                  get().updateQueryResult(queryResultId, {
-                    pipelineStage: "guardrail_validation",
-                    pipelineLog: [
-                      ...active.pipelineLog,
-                      {
-                        ts: Date.now(),
-                        stage: "guardrail_validation",
-                        message: `Validate: ${data.corrections?.length || 0} corrections applied`,
-                      },
-                    ].slice(-MAX),
-                  });
-                if (data.corrected_text) {
-                  const cur = get().queries.find((q) => q.id === queryResultId);
-                  if (cur)
-                    get().updateQueryResult(queryResultId, {
-                      answer: data.corrected_text,
+                case "token":
+                  clearGradingWatchdog();
+                  if (data.content) {
+                    if (!generationLogged) {
+                      generationLogged = true;
+                      const active = get().queries.find(
+                        (q) => q.id === queryResultId,
+                      );
+                      if (active)
+                        get().updateQueryResult(queryResultId, {
+                          pipelineLog: [
+                            ...active.pipelineLog,
+                            {
+                              ts: Date.now(),
+                              stage: "generation",
+                              message: "Generate: composing answer…",
+                            },
+                          ].slice(-MAX),
+                        });
+                    }
+                    tokenBuffer.push(data.content);
+                    scheduleTokenFlush(() => {
+                      const buffered = tokenBuffer.join("");
+                      tokenBuffer = [];
+                      const active = get().queries.find(
+                        (q) => q.id === queryResultId,
+                      );
+                      if (!active) return;
+                      get().updateQueryResult(queryResultId, {
+                        answer: active.answer + buffered,
+                        pipelineStage: "generation",
+                        searchStage: "reasoning",
+                      });
                     });
-                }
-                break;
-              }
+                  }
+                  break;
 
-              case "done":
-                clearGradingWatchdog();
-                if (tokenBuffer.length > 0) {
-                  const remaining = tokenBuffer.join("");
-                  tokenBuffer = [];
+                case "corrections": {
+                  clearGradingWatchdog();
                   const active = get().queries.find(
                     (q) => q.id === queryResultId,
                   );
                   if (active)
                     get().updateQueryResult(queryResultId, {
-                      answer: active.answer + remaining,
-                    });
-                }
-                if (rafId !== null) {
-                  cancelAnimationFrame(rafId);
-                  rafId = null;
-                }
-                flushCallback = null;
-                {
-                  const active = get().queries.find(
-                    (q) => q.id === queryResultId,
-                  );
-                  if (active)
-                    get().updateQueryResult(queryResultId, {
-                      searchStage: "complete",
-                      pipelineStage: "idle",
+                      pipelineStage: "guardrail_validation",
                       pipelineLog: [
                         ...active.pipelineLog,
                         {
                           ts: Date.now(),
                           stage: "guardrail_validation",
-                          message: `Complete: ${data.total_time_ms ? `${data.total_time_ms.toFixed(0)}ms` : "done"}`,
+                          message: `Validate: ${data.corrections?.length || 0} corrections applied`,
                         },
                       ].slice(-MAX),
                     });
+                  if (data.corrected_text) {
+                    const cur = get().queries.find(
+                      (q) => q.id === queryResultId,
+                    );
+                    if (cur)
+                      get().updateQueryResult(queryResultId, {
+                        answer: data.corrected_text,
+                      });
+                  }
+                  break;
                 }
-                set({ isSearching: false, currentSearchId: null });
-                break;
 
-              case "error":
-                clearGradingWatchdog();
-                tokenBuffer = [];
-                if (rafId !== null) {
-                  cancelAnimationFrame(rafId);
-                  rafId = null;
-                }
-                flushCallback = null;
-                {
-                  const active = get().queries.find(
-                    (q) => q.id === queryResultId,
-                  );
-                  if (active)
-                    get().updateQueryResult(queryResultId, {
-                      error: data.message || "Unknown error",
-                      searchStage: "error",
-                      pipelineStage: "idle",
-                      pipelineLog: [
-                        ...active.pipelineLog,
-                        {
-                          ts: Date.now(),
-                          stage: "idle",
-                          message: `Error: ${data.message}`,
-                        },
-                      ].slice(-MAX),
-                    });
-                }
-                set({ isSearching: false, currentSearchId: null });
-                break;
+                case "done":
+                  clearGradingWatchdog();
+                  if (tokenBuffer.length > 0) {
+                    const remaining = tokenBuffer.join("");
+                    tokenBuffer = [];
+                    const active = get().queries.find(
+                      (q) => q.id === queryResultId,
+                    );
+                    if (active)
+                      get().updateQueryResult(queryResultId, {
+                        answer: active.answer + remaining,
+                      });
+                  }
+                  if (rafId !== null) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                  }
+                  flushCallback = null;
+                  {
+                    const active = get().queries.find(
+                      (q) => q.id === queryResultId,
+                    );
+                    if (active)
+                      get().updateQueryResult(queryResultId, {
+                        searchStage: "complete",
+                        pipelineStage: "idle",
+                        pipelineLog: [
+                          ...active.pipelineLog,
+                          {
+                            ts: Date.now(),
+                            stage: "guardrail_validation",
+                            message: `Complete: ${data.total_time_ms ? `${data.total_time_ms.toFixed(0)}ms` : "done"}`,
+                          },
+                        ].slice(-MAX),
+                      });
+                  }
+                  set({ isSearching: false, currentSearchId: null });
+                  break;
+
+                case "error":
+                  clearGradingWatchdog();
+                  tokenBuffer = [];
+                  if (rafId !== null) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                  }
+                  flushCallback = null;
+                  {
+                    const active = get().queries.find(
+                      (q) => q.id === queryResultId,
+                    );
+                    if (active)
+                      get().updateQueryResult(queryResultId, {
+                        error: data.message || "Unknown error",
+                        searchStage: "error",
+                        pipelineStage: "idle",
+                        pipelineLog: [
+                          ...active.pipelineLog,
+                          {
+                            ts: Date.now(),
+                            stage: "idle",
+                            message: `Error: ${data.message}`,
+                          },
+                        ].slice(-MAX),
+                      });
+                  }
+                  set({ isSearching: false, currentSearchId: null });
+                  break;
+              }
+            } catch (e) {
+              console.error("Error parsing SSE data:", e);
             }
-          } catch (e) {
-            console.error("Error parsing SSE data:", e);
           }
         }
-      }
 
-      const currentState = get();
-      if (
-        currentState.isSearching &&
-        currentState.currentSearchId === searchId
-      ) {
+        const currentState = get();
+        if (
+          currentState.isSearching &&
+          currentState.currentSearchId === searchId
+        ) {
+          clearGradingWatchdog();
+          const active = get().queries.find((q) => q.id === queryResultId);
+          if (active)
+            get().updateQueryResult(queryResultId, {
+              searchStage: "complete",
+              pipelineStage: "idle",
+            });
+          set({ isSearching: false, currentSearchId: null });
+        }
+        break; // Success — exit retry loop
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        if (get().currentSearchId !== searchId) return;
+
+        // Retry on network errors (TypeError from fetch), not server errors
+        const isNetworkError =
+          error instanceof TypeError && !currentAbortController?.signal.aborted;
+        if (isNetworkError && attempt < MAX_RETRIES) {
+          lastNetworkError = error;
+          continue;
+        }
+
         clearGradingWatchdog();
         const active = get().queries.find((q) => q.id === queryResultId);
         if (active)
           get().updateQueryResult(queryResultId, {
-            searchStage: "complete",
+            searchStage: "error",
             pipelineStage: "idle",
+            error: error instanceof Error ? error.message : "Search failed",
           });
         set({ isSearching: false, currentSearchId: null });
+        break; // Non-retryable error — exit retry loop
+      } finally {
+        clearGradingWatchdog();
+        if (
+          activeAbortController === currentAbortController &&
+          currentAbortController?.signal.aborted
+        ) {
+          activeAbortController = null;
+        }
       }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
-      if (get().currentSearchId !== searchId) return;
-      clearGradingWatchdog();
-      const active = get().queries.find((q) => q.id === queryResultId);
-      if (active)
-        get().updateQueryResult(queryResultId, {
-          searchStage: "error",
-          pipelineStage: "idle",
-          error: error instanceof Error ? error.message : "Search failed",
-        });
-      set({ isSearching: false, currentSearchId: null });
-    } finally {
-      clearGradingWatchdog();
-      if (
-        activeAbortController === currentAbortController &&
-        currentAbortController?.signal.aborted
-      ) {
-        activeAbortController = null;
-      }
-    }
+    } // end retry loop
   },
 
   retryQuery: (queryResultId) => {

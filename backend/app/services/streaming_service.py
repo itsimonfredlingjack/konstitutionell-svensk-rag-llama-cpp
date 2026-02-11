@@ -109,11 +109,15 @@ async def stream_query(
             history=history_for_retrieval,
         )
         retrieval_ms = (time.perf_counter() - retrieval_start) * 1000
+        yield f"data: {_json({'type': 'phase', 'phase': 'retrieval_complete', 'latency_ms': retrieval_ms})}\n\n"
 
         # CRAG: Document Grading & Filtering
         sources = retrieval_result.results
         thought_chain = None
 
+        # Emit phase start for CRAG grading
+        if config.settings.crag_enabled and grader:
+            yield f"data: {_json({'type': 'phase', 'phase': 'grading_start'})}\n\n"
         if config.settings.crag_enabled and grader:
             grading_result = await grader.grade_documents(
                 query=search_query, documents=retrieval_result.results
@@ -228,9 +232,14 @@ async def stream_query(
         ]
         yield f"data: {_json({'type': 'metadata', 'mode': response_mode.value, 'sources': sources_metadata, 'search_time_ms': retrieval_ms, 'evidence_level': evidence_level.value.upper()})}\n\n"
 
+        yield f"data: {_json({'type': 'phase', 'phase': 'generation_start'})}\n\n"
+
         # Step 4: Build context and stream LLM response
         context_text = build_llm_context_fn(sources)
-        examples = await examples_task
+        try:
+            examples = await examples_task
+        except (asyncio.CancelledError, Exception):
+            examples = []
         examples_text = format_examples_fn(examples)
 
         system_prompt = build_system_prompt_fn(

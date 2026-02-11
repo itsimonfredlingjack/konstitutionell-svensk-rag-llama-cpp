@@ -1,7 +1,13 @@
 /** Pipeline step-through animation interval (ms) */
 export const STEP_TIMER_MS = 420;
 
-/** Grading stage watchdog — advance to generation if grading stalls (ms) */
+/**
+ * Grading stage watchdog — advance to generation if grading stalls (ms).
+ * Controls how long the frontend waits for a grading SSE event before
+ * assuming grading is complete and advancing the pipeline to generation.
+ * Tune this based on grading model (Qwen 0.5B) performance; increase if
+ * the model is slow or running on CPU, decrease for faster hardware.
+ */
 export const GRADING_WATCHDOG_MS = 2000;
 
 /** Default minimum visual duration per pipeline stage transition (ms) */

@@ -4,7 +4,6 @@ Wraps RetrievalOrchestrator (Phase 1-4) and provides clean interface
 """
 
 import asyncio
-import os
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -18,9 +17,6 @@ from .config_service import ConfigService, get_config_service
 from .embedding_service import get_embedding_service
 
 logger = get_logger(__name__)
-
-# RAG Similarity Threshold - Direct env var (no config dependency)
-SCORE_THRESHOLD = float(os.getenv("RAG_SIMILARITY_THRESHOLD", "0.35"))
 
 # ═════════════════════════════════════════════════════════════════════════
 # RETRIEVAL ORCHESTRATOR IMPORT (Module level for visibility in methods)
@@ -384,6 +380,7 @@ class RetrievalService(BaseService):
                     bm25_service=bm25_service,  # Hybrid search: BM25 sidecar
                     bm25_weight=self.config.rrf_bm25_weight,  # Favor exact legal terms
                     rrf_k=self.config.rrf_k,  # Lower k = top results dominate
+                    score_threshold=self.config.score_threshold,
                 )
                 logger.info(
                     f"RetrievalOrchestrator initialized (bm25_weight={self.config.rrf_bm25_weight}, "
@@ -583,13 +580,14 @@ class RetrievalService(BaseService):
                 )
 
                 # Apply similarity threshold filtering (BEFORE trimming to k)
-                qualified_results = [r for r in search_results if r.score >= SCORE_THRESHOLD]
+                threshold = self.config.score_threshold
+                qualified_results = [r for r in search_results if r.score >= threshold]
 
                 # Adaptive fallback: if all filtered out, return top 3 anyway but log warning
                 if not qualified_results and search_results:
                     qualified_results = search_results[:3]
                     logger.warning(
-                        f"All {len(search_results)} results below threshold {SCORE_THRESHOLD:.3f}. "
+                        f"All {len(search_results)} results below threshold {threshold:.3f}. "
                         f"Adaptive fallback: returning top 3 results."
                     )
 
@@ -627,8 +625,8 @@ class RetrievalService(BaseService):
         start_time = time.perf_counter()
 
         try:
-            # Generate embedding
-            query_embedding = self._embedding_service.embed_single(query)
+            # Generate embedding (async to avoid blocking the event loop)
+            query_embedding = await self._embedding_service.embed_single_async(query)
 
             all_results = []
 
@@ -710,13 +708,14 @@ class RetrievalService(BaseService):
             all_results.sort(key=lambda x: -x.score)
 
             # Apply similarity threshold filtering (BEFORE trimming to k)
-            qualified_results = [r for r in all_results if r.score >= SCORE_THRESHOLD]
+            threshold = self.config.score_threshold
+            qualified_results = [r for r in all_results if r.score >= threshold]
 
             # Adaptive fallback: if all filtered out, return top 3 anyway but log warning
             if not qualified_results and all_results:
                 qualified_results = all_results[:3]
                 logger.warning(
-                    f"All {len(all_results)} results below threshold {SCORE_THRESHOLD:.3f}. "
+                    f"All {len(all_results)} results below threshold {threshold:.3f}. "
                     f"Adaptive fallback: returning top 3 results."
                 )
 

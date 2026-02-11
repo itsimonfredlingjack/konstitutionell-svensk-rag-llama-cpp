@@ -75,6 +75,7 @@ class EvalMetrics:
     context_recall: float
     answer_relevancy: float
     latency_ms: int
+    routing_correct: bool = True  # Did intent classifier pick expected intent?
 
 
 @dataclass
@@ -117,9 +118,10 @@ class EvalReport:
 class EvalRunner:
     """Kör evaluation mot RAG-systemet"""
 
-    def __init__(self, metrics_provider: str = "lightweight"):
+    def __init__(self, metrics_provider: str = "lightweight", use_ground_truth: bool = False):
         self.metrics = get_metrics_provider(metrics_provider)
         self.client = httpx.AsyncClient(timeout=60.0)
+        self.use_ground_truth = use_ground_truth
 
     async def load_golden_set(self) -> list[dict]:
         """Ladda golden set från JSON"""
@@ -145,6 +147,7 @@ class EvalRunner:
 
         try:
             # Call search API
+            data = {}
             if not should_search:
                 # Smalltalk - ska inte trigga RAG
                 answer = "Jag hjälper dig med juridiska frågor."
@@ -171,11 +174,16 @@ class EvalRunner:
                 # Check for primary source (SFS)
                 primary_source = any(r.get("doc_type") == "sfs" for r in results)
 
-                # Simulate answer generation (i produktion: anropa agent-loop)
-                # För nu: använd ground_truth som "svar"
-                answer = data.get(
-                    "answer", ground_truth if ground_truth else "Svar baserat på källor."
-                )
+                # Use actual LLM-generated answer from API, or ground_truth in legacy mode
+                if self.use_ground_truth:
+                    answer = ground_truth if ground_truth else "Svar baserat på källor."
+                else:
+                    answer = data.get("answer", "")
+                    if not answer:
+                        logger.warning(
+                            f"{q_id}: No answer in API response, using ground_truth fallback"
+                        )
+                        answer = ground_truth if ground_truth else "Svar baserat på källor."
 
             latency_ms = int((datetime.now() - start_time).total_seconds() * 1000)
 
@@ -193,6 +201,11 @@ class EvalRunner:
             else:
                 evidence_level = "red"
 
+            # Check routing accuracy if ground truth specifies expected intent
+            expected_intent = question.get("intent", "")
+            actual_intent = data.get("intent", "")
+            routing_correct = (actual_intent == expected_intent) if actual_intent else True
+
             # Build metrics
             metrics = EvalMetrics(
                 sources_count=sources_count,
@@ -206,6 +219,7 @@ class EvalRunner:
                 context_recall=context_recall,
                 answer_relevancy=answer_relevancy,
                 latency_ms=latency_ms,
+                routing_correct=routing_correct,
             )
 
             # Determine pass/fail
@@ -439,6 +453,62 @@ def save_report(report: EvalReport, filepath: Path):
     console.print(f"\n[dim]Report saved to: {filepath}[/dim]")
 
 
+def compare_with_baseline(current: EvalReport, baseline_path: Path):
+    """Compare current results with a baseline JSON report."""
+    if not baseline_path.exists():
+        console.print(f"[red]Baseline file not found: {baseline_path}[/red]")
+        return
+
+    with open(baseline_path, encoding="utf-8") as f:
+        baseline_data = json.load(f)
+
+    # Build comparison table
+    comparison_table = Table(title="Baseline Comparison", box=box.ROUNDED)
+    comparison_table.add_column("Metric", style="cyan")
+    comparison_table.add_column("Baseline", justify="right")
+    comparison_table.add_column("Current", justify="right")
+    comparison_table.add_column("Delta", justify="right")
+    comparison_table.add_column("Status", justify="center")
+
+    metrics_to_compare = [
+        ("Pass Rate", "pass_rate"),
+        ("Faithfulness", "avg_faithfulness"),
+        ("Context Precision", "avg_context_precision"),
+        ("Context Recall", "avg_context_recall"),
+        ("Answer Relevancy", "avg_answer_relevancy"),
+    ]
+
+    regressions = []
+    for label, key in metrics_to_compare:
+        baseline_val = baseline_data.get(key, 0.0)
+        current_val = getattr(current, key, 0.0)
+        delta = current_val - baseline_val
+        delta_pct = (delta / baseline_val * 100) if baseline_val > 0 else 0
+
+        # Flag regressions > 5%
+        if delta_pct < -5:
+            status = "[red]REGRESSION[/red]"
+            regressions.append(label)
+        elif delta_pct > 5:
+            status = "[green]IMPROVED[/green]"
+        else:
+            status = "[dim]STABLE[/dim]"
+
+        comparison_table.add_row(
+            label,
+            f"{baseline_val:.3f}",
+            f"{current_val:.3f}",
+            f"{delta:+.3f} ({delta_pct:+.1f}%)",
+            status,
+        )
+
+    console.print()
+    console.print(comparison_table)
+
+    if regressions:
+        console.print(f"\n[bold red]Regressions detected in: {', '.join(regressions)}[/bold red]")
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # CLI
 # ═══════════════════════════════════════════════════════════════════════════
@@ -456,16 +526,27 @@ async def main():
     )
     parser.add_argument("--compare", type=str, help="Compare with baseline JSON")
     parser.add_argument("--output", type=str, help="Output file (default: auto-generated)")
+    parser.add_argument(
+        "--use-ground-truth",
+        action="store_true",
+        help="Use ground truth instead of generated answers (legacy mode)",
+    )
 
     args = parser.parse_args()
 
     # Initialize runner
     try:
-        runner = EvalRunner(metrics_provider=args.provider)
+        runner = EvalRunner(
+            metrics_provider=args.provider,
+            use_ground_truth=args.use_ground_truth,
+        )
     except RuntimeError as e:
         console.print(f"[red]Error:[/red] {e}")
         console.print("[yellow]Falling back to lightweight provider...[/yellow]")
-        runner = EvalRunner(metrics_provider="lightweight")
+        runner = EvalRunner(
+            metrics_provider="lightweight",
+            use_ground_truth=args.use_ground_truth,
+        )
 
     # Load golden set
     questions = await runner.load_golden_set()
@@ -498,8 +579,7 @@ async def main():
 
     # Compare with baseline
     if args.compare:
-        # TODO: Implement comparison logic
-        console.print("\n[yellow]Comparison with baseline not yet implemented[/yellow]")
+        compare_with_baseline(report, Path(args.compare))
 
     # Cleanup
     await runner.close()

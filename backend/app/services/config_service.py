@@ -89,6 +89,14 @@ class ConfigSettings(BaseSettings):
     max_search_limit: int = 100
     search_timeout: float = 5.0
 
+    # RAG Similarity Threshold (replaces RAG_SIMILARITY_THRESHOLD env var)
+    score_threshold: float = 0.35
+
+    # Per-collection retrieval timeouts (seconds)
+    retrieval_timeout_default: float = 5.0
+    retrieval_timeout_sfs: float = 3.0
+    retrieval_timeout_diva: float = 8.0
+
     # Parallel Search
     parallel_search_enabled: bool = True
     parallel_search_timeout: float = 5.0
@@ -336,6 +344,30 @@ class ConfigService:
     @property
     def rrf_k(self) -> float:
         return self._settings.rrf_k
+
+    @property
+    def score_threshold(self) -> float:
+        return self._settings.score_threshold
+
+    @property
+    def retrieval_timeout_default(self) -> float:
+        return self._settings.retrieval_timeout_default
+
+    @property
+    def retrieval_timeout_sfs(self) -> float:
+        return self._settings.retrieval_timeout_sfs
+
+    @property
+    def retrieval_timeout_diva(self) -> float:
+        return self._settings.retrieval_timeout_diva
+
+    def get_collection_timeout(self, collection_name: str) -> float:
+        """Get timeout for a specific collection based on its name."""
+        if "sfs" in collection_name:
+            return self._settings.retrieval_timeout_sfs
+        elif "diva" in collection_name:
+            return self._settings.retrieval_timeout_diva
+        return self._settings.retrieval_timeout_default
 
     def get_mode_config(self, mode: str) -> dict:
         """

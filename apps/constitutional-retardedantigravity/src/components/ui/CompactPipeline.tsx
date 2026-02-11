@@ -17,6 +17,7 @@ import {
 import clsx from "clsx";
 import type { QueryResult } from "../../types/queryResult";
 import type { PipelineStage } from "../../stores/useAppStore";
+import { EVIDENCE_COLORS, DEFAULT_STAGE_COLORS } from "../../theme/colors";
 
 const stages: { id: PipelineStage; label: string; icon: LucideIcon }[] = [
     { id: "query_classification", label: "Tolka", icon: Brain },
@@ -43,11 +44,18 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
     // Track which stage is selected for detailed view. Null means default view (all/recent logs).
     const [activeDetailStage, setActiveDetailStage] = useState<PipelineStage | null>(null);
 
-    const { searchStage, pipelineStage, pipelineLog, error } = queryResult;
+    const { searchStage, pipelineStage, pipelineLog, error, evidenceLevel } = queryResult;
 
     const isIdle = searchStage === "idle";
     const isComplete = searchStage === "complete";
     const isError = searchStage === "error";
+
+    // Resolve accent colors based on evidence level
+    const stageColors = useMemo(() => {
+        const level = evidenceLevel as keyof typeof EVIDENCE_COLORS | null;
+        if (level && EVIDENCE_COLORS[level]) return EVIDENCE_COLORS[level];
+        return DEFAULT_STAGE_COLORS;
+    }, [evidenceLevel]);
 
     // Calculate actual stage index from backend
     const actualStageIndex = useMemo(() => {
@@ -199,16 +207,16 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                     initial={false}
                                     animate={{
                                         backgroundColor: isDone
-                                            ? "rgba(15, 118, 110, 0.15)"
+                                            ? stageColors.bgRgba
                                             : isCurrent && !isFailed
                                                 ? "rgba(250, 250, 249, 1)"
                                                 : isFailed
                                                     ? "rgba(254, 242, 242, 1)"
                                                     : "rgba(231, 229, 228, 0.5)",
                                         borderColor: isDone
-                                            ? "rgba(15, 118, 110, 0.4)"
+                                            ? stageColors.borderRgba
                                             : isCurrent && !isFailed
-                                                ? "rgba(15, 118, 110, 0.6)"
+                                                ? stageColors.activeRgba
                                                 : isFailed
                                                     ? "rgba(239, 68, 68, 0.5)"
                                                     : "rgba(168, 162, 158, 0.4)",
@@ -225,7 +233,7 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                                 transition={{ duration: 0.2 }}
                                             >
                                                 <Check
-                                                    className="w-3 h-3 text-teal-700"
+                                                    className={clsx("w-3 h-3", stageColors.text)}
                                                     strokeWidth={2.5}
                                                 />
                                             </motion.div>
@@ -249,7 +257,7 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                                 transition={{ duration: 0.2 }}
                                             >
                                                 <Loader2
-                                                    className="w-3 h-3 text-teal-700 animate-spin"
+                                                    className={clsx("w-3 h-3 animate-spin", stageColors.text)}
                                                     strokeWidth={2}
                                                 />
                                             </motion.div>
@@ -271,7 +279,7 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                     className={clsx(
                                         "text-[9px] font-mono uppercase tracking-wide transition-colors duration-300",
                                         isDone
-                                            ? "text-teal-700"
+                                            ? stageColors.text
                                             : isCurrent
                                                 ? "text-stone-700 font-semibold"
                                                 : "text-text-muted group-hover:text-stone-600"
@@ -301,7 +309,7 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                             runState === "error"
                                 ? "text-red-600"
                                 : runState === "complete"
-                                    ? "text-teal-700"
+                                    ? stageColors.text
                                     : "text-text-muted"
                         )}
                     >

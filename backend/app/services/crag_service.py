@@ -114,6 +114,63 @@ async def process_crag_grading(
         relevant_count = 0
         sources = []
 
+    # Early return when EVIDENCE mode has no relevant sources after grading
+    if not sources and resolved_mode == ResponseMode.EVIDENCE:
+        reasoning_steps.append(
+            "CRAG: No relevant documents, EVIDENCE mode requires sources - early return"
+        )
+        total_ms = (time.perf_counter() - start_time) * 1000
+        metrics = RAGPipelineMetrics(
+            query_classification_ms=query_classification_ms,
+            decontextualization_ms=decontextualization_ms,
+            retrieval_ms=retrieval_ms,
+            grade_ms=grade_ms,
+            self_reflection_ms=0.0,
+            total_pipeline_ms=total_ms,
+            mode=resolved_mode.value,
+            sources_count=0,
+            tokens_generated=0,
+            corrections_count=0,
+            retrieval_strategy=retrieval_result.metrics.strategy,
+            retrieval_results_count=len(retrieval_result.results),
+            top_relevance_score=retrieval_result.metrics.top_score,
+            guardrail_status="unchanged",
+            evidence_level="NONE",
+            model_used="",
+            llm_latency_ms=0.0,
+            parse_errors=False,
+            structured_output_enabled=config.structured_output_effective_enabled,
+            critic_revision_count=0,
+            critic_ms=0.0,
+            critic_ok=False,
+            crag_enabled=True,
+            grade_count=grade_count,
+            relevant_count=0,
+            self_reflection_used=False,
+            rewrite_count=0,
+        )
+
+        return CragResult(
+            sources=[],
+            grade_ms=grade_ms,
+            grade_count=grade_count,
+            relevant_count=0,
+            self_reflection_ms=0.0,
+            thought_chain=None,
+            rewrite_count=0,
+            early_return=True,
+            result=RAGResult(
+                answer=ResponseTemplates.EVIDENCE_REFUSAL,
+                sources=[],
+                reasoning_steps=reasoning_steps,
+                metrics=metrics,
+                mode=resolved_mode,
+                guardrail_status=WardenStatus.UNCHANGED,
+                evidence_level="NONE",
+                success=True,
+            ),
+        )
+
     # Self-Reflection (Chain of Thought) before generation
     if sources and config.settings.crag_enable_self_reflection and critic:
         reflection_start = time.perf_counter()

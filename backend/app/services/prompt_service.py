@@ -19,26 +19,44 @@ logger = get_logger(__name__)
 
 # ── Source Context Formatting ───────────────────────────────────────
 
+# Reserve ~8K for system prompt + response in 32K context window
+MAX_CONTEXT_TOKENS = 24_000
+
 
 def build_llm_context(sources: List[SearchResult]) -> str:
     """
     Build LLM context from retrieved sources.
 
     Formats sources with metadata and relevance scores.
+    Truncates when approximate token count exceeds MAX_CONTEXT_TOKENS.
     """
     if not sources:
         return "Inga relevanta källor hittades i korpusen."
 
     context_parts = []
+    estimated_tokens = 0
+
     for i, source in enumerate(sources, 1):
         doc_type = source.doc_type or "okänt"
         score = source.score
         priority_marker = "⭐ PRIORITET (SFS)" if doc_type == "sfs" else f"Typ: {doc_type.upper()}"
 
-        context_parts.append(
+        part = (
             f"[Källa {i}: {source.title}] {priority_marker} | Relevans: {score:.2f}\n"
             f"{source.snippet}"
         )
+        part_tokens = len(part) // 4  # rough chars-to-tokens estimate
+
+        if estimated_tokens + part_tokens > MAX_CONTEXT_TOKENS:
+            dropped_count = len(sources) - i + 1
+            logger.warning(
+                f"Context truncated: dropped {dropped_count} sources "
+                f"(~{estimated_tokens} tokens, limit {MAX_CONTEXT_TOKENS})"
+            )
+            break
+
+        context_parts.append(part)
+        estimated_tokens += part_tokens
 
     return "\n\n".join(context_parts)
 
@@ -115,7 +133,7 @@ async def retrieve_constitutional_examples(
             return []
 
         embedding_service = get_embedding_service(config)
-        query_embedding = embedding_service.embed_single(query)
+        query_embedding = await embedding_service.embed_single_async(query)
 
         results = collection.query(
             query_embeddings=[query_embedding],
