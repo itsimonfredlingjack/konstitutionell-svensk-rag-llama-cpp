@@ -97,7 +97,7 @@ Svar: "Beslut överklagas genom förvaltningsbesvär..."
 
 ### Struktur
 
-20 frågor (P0) → 50 frågor (P1) fördelade på:
+55 frågor fördelade på 7 kategorier:
 
 | Kategori | Antal | Beskrivning |
 |----------|-------|-------------|
@@ -105,6 +105,10 @@ Svar: "Beslut överklagas genom förvaltningsbesvär..."
 | **PRAXIS** | 6 | Myndighetspraktik, kan vara sekundärkällor |
 | **EDGE_CASES** | 4 | Förkortningar, felstavningar, förtydliganden |
 | **SMALLTALK** | 2 | Ska INTE trigga RAG |
+| **DIVA_FORSKNING** | 12 | Forskningsfrågor mot DiVA-akademiska källor |
+| **KORSKOLLEKTION** | 8 | Kräver både lag + forskning (cross-collection) |
+| **KOMMUN_JURIDIK** | 10 | Kommunallagen (2017:725): självstyre, nämnder, revision |
+| **TEMPORALA_FRAGOR** | 5 | Lagändringar över tid, ikraftträdanden |
 
 ### Exempel-fråga
 
@@ -135,13 +139,13 @@ constitutional eval --quick
 - RAGAS-mått
 - Sparar resultat till `eval/results/`
 
-### Full Test (5 min)
+### Full Test (10 min)
 
 ```bash
 constitutional eval --full
 ```
 
-- 20 frågor
+- 55 frågor (alla kategorier)
 - Komplett RAGAS-analys
 - Jämförelse per intent-kategori
 
@@ -328,9 +332,11 @@ systemctl --user restart constitutional-ai-backend
 - [x] CLI-kommando
 - [x] Console output
 
-### P1 (Nästa)
-- [ ] Utöka till 50 frågor
-- [ ] Baseline-jämförelse
+### P1 (Klart)
+- [x] Utöka till 55 frågor (DiVA, cross-collection, kommun, temporal)
+- [x] Retrieval quality evaluation suite
+- [x] Chunk quality analysis
+- [ ] Baseline-jämförelse (automatiserad)
 - [ ] Regression detection
 - [ ] CI/CD-integration
 

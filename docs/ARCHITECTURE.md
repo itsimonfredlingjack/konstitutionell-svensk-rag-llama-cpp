@@ -3,8 +3,8 @@
 **Project**: Swedish Government Document Retrieval Augmented Generation (RAG) System  
 **Framework**: FastAPI 0.109+ (Python 3.12) backend + React 19 + TypeScript frontend  
 **Location**: `/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/`  
-**Last Updated**: 2026-02-07  
-**Version**: 1.0
+**Last Updated**: 2026-02-11
+**Version**: 1.1
 
 ---
 
@@ -131,7 +131,7 @@ Frontend displays results
 
 ## Backend Service Architecture
 
-### Overview: 29 Services, 13,274 Lines of Code
+### Overview: 30 Services
 
 #### Core Orchestration Services
 
@@ -177,8 +177,8 @@ Frontend displays results
 | Service | Lines | Purpose |
 |---------|-------|---------|
 | **query_processor_service.py** | 529 | Query classification and decontextualization |
-| **intent_classifier.py** | 403 | Intent routing (legal_text, policy_args, etc.) |
-| **intent_routing.py** | 170 | Router dispatcher |
+| **intent_classifier.py** | 403 | Intent classification (16 research patterns, 9 intent types) |
+| **intent_routing.py** | 170 | EPR two-pass routing with DiVA secondary budget |
 
 #### Configuration & Utilities
 
@@ -202,13 +202,15 @@ Frontend displays results
 #### Phase 1: Query Classification
 
 QueryProcessorService.classify_query() detects intent:
-- PARLIAMENT_TRACE: Tracking parliamentary decisions
-- POLICY_ARGUMENTS: Political argument analysis
-- RESEARCH_SYNTHESIS: Research synthesis
-- LEGAL_TEXT: Quoting law text
-- PRACTICAL_PROCESS: Step-by-step procedures
-- LEGAL_PRINCIPLE: General principles
-- COMPARATIVE_LAW: Comparing jurisdictions
+- LEGAL_TEXT: Quoting law text (routes to SFS primary)
+- PARLIAMENT_TRACE: Parliamentary decisions (routes to riksdag + DiVA secondary)
+- POLICY_ARGUMENTS: Political argument analysis (routes to riksdag + DiVA secondary)
+- RESEARCH_SYNTHESIS: Research synthesis (routes to DiVA primary)
+- PRACTICAL_PROCESS: Step-by-step procedures (routes to procedural guides + SFS)
+- EDGE_ABBREVIATION: Law abbreviations (RF 2:1 → RF 2 kap. 1 §)
+- EDGE_CLARIFICATION: Disambiguation queries
+- SMALLTALK: Greetings, off-topic (no retrieval)
+- UNKNOWN: Fallback (all collections + DiVA secondary)
 
 #### Phase 2: Decontextualization
 
@@ -218,9 +220,14 @@ Removes pronouns and implicit context to create standalone search query.
 
 RetrievalOrchestrator executes selected strategy:
 - **Parallel V1**: Parallel dense + BM25 search, deduplicate and rank
-- **RAG Fusion**: Query expansion (3-5 variants), parallel search, RRF fusion
+- **RAG Fusion**: Query expansion (3-5 variants), parallel search, RRF fusion. BM25 runs in parallel with dense embedding via `asyncio.gather()`.
 - **Rewrite V1**: Detect complexity, rewrite if needed, fuse results
-- **Adaptive**: Select strategy by intent, apply routing to collections
+- **Adaptive**: Confidence-based escalation (A→B→C→D) with RAG Fusion
+- **EPR Two-Pass**: Intent-based routing with primary/secondary collections and DiVA budget
+
+Latency optimizations:
+- Example retrieval prefetched during retrieval via `asyncio.ensure_future()`
+- BM25 parallelized with dense embedding (saves ~100-150ms per query)
 
 #### Phase 4: CRAG Grading & Reflection
 
@@ -338,24 +345,26 @@ Return Swedish refusal: "Tyvärr kan jag inte besvara denna fråga utifrån de d
 
 ChromaDB stores all Swedish government documents embedded with BGE-M3 multi-lingual embeddings.
 
-### Default Collections
+### Collections (all suffixed `_bge_m3_1024`)
 
-| Collection | Purpose | Documents | Metadata Fields |
-|-----------|---------|-----------|-----------------|
-| **sfs** | Swedish laws (Författningssamling) | 2,847 | year, chapter, paragraph, section |
-| **prop** | Government propositions | 1,234 | year, session, prop_number |
-| **bet** | Parliamentary committee reports | 856 | year, session, committee |
-| **motion** | Parliamentary motions | 1,203 | year, session, mover |
-| **research** | Academic research papers | 2,094 | year, author, title, institution |
+| Collection | Purpose | Documents |
+|-----------|---------|-----------|
+| **swedish_gov_docs** | Government documents (myndigheter, propositioner) | ~304K |
+| **riksdag_documents_p1** | Parliamentary documents (motioner, betänkanden) | ~230K |
+| **sfs_lagtext** | Swedish law text (Författningssamling) | ~4K |
+| **procedural_guides** | Process guides for citizens | ~100 |
+| **diva_research** | DiVA academic research papers | ~829K |
+
+**Total**: 1.37M+ documents (538K legal/government + 829K DiVA research)
 
 ### Embedding Details
 
-- **Model**: BGE-M3 (Alibaba) v2 or v3
-- **Dimension**: 1024 (dense) + sparse vectors
+- **Model**: BAAI/bge-m3
+- **Dimension**: 1024
 - **Languages**: 100+ including Swedish
 - **Metric**: Cosine similarity
-- **Threshold**: >= 0.5 (configurable)
-- **Storage**: Disk-backed (SQLite + parquet)
+- **Reranker**: BAAI/bge-reranker-v2-m3 (cross-encoder)
+- **Storage**: ~37GB disk-backed (SQLite + parquet)
 
 ---
 
@@ -592,6 +601,6 @@ Docker Compose or Systemd services (see docker-compose.yml, systemd/)
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-02-07  
-**Author**: Claude Code - Explorer Agent (Sprint 3, Task #6)
+**Document Version**: 1.1
+**Last Updated**: 2026-02-11
+**Author**: Claude Code
