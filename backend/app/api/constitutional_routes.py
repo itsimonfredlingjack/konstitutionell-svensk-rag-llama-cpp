@@ -13,14 +13,13 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 # Import services
+from ..core.rate_limiter import limiter
 from ..services.orchestrator_service import OrchestratorService, get_orchestrator_service
 from ..services.rag_models import RAGResult
-from ..services.retrieval_service import RetrievalStrategy, get_retrieval_service
+from ..services.retrieval_service import RetrievalStrategy
 
 router = APIRouter(prefix="/api/constitutional", tags=["constitutional"])
 logger = logging.getLogger(__name__)
-
-from ..core.rate_limiter import limiter
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -199,6 +198,7 @@ def _sanitize_answer(
 ) -> tuple[str, bool, bool]:
     """
     Sanitize answer to avoid leaking structured JSON or internal fields.
+    If the answer is structured JSON with a "svar" field, extract it.
 
     Returns:
         (sanitized_answer, saknas_underlag_override, was_sanitized)
@@ -210,6 +210,18 @@ def _sanitize_answer(
     contains_internal = "arbetsanteckning" in answer or "fakta_utan_kalla" in answer
 
     if looks_like_json or contains_internal:
+        # Try to extract "svar" from the structured JSON before discarding
+        import json as _json
+
+        try:
+            parsed = _json.loads(answer.strip())
+            svar = parsed.get("svar", "").strip()
+            if svar and len(svar) > 20:
+                # Successfully extracted answer from leaked JSON
+                return svar, parsed.get("saknas_underlag", False), False
+        except (ValueError, TypeError, AttributeError):
+            pass
+
         if mode_value == "evidence":
             return refusal_text, True, True
         return safe_fallback, False, True
@@ -527,7 +539,7 @@ async def agent_query(
         if mode_value == "evidence" and saknas_underlag:
             sources = []
         if was_sanitized and mode_value == "assist":
-            sources = []
+            pass  # Preserve retrieved sources even when answer is sanitized
 
         # Convert to response format (no internal fields)
         return AgentQueryResponse(

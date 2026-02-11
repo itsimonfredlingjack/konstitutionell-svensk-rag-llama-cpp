@@ -175,7 +175,6 @@ async def _parse_with_retry(
         return data, False, full_answer
 
     # Attempt 1 failed
-    parse_errors = True
     reasoning_steps.append(f"Structured output validation: FAILED attempt 1 ({err})")
     logger.warning(f"Structured output attempt 1 failed: {err}")
 
@@ -222,7 +221,7 @@ async def _parse_with_retry(
             reformat_answer = ""
             async for token, _ in llm_service.chat_stream(
                 messages=reformat_messages,
-                config_override={"temperature": 0.0, "num_predict": 1024},
+                config_override={"temperature": 0.0, "num_predict": 2048},
             ):
                 reformat_answer += token
 
