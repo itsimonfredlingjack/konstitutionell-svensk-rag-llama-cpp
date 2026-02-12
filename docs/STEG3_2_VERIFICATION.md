@@ -8,7 +8,7 @@
 ## ✅ Checklista - Allt Uppfyllt
 
 ### 1. retrieve_node
-- ✅ **Funktionalitet**: Anropar vektordatabasen (BGE-M3) via RetrievalService
+- ✅ **Funktionalitet**: Anropar vektordatabasen (Jina v3) via RetrievalService
 - ✅ **Return**: `{'documents': docs}` - Lista av Document-objekt
 - ✅ **Integration**: Använder RetrievalStrategy.PARALLEL_V1
 - ✅ **Error handling**: Returnerar tom lista vid fel

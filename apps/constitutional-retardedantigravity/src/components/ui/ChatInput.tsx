@@ -94,8 +94,10 @@ export const ChatInput: React.FC = () => {
                                 key={mode.id}
                                 type="button"
                                 onClick={() => setActiveMode(mode.id)}
+                                aria-label={mode.label}
+                                aria-pressed={isActive}
                                 className={clsx(
-                                    "w-9 h-9 rounded-xl flex items-center justify-center",
+                                    "min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center",
                                     "border transition-all duration-200",
                                     isActive
                                         ? "bg-teal-700 border-teal-700 text-white shadow-sm"
@@ -149,7 +151,7 @@ export const ChatInput: React.FC = () => {
                     disabled={isSearching}
                     aria-label="Skicka"
                     className={clsx(
-                        "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                        "min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center flex-shrink-0",
                         "transition-all duration-200",
                         !isSearching
                             ? "bg-teal-700 text-white hover:bg-teal-800 shadow-sm"
@@ -168,8 +170,9 @@ export const ChatInput: React.FC = () => {
                             exit={{ opacity: 0, scale: 0.8 }}
                             type="button"
                             onClick={handleNewConversation}
+                            aria-label="Ny konversation"
                             className={clsx(
-                                "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                                "min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center flex-shrink-0",
                                 "border border-stone-300/60 bg-stone-100",
                                 "text-stone-500 hover:text-stone-700 hover:bg-stone-200/70",
                                 "transition-all duration-200"

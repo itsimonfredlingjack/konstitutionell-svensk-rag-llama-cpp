@@ -217,7 +217,7 @@ async def test_process_query_security_block(mock_orchestrator, mock_guardrail_se
     # Orchestrator catches the exception and returns a failed result
     assert result.success is False
     assert (
-        "sakerhetsskal" in (result.error or "").lower()
+        "säkerhetsskäl" in (result.error or "").lower()
         or "security" in (result.error or "").lower()
     )
 

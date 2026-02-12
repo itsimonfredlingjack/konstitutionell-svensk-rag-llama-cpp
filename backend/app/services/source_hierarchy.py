@@ -17,13 +17,13 @@ class SourceTier(IntEnum):
 
 COLLECTION_TIERS: Dict[str, SourceTier] = {
     # Tier A - Normative/Primary
-    "sfs_lagtext_bge_m3_1024": SourceTier.A,
-    "riksdag_documents_p1_bge_m3_1024": SourceTier.A,
+    "sfs_lagtext_jina_v3_1024": SourceTier.A,
+    "riksdag_documents_p1_jina_v3_1024": SourceTier.A,
     # Tier B - Political Signal
-    "swedish_gov_docs_bge_m3_1024": SourceTier.B,
-    "procedural_guides_bge_m3_1024": SourceTier.B,
+    "swedish_gov_docs_jina_v3_1024": SourceTier.B,
+    "procedural_guides_jina_v3_1024": SourceTier.B,
     # Tier C - Context/Research
-    "diva_research_bge_m3_1024": SourceTier.C,
+    "diva_research_jina_v3_1024": SourceTier.C,
 }
 
 

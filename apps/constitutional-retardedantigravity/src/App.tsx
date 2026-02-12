@@ -94,8 +94,13 @@ function App() {
             />
             <AmberLight />
 
-            <Suspense fallback={null}>
-              <Substrate />
+            <Suspense fallback={
+              <mesh position={[0, 0, 0]}>
+                <planeGeometry args={[20, 20]} />
+                <meshBasicMaterial color={COLORS.background} transparent opacity={0.5} />
+              </mesh>
+            }>
+              <Substrate reducedParticles={!isHighPerformance} />
 
               {/* 3D Source Visualization (Left side) */}
               <SourceViewer3D />
@@ -114,7 +119,7 @@ function App() {
               />
               <Vignette eskil={false} offset={0.1} darkness={0.4} />
               {isHighPerformance ? <Noise opacity={0.01} /> : <></>}
-              <TiltShift2 blur={0.05} />
+              {isHighPerformance ? <TiltShift2 blur={0.05} /> : <></>}
             </EffectComposer>
           </Canvas>
         </ErrorBoundary>

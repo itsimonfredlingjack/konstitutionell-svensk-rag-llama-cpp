@@ -96,6 +96,7 @@ class _StreamFixture:
         validation.corrections = []
         validation.corrected_text = ""
         self.guardrail.validate_response.return_value = validation
+        self.guardrail.check_output_leakage.return_value = ("", [])
 
         # LLM service
         self.llm_service = AsyncMock()

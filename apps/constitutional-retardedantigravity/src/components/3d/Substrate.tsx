@@ -26,13 +26,18 @@ function generateSpherePoints(count: number, radius: number): Float32Array {
     return points;
 }
 
-export function Substrate() {
+interface SubstrateProps {
+    reducedParticles?: boolean;
+}
+
+export function Substrate({ reducedParticles = false }: SubstrateProps) {
     const ref = useRef<THREE.Points>(null);
 
     // Generate subtle tech particles (not snow!)
     const sphere = useMemo(() => {
-        return generateSpherePoints(800, 25); // Much fewer particles
-    }, []);
+        const count = reducedParticles ? 400 : 800;
+        return generateSpherePoints(count, 25);
+    }, [reducedParticles]);
 
     useFrame((state, delta) => {
         if (ref.current) {

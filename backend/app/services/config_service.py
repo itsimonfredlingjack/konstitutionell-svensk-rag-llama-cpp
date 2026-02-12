@@ -39,8 +39,6 @@ class ConfigSettings(BaseSettings):
     pdf_cache_path: str = "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/pdf_cache"
 
     # Collections
-    # NOTE: Embedding switch to BGE-M3 (1024 dim) requires re-indexing.
-    # Use new collection names to avoid dimension-mismatch crashes against legacy 768-dim collections.
     default_collections: list[str] = [
         "sfs_lagtext",
         "riksdag_documents_p1",
@@ -49,15 +47,18 @@ class ConfigSettings(BaseSettings):
         "procedural_guides",
     ]
 
-    # Embedding Model (BGE-M3, 1024 dim) - requires re-indexing
-    embedding_model: str = "BAAI/bge-m3"
+    # Embedding Model (Jina v3, 1024 dim, asymmetric encoding)
+    # TODO(re-index): ALL ChromaDB collections must be re-indexed with Jina v3
+    # embed_document() before queries work. Old _bge_m3_1024 collections are
+    # incompatible — different vector space despite same dimensions.
+    embedding_model: str = "jinaai/jina-embeddings-v3"
     expected_embedding_dim: int = 1024
-    embedding_collection_suffix: str = "_bge_m3_1024"
+    embedding_collection_suffix: str = "_jina_v3_1024"
 
     # LLM Configuration (Constitutional AI)
-    constitutional_model: str = "Mistral-Nemo-Instruct-2407-Q5_K_M.gguf"
+    constitutional_model: str = "Ministral-3-14B-Instruct-2512-Q4_K_M.gguf"
     # Intentionally same as primary — no separate fallback model downloaded
-    constitutional_fallback: str = "Mistral-Nemo-Instruct-2407-Q5_K_M.gguf"
+    constitutional_fallback: str = "Ministral-3-14B-Instruct-2512-Q4_K_M.gguf"
     llm_timeout: float = 60.0
 
     # LLM Base URL (OpenAI-compatible llama-server)
@@ -65,8 +66,8 @@ class ConfigSettings(BaseSettings):
     llama_server_base_url: str = "http://localhost:8080/v1"
     llama_server_enabled: bool = True
     llama_server_timeout: float = 120.0
-    gguf_primary_model: str = "Mistral-Nemo-Instruct-2407-Q5_K_M.gguf"
-    gguf_context_window: int = 32768
+    gguf_primary_model: str = "Ministral-3-14B-Instruct-2512-Q4_K_M.gguf"
+    gguf_context_window: int = 8192
 
     # Response Modes
     mode_evidence_temperature: float = 0.15
@@ -102,8 +103,8 @@ class ConfigSettings(BaseSettings):
     parallel_search_timeout: float = 5.0
     max_concurrent_queries: int = 3
 
-    # Reranking (BGE)
-    reranking_model: str = "BAAI/bge-reranker-v2-m3"
+    # Reranking (Jina)
+    reranking_model: str = "jinaai/jina-reranker-v2-base-multilingual"
     reranking_enabled: bool = True
     reranking_top_k: int = 10
     reranking_score_threshold: float = 0.1  # Filter docs below this reranker score
@@ -173,7 +174,9 @@ class ConfigSettings(BaseSettings):
     crag_enabled: bool = True  # Enabled - filters irrelevant docs before LLM generation
     crag_grade_threshold: float = 0.15  # Relevance threshold (lowered for better edge-case recall)
     crag_max_rewrite_attempts: int = 2  # Max query rewrite attempts if no relevant docs
-    crag_grader_model: str = "Qwen2.5-0.5B-Instruct-Q5_K_M.gguf"  # Lightweight model for grading
+    crag_grader_model: str = (
+        "Ministral-3-14B-Instruct-2512-Q4_K_M.gguf"  # Same as primary — single model setup
+    )
     crag_enable_self_reflection: bool = False  # Chain of Thought before answering
     crag_max_concurrent_grading: int = 5  # Max parallel document grading
     crag_grade_timeout: float = 10.0  # Timeout per document grading in seconds

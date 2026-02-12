@@ -307,7 +307,7 @@ class RetrievalService(BaseService):
             if actual_dim != expected_dim:
                 raise RuntimeError(
                     f"FATAL: Query embedder dimension mismatch! "
-                    f"Expected {expected_dim} (BGE-M3), got {actual_dim}. "
+                    f"Expected {expected_dim} (Jina v3), got {actual_dim}. "
                     f"Query embedder must match collection embedding dimension. "
                     f"Fix: Update embedding_model in config to match migrated collections."
                 )
@@ -321,7 +321,7 @@ class RetrievalService(BaseService):
                 missing = sorted(list(expected - existing))
                 if missing:
                     logger.warning(
-                        "Embedding dimension is 1024 (BGE-M3) but expected Chroma collections are missing. "
+                        "Embedding dimension is 1024 (Jina v3) but expected Chroma collections are missing. "
                         "Search will return empty results until re-indexing is completed. "
                         f"Missing collections: {missing}"
                     )
@@ -372,7 +372,7 @@ class RetrievalService(BaseService):
 
                 self._orchestrator = self.RetrievalOrchestrator(
                     chromadb_client=self._chromadb_client,
-                    embedding_function=self._embedding_service.embed,
+                    embedding_function=self._embedding_service.embed_query,
                     default_timeout=self.config.search_timeout,
                     query_rewriter=query_rewriter,  # Aktiverar förkortningsexpansion
                     query_expander=None,  # Will be added separately

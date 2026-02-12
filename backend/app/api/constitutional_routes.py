@@ -5,6 +5,8 @@ Refactored with Service Layer Architecture
 
 import asyncio
 import logging
+import time
+from collections import defaultdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -20,6 +22,39 @@ from ..services.retrieval_service import RetrievalStrategy
 
 router = APIRouter(prefix="/api/constitutional", tags=["constitutional"])
 logger = logging.getLogger(__name__)
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# SECURITY VIOLATION RATE LIMITING
+# ═════════════════════════════════════════════════════════════════════════
+
+_security_violations: dict[str, list[float]] = defaultdict(list)
+_ip_bans: dict[str, float] = {}
+
+SECURITY_VIOLATION_LIMIT = 3
+SECURITY_VIOLATION_WINDOW = 300  # 5 minutes
+SECURITY_BAN_DURATION = 900  # 15 minutes
+
+
+def check_security_ban(ip: str) -> bool:
+    """Check if IP is banned due to repeated security violations."""
+    now = time.time()
+    if ip in _ip_bans:
+        if now < _ip_bans[ip]:
+            return True
+        del _ip_bans[ip]
+    if ip in _security_violations:
+        recent = [t for t in _security_violations[ip] if now - t < SECURITY_VIOLATION_WINDOW]
+        _security_violations[ip] = recent
+        if len(recent) >= SECURITY_VIOLATION_LIMIT:
+            _ip_bans[ip] = now + SECURITY_BAN_DURATION
+            return True
+    return False
+
+
+def record_security_violation(ip: str) -> None:
+    """Record a security violation for an IP address."""
+    _security_violations[ip].append(time.time())
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -467,6 +502,18 @@ async def agent_query(
     Full agentic RAG pipeline using OrchestratorService.
     """
     try:
+        # Security ban check
+        client_ip = request.client.host if request.client else "unknown"
+        if check_security_ban(client_ip):
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "detail": "För många säkerhetsöverträdelser. Försök igen senare.",
+                },
+            )
+
         # Map header to RetrievalStrategy
         strategy_map = {
             "parallel_v1": RetrievalStrategy.PARALLEL_V1,
@@ -541,6 +588,10 @@ async def agent_query(
         if was_sanitized and mode_value == "assist":
             pass  # Preserve retrieved sources even when answer is sanitized
 
+        # Record security violations for rate limiting
+        if not result.success and result.error and "security" in result.error.lower():
+            record_security_violation(client_ip)
+
         # Convert to response format (no internal fields)
         return AgentQueryResponse(
             answer=answer,
@@ -590,6 +641,20 @@ async def agent_query_stream(
 
     Frontend should use EventSource or fetch with streaming body.
     """
+
+    # Security ban check
+    client_ip = request.client.host if request.client else "unknown"
+    if check_security_ban(client_ip):
+        import json
+
+        async def banned_response():
+            yield f"data: {json.dumps({'type': 'error', 'error': 'För många säkerhetsöverträdelser. Försök igen senare.'})}\n\n"
+
+        return StreamingResponse(
+            banned_response(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+        )
 
     # Map header to RetrievalStrategy
     strategy_map = {

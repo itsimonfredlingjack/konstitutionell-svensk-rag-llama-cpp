@@ -14,13 +14,13 @@
 - ✅ Delar upp i chunks (~500 tokens)
 - ✅ Genererar kontextsammanfattning för varje chunk via LLM
 - ✅ Prependar sammanfattningen till chunken: `[KONTEXT] {summary}\n\n[TEXT] {original_chunk}`
-- ✅ Embeddar den berikade texten med BGE-M3
+- ✅ Embeddar den berikade texten med Jina v3
 - ✅ Sparar originaltexten i metadata (`page_content`)
 
 **Metoder**:
 - `process_document()`: Processerar dokument och genererar contextual chunks
 - `_generate_context_summary()`: Anropar LLM för kontextsammanfattning
-- `embed_chunks()`: Embeddar chunks med BGE-M3
+- `embed_chunks()`: Embeddar chunks med Jina v3
 - `process_and_embed()`: Komplett pipeline
 
 ### 2. ContextualChromaDBIndexer (`indexers/contextual_chromadb_indexer.py`)
@@ -47,7 +47,7 @@
 from contextual_chromadb_indexer import ContextualChromaDBIndexer
 
 indexer = ContextualChromaDBIndexer(
-    collection_name="swedish_gov_docs_bge_m3_1024"
+    collection_name="swedish_gov_docs_jina_v3_1024"
 )
 
 result = await indexer.index_document(
@@ -96,7 +96,7 @@ print(f"Indexed {result['total_chunks_indexed']} chunks from {result['documents_
 - **Konvertering**: ~4 chars/token för svensk text
 
 ### Embedding
-- **Model**: BGE-M3 (BAAI/bge-m3)
+- **Model**: Jina v3 (jinaai/jina-embeddings-v3)
 - **Dimension**: 1024
 - **Device**: CPU (för att spara VRAM för LLM)
 

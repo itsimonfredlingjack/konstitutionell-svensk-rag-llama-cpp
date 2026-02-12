@@ -37,7 +37,6 @@ from .confidence_signals import (
 from .rag_fusion import (
     QueryExpander,
     calculate_fusion_metrics,
-    reciprocal_rank_fusion,
     hybrid_reciprocal_rank_fusion,
 )
 
@@ -490,9 +489,9 @@ class RetrievalOrchestrator:
 
     # Fallback only - prefer passing default_collections from config
     DEFAULT_COLLECTIONS = [
-        "sfs_lagtext_bge_m3_1024",
-        "riksdag_documents_p1_bge_m3_1024",
-        "swedish_gov_docs_bge_m3_1024",
+        "sfs_lagtext_jina_v3_1024",
+        "riksdag_documents_p1_jina_v3_1024",
+        "swedish_gov_docs_jina_v3_1024",
     ]
 
     # Concurrency control for multi-query (Phase 3)
@@ -1117,10 +1116,34 @@ class RetrievalOrchestrator:
                 )
                 return results
 
-        tasks = [search_single_embedding(emb) for emb in query_embeddings]
-        result_sets = await asyncio.gather(*tasks, return_exceptions=True)
+        # BM25 search in parallel with dense (hybrid retrieval)
+        async def _bm25_search_async():
+            if not (self._bm25_service and self._bm25_service.is_available()):
+                return None
+            try:
+                bm25_start = time.perf_counter()
+                bm25_query = search_query
+                if rewrite_result and hasattr(rewrite_result, "lexical_query"):
+                    bm25_query = rewrite_result.lexical_query or search_query
+                loop = asyncio.get_event_loop()
+                results = await loop.run_in_executor(
+                    None, lambda: self._bm25_service.search(bm25_query, k=adjusted_k * 2)
+                )
+                metrics.bm25_latency_ms = (time.perf_counter() - bm25_start) * 1000
+                logger.info(
+                    f"Adaptive BM25: '{bm25_query[:30]}...' → {len(results)} results "
+                    f"in {metrics.bm25_latency_ms:.1f}ms"
+                )
+                return results
+            except Exception as e:
+                logger.warning(f"Adaptive BM25 failed (continuing dense only): {e}")
+                return None
 
-        # Filter exceptions
+        # Run dense + BM25 in parallel
+        dense_tasks = [search_single_embedding(emb) for emb in query_embeddings]
+        *result_sets, bm25_results = await asyncio.gather(*dense_tasks, _bm25_search_async())
+
+        # Filter exceptions from dense results
         valid_result_sets = []
         for result in result_sets:
             if isinstance(result, Exception):
@@ -1129,9 +1152,15 @@ class RetrievalOrchestrator:
                 valid_result_sets.append(result)
 
         metrics.per_query_result_counts = [len(rs) for rs in valid_result_sets]
+        metrics.bm25_result_count = len(bm25_results) if bm25_results else 0
 
-        # RRF merge
-        merged_results = reciprocal_rank_fusion(valid_result_sets, k=self._rrf_k)
+        # Hybrid RRF merge (dense + BM25)
+        merged_results = hybrid_reciprocal_rank_fusion(
+            dense_result_sets=valid_result_sets,
+            bm25_results=bm25_results,
+            k=self._rrf_k,
+            bm25_weight=self._bm25_weight,
+        )
 
         # Calculate fusion metrics
         fusion_metrics = calculate_fusion_metrics(
@@ -1253,24 +1282,62 @@ class RetrievalOrchestrator:
             # Single query fallback
             query_embeddings = [self.embed_fn([query])[0]]
 
-        # Step 3: Pass 1 - Search primary + support collections (multi-query)
-        pass1_collections = routing_config.primary + routing_config.support
-        pass1_result_sets = []
-
-        if pass1_collections:
-            for emb in query_embeddings:
-                raw_results, pass1_metrics = await parallel_collection_search(
-                    client=self.client,
-                    query_embedding=emb,
-                    collection_names=pass1_collections,
-                    n_results_per_collection=k,
-                    where_filter=where_filter,
-                    timeout_seconds=self.default_timeout,
+        # BM25 search (runs in parallel with Pass 1 dense search)
+        async def _epr_bm25_search():
+            if not (self._bm25_service and self._bm25_service.is_available()):
+                return None
+            try:
+                bm25_start = time.perf_counter()
+                bm25_query = query
+                if use_fusion and rewrite_result and hasattr(rewrite_result, "lexical_query"):
+                    bm25_query = rewrite_result.lexical_query or query
+                loop = asyncio.get_event_loop()
+                results = await loop.run_in_executor(
+                    None, lambda: self._bm25_service.search(bm25_query, k=k * 2)
                 )
-                pass1_result_sets.append(raw_results)
+                metrics.bm25_latency_ms = (time.perf_counter() - bm25_start) * 1000
+                logger.info(
+                    f"EPR BM25: '{bm25_query[:30]}...' → {len(results)} results "
+                    f"in {metrics.bm25_latency_ms:.1f}ms"
+                )
+                return results
+            except Exception as e:
+                logger.warning(f"EPR BM25 failed (continuing dense only): {e}")
+                return None
+
+        # Step 3: Pass 1 - Search primary + support collections (multi-query)
+        # Run dense search and BM25 in parallel
+        pass1_collections = routing_config.primary + routing_config.support
+
+        async def _pass1_dense_search():
+            result_sets = []
+            last_metrics = None
+            if pass1_collections:
+                for emb in query_embeddings:
+                    raw_results, last_metrics = await parallel_collection_search(
+                        client=self.client,
+                        query_embedding=emb,
+                        collection_names=pass1_collections,
+                        n_results_per_collection=k,
+                        where_filter=where_filter,
+                        timeout_seconds=self.default_timeout,
+                    )
+                    result_sets.append(raw_results)
+            return result_sets, last_metrics
+
+        pass1_dense_result, bm25_results = await asyncio.gather(
+            _pass1_dense_search(),
+            _epr_bm25_search(),
+        )
+        # Unpack pass1 tuple
+        pass1_result_sets, pass1_metrics = pass1_dense_result
+
+        if pass1_metrics:
             metrics.dense_latency_ms = pass1_metrics.dense_latency_ms
-            total_pass1 = sum(len(rs) for rs in pass1_result_sets)
-            metrics.dense_result_count = total_pass1
+        total_pass1 = sum(len(rs) for rs in pass1_result_sets)
+        metrics.dense_result_count = total_pass1
+        metrics.bm25_result_count = len(bm25_results) if bm25_results else 0
+        if pass1_collections:
             logger.info(
                 f"EPR Pass 1: {total_pass1} results from {pass1_collections} "
                 f"({len(query_embeddings)} queries)"
@@ -1290,22 +1357,19 @@ class RetrievalOrchestrator:
                     timeout_seconds=self.default_timeout,
                 )
                 pass2_result_sets.append(secondary_raw[: routing_config.secondary_budget])
-            metrics.bm25_latency_ms = pass2_metrics.dense_latency_ms
-            total_pass2 = sum(len(rs) for rs in pass2_result_sets)
-            metrics.bm25_result_count = total_pass2
             logger.info(
-                f"EPR Pass 2: {total_pass2} results from {routing_config.secondary} "
-                f"(budget={routing_config.secondary_budget})"
+                f"EPR Pass 2: {sum(len(rs) for rs in pass2_result_sets)} results "
+                f"from {routing_config.secondary} (budget={routing_config.secondary_budget})"
             )
 
-        # Step 5: Merge results using RRF (multi-query fusion)
+        # Step 5: Merge results using RRF (multi-query fusion + BM25)
         all_result_sets = pass1_result_sets + pass2_result_sets
 
-        if len(all_result_sets) > 1:
-            # Use RRF to merge multi-query results
+        if len(all_result_sets) > 1 or bm25_results:
+            # Use hybrid RRF to merge multi-query + BM25 results
             merged_results = hybrid_reciprocal_rank_fusion(
                 dense_result_sets=all_result_sets,
-                bm25_results=None,
+                bm25_results=bm25_results,
                 k=self._rrf_k,
                 bm25_weight=self._bm25_weight,
             )

@@ -50,7 +50,7 @@
 - **LLM**: llama-server (llama.cpp, OpenAI-compatible API on port 8080) with optional Ollama fallback
 - **RAG Framework**: LangChain (chains, tools, agents)
 - **Graph Processing**: LangGraph (agentic flow state machine)
-- **Embeddings**: BGE-M3 v2/v3 (multi-lingual, dense+sparse)
+- **Embeddings**: Jina v3 (multi-lingual, dense+sparse)
 - **Search**: BM25 (sparse text retrieval)
 - **Frontend State**: Zustand, XState (missionControlMachine in some docs)
 - **Visualization**: Three.js (3D source viewer)
@@ -161,7 +161,7 @@
 | **bm25_service.py** | 271 | BM25 indexing & sparse text search | rank-bm25 library |
 | **structured_output_service.py** | 258 | JSON response formatting, schema validation | Pydantic |
 | **reranking_service.py** | 356 | Cross-encoder reranking of retrieved results | LangChain, embeddings |
-| **embedding_service.py** | 209 | Embedding generation (BGE-M3) | ChromaDB, embeddings |
+| **embedding_service.py** | 209 | Embedding generation (Jina v3) | ChromaDB, embeddings |
 | **intent_routing.py** | 170 | Router dispatch based on intent | Services |
 | **base_service.py** | 127 | Abstract base class for all services | — |
 | **sse_stream_service.py** | 37 | Server-Sent Events stream handling | FastAPI |
@@ -370,7 +370,7 @@ Collection names (document types):
 ```
 Raw documents (PDF/JSON) 
     → indexers/*.py (extract, clean, chunk)
-    → Embed with BGE-M3
+    → Embed with Jina v3
     → Index to ChromaDB
     → BM25 index for sparse search
     → Verify (verify_*.py scripts)

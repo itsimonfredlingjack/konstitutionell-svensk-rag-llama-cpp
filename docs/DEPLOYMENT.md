@@ -131,9 +131,9 @@ All backend variables use the `CONST_` prefix. See `backend/.env.example` for th
 | `CONST_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 | `CONST_LOG_JSON` | `false` | JSON-formatted log output |
 | `CONST_CRAG_ENABLED` | `false` | Enable Corrective RAG pipeline |
-| `CONST_RERANKING_ENABLED` | `true` | BGE reranker for search quality |
+| `CONST_RERANKING_ENABLED` | `true` | Jina reranker for search quality |
 | `CONST_STRUCTURED_OUTPUT_ENABLED` | `true` | JSON-structured LLM responses |
-| `CONST_EMBEDDING_MODEL` | `BAAI/bge-m3` | Embedding model (1024 dim) |
+| `CONST_EMBEDDING_MODEL` | `jinaai/jina-embeddings-v3` | Embedding model (1024 dim) |
 
 ### CORS
 
@@ -214,7 +214,7 @@ GET /api/constitutional/metrics/prometheus
 - Check GPU memory — the model may not be fully loaded
 
 ### Embedding model fails to load
-- First load downloads ~2.3 GB for BGE-M3
+- First load downloads ~2.3 GB for Jina v3
 - Ensure sufficient disk space and internet access
 - Model cache: `~/.cache/huggingface/`
 

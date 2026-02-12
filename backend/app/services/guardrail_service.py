@@ -63,6 +63,30 @@ class GuardrailResult:
     confidence_score: float  # Overall confidence in the corrections (0-1)
 
 
+class HarmCategory(str, Enum):
+    WEAPONS_EXPLOSIVES = "weapons_explosives"
+    DRUG_MANUFACTURING = "drug_manufacturing"
+    VIOLENCE_THREATS = "violence_threats"
+    SELF_HARM = "self_harm"
+    FRAUD_FINANCIAL = "fraud_financial"
+    CHILD_EXPLOITATION = "child_exploitation"
+
+
+class HarmAction(str, Enum):
+    BLOCK = "block"
+    COMPASSIONATE = "compassionate"
+    PASS = "pass"
+
+
+@dataclass
+class HarmDetectionResult:
+    action: HarmAction
+    category: Optional[HarmCategory] = None
+    matched_pattern: Optional[str] = None
+    response_message: Optional[str] = None
+    legal_whitelist_matched: bool = False
+
+
 class GuardrailService(BaseService):
     """
     Jail Warden v2 - Post-processing for legal term corrections.
@@ -72,6 +96,8 @@ class GuardrailService(BaseService):
     - Citation validation
     - Evidence level determination
     - Security violation detection
+    - Harmful content detection
+    - Output leakage sanitization
     - Confidence scoring for corrections
     """
 
@@ -150,14 +176,150 @@ class GuardrailService(BaseService):
     }
 
     # Security violation patterns (malicious queries, prompt injection, etc.)
-    SECURITY_PATTERNS = [
-        r"(ignore|bypass|override)\s+(instructions|rules|constraints)",
+    INJECTION_PATTERNS = [
+        # English (existing)
+        r"(ignore|bypass|override)\s+(all\s+)?(previous\s+)?(instructions|rules|constraints)",
         r"(forget|pretend|act)\s+(like|as)",
+        r"(jailbreak|injection|prompt\s+injection)",
+        # Swedish
+        r"ignorera\s+(alla\s+)?(tidigare\s+)?(instruktioner|regler)",
+        r"glöm\s+(dina\s+)?(regler|instruktioner|begränsningar)",
+        r"bortse\s+från\s+(alla\s+)?(regler|instruktioner|begränsningar)",
+        r"(låtsas|agera)\s+(att\s+du|som\s+(om\s+)?du)",
+        r"du\s+är\s+nu\s+(en|ett)",
+        r"du\s+är\s+inte\s+längre",
+        r"du\s+ska\s+nu\s+agera\s+som",
+        r"from\s+now\s+on\s+you\s+are",
+        r"skriv\s+utan\s+(begränsningar|restriktioner|regler)",
+        r"kringgå\s+(alla\s+)?(regler|säkerhet|filter|begränsningar)",
+        r"\bDAN\b.*\brestriktioner\b",
+    ]
+
+    PROBING_PATTERNS = [
+        # English (existing)
         r"(reveal|show|display)\s+(system|prompt|instructions)",
         r"(root|admin)\s+(access|password|key)",
-        r"(jailbreak|injection|prompt\s+injection)",
-        r"(code|execute|run)\s+(shell|command|script)",
+        # Swedish
+        r"visa\s+(din|ditt|dina)\s+(systemprompt|instruktioner|konfiguration)",
+        r"visa\s+(system\s*prompt|konfiguration|inställningar)",
+        r"vilken\s+modell\s+är\s+du",
+        r"vilka\s+(portar|servrar|tjänster)\s+(lyssnar|körs|finns)",
+        r"\bAPI[- ]?nyckel\b",
+        r"\bsystemarkitektur\b",
+        r"\bllama[- ]?server\b",
+        r"\bchromadb\b.*\b(konfiguration|data|sökväg)",
+        r"\b(backend|server)\s*(port|adress|url|endpoint)",
     ]
+
+    EXECUTION_PATTERNS = [
+        # English (existing)
+        r"(code|execute|run)\s+(shell|command|script)",
+        # Swedish
+        r"(kör|exekvera|utför)\s+(kommando|skript|shell|kod)",
+    ]
+
+    # Backward compatible combined list
+    SECURITY_PATTERNS = INJECTION_PATTERNS + PROBING_PATTERNS + EXECUTION_PATTERNS
+
+    SELF_HARM_PATTERNS = [
+        r"jag\s+vill\s+ta\s+livet\s+av\s+mig",
+        r"jag\s+vill\s+(inte\s+leva|dö)",
+        r"jag\s+orkar\s+inte\s+mer",
+        r"(vill|tänker)\s+(begå|ta)\s+självmord",
+        r"hur\s+(tar|begår)\s+man\s+självmord",
+        r"bästa\s+sättet\s+att\s+(dö|ta\s+livet)",
+        r"i\s+want\s+to\s+(kill\s+myself|die|end\s+my\s+life)",
+    ]
+
+    CSAM_PATTERNS = [
+        r"(sexuell[at]?|pornograf\w*)\s*(bild|material|innehåll)\w*\s*(av|med|på)\s*(barn|minderårig|under\s*årig)",
+        r"(barn|minderårig)\w*\s*(pornografi|sexuell[at]?|nakenbilder)",
+        r"child\s*(porn|sexual|abuse\s*material)",
+    ]
+
+    LEGAL_WHITELIST_PATTERNS = [
+        r"vad\s+säger\s+(lagen|.*lagen|.*förordningen|.*balken)\s+om",
+        r"vad\s+är\s+(straffet|påföljden)\s+för",
+        r"vilka\s+(regler|krav)\s+gäller\s+för",
+        r"enligt\s+\d+\s+kap\.?\s+\d+\s*§",
+        r"\bSFS\s+\d{4}:\d+",
+        r"är\s+det\s+(olagligt|straffbart|tillåtet)\s+att",
+        r"\b(narkotikastrafflagen|vapenlagen|brottsbalken|miljöbalken)\b",
+        r"\b(terroristbrottslagen|penningtvättslagen)\b",
+    ]
+
+    ACTION_VERB_PATTERNS = [
+        r"hur\s+(tillverkar|framställer|gör|skapar|bygger)\s+man",
+        r"(beskriv|ge)\s+(mig\s+)?(steg\s+för\s+steg|instruktioner|recept|guide)",
+        r"hjälp\s+mig\s+att\s+(tillverka|göra|skapa|bygga)",
+        r"lär\s+mig\s+att\s+(tillverka|göra|skapa|bygga)",
+        r"(how\s+to|instructions\s+for)\s+(make|build|create|manufacture)",
+    ]
+
+    DANGEROUS_TOPIC_PATTERNS = {
+        HarmCategory.WEAPONS_EXPLOSIVES: [
+            r"\b(bomb|sprängmedel|dynamit|sprängämne|skjutvapen|automatvapen|hemmagjord[a]?\s+vapen)\b",
+        ],
+        HarmCategory.DRUG_MANUFACTURING: [
+            r"\b(metamfetamin|amfetamin|kokain|heroin|fentanyl|mdma|ecstasy)\b",
+        ],
+        HarmCategory.FRAUD_FINANCIAL: [
+            r"\b(penningtvätt|skattefusk|förfalska\s+(pengar|dokument|id|pass))\b",
+        ],
+    }
+
+    DIRECT_THREAT_PATTERNS = [
+        (r"skriv\s+(ett\s+)?hot\s+mot", HarmCategory.VIOLENCE_THREATS),
+        (r"(hota|utpressa)\s+(en|ett|någon|person|riksdagsledamot)", HarmCategory.VIOLENCE_THREATS),
+        (
+            r"(planera|genomföra)\s+(ett\s+)?(terrordåd|terrorattack|attentat)",
+            HarmCategory.VIOLENCE_THREATS,
+        ),
+    ]
+
+    OUTPUT_LEAKAGE_PATTERNS = [
+        # Port numbers
+        (r"\b(8080|8900|3001|3003|5173|5174|11434)\b", "port_number"),
+        # Technology names (case-insensitive handled at compile time)
+        (r"\bllama[- ]?server\b", "technology"),
+        (r"\bllama\.cpp\b", "technology"),
+        (r"\bchromadb\b", "technology"),
+        (r"\bollama\b", "technology"),
+        (r"\bministral[- ]?3\b", "technology"),
+        (r"\bbge[- ]?m3\b", "technology"),
+        (r"\bbge[- ]?reranker\b", "technology"),
+        (r"\buvicorn\b", "technology"),
+        (r"\bfastapi\b", "technology"),
+        # Model filenames
+        (r"\w+\.gguf\b", "model_file"),
+        # File paths
+        (r"/home/ai-server\S*", "file_path"),
+        (r"/backend/\S*", "file_path"),
+        (r"/app/services/\S*", "file_path"),
+        # Internal IPs
+        (r"192\.168\.\d+\.\d+", "internal_ip"),
+        (r"10\.\d+\.\d+\.\d+", "internal_ip"),
+        (r"127\.0\.0\.1(:\d+)?", "internal_ip"),
+        (r"localhost:\d+", "internal_ip"),
+    ]
+
+    SELF_HARM_RESPONSE = (
+        "Jag hör att du har det svårt. Du är inte ensam och det finns hjälp att få.\n\n"
+        "Kontakta:\n"
+        "- Mind Självmordslinjen: Ring 90101 (dygnet runt)\n"
+        "- Jourhavande medmänniska: Ring 08-702 16 80\n"
+        "- BRIS (för unga under 18): Ring 116 111\n"
+        "- 1177 Vårdguiden: Ring 1177\n"
+        "- mind.se för mer information\n\n"
+        "Du förtjänar stöd och hjälp."
+    )
+
+    HARMFUL_CONTENT_BLOCK_MESSAGE = (
+        "Jag kan inte hjälpa till med den typen av förfrågan. "
+        "Som juridisk AI-assistent kan jag svara på frågor om svensk lagstiftning, "
+        "rättspraxis och myndigheters verksamhet. "
+        "Omformulera gärna din fråga som en juridisk fråga."
+    )
 
     # Citation validation patterns
     CITATION_PATTERNS = [
@@ -181,7 +343,7 @@ class GuardrailService(BaseService):
     def _compile_patterns(self) -> None:
         """
         Compile regex patterns for better performance.
-        Pre-compiles security and citation patterns.
+        Pre-compiles security, citation, harmful content, and leakage patterns.
         """
         self._security_patterns = [re.compile(p, re.IGNORECASE) for p in self.SECURITY_PATTERNS]
         self._citation_patterns = [re.compile(p) for p in self.CITATION_PATTERNS]
@@ -196,6 +358,25 @@ class GuardrailService(BaseService):
                 "type": correction_data["type"],
                 "confidence": correction_data["confidence"],
             }
+
+        # Compile harmful content patterns
+        self._self_harm_patterns = [re.compile(p, re.IGNORECASE) for p in self.SELF_HARM_PATTERNS]
+        self._csam_patterns = [re.compile(p, re.IGNORECASE) for p in self.CSAM_PATTERNS]
+        self._legal_whitelist_patterns = [
+            re.compile(p, re.IGNORECASE) for p in self.LEGAL_WHITELIST_PATTERNS
+        ]
+        self._action_verb_patterns = [
+            re.compile(p, re.IGNORECASE) for p in self.ACTION_VERB_PATTERNS
+        ]
+        self._dangerous_topic_compiled = {
+            cat: [re.compile(p, re.IGNORECASE) for p in patterns]
+            for cat, patterns in self.DANGEROUS_TOPIC_PATTERNS.items()
+        }
+
+        # Compile output leakage patterns
+        self._output_leakage_patterns = [
+            (re.compile(p, re.IGNORECASE), label) for p, label in self.OUTPUT_LEAKAGE_PATTERNS
+        ]
 
     async def initialize(self) -> None:
         """
@@ -296,6 +477,120 @@ class GuardrailService(BaseService):
 
         return result
 
+    def security_event(
+        self,
+        event_type: str,
+        query: str,
+        pattern_matched: str,
+        client_ip: str | None = None,
+    ) -> None:
+        """Log structured security event."""
+        from datetime import datetime, timezone
+
+        self.logger.warning(
+            "SECURITY_EVENT",
+            extra={
+                "security_event_type": event_type,
+                "query_truncated": query[:200],
+                "pattern_matched": pattern_matched,
+                "client_ip": client_ip or "unknown",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
+        )
+
+    def check_harmful_content(self, query: str) -> HarmDetectionResult:
+        """Check query for harmful content. Returns HarmDetectionResult."""
+        query_lower = query.lower()
+
+        # Phase 1: Self-harm check → compassionate response
+        for pattern in self._self_harm_patterns:
+            if pattern.search(query_lower):
+                self.security_event("SELF_HARM_DETECTED", query, pattern.pattern)
+                return HarmDetectionResult(
+                    action=HarmAction.COMPASSIONATE,
+                    category=HarmCategory.SELF_HARM,
+                    matched_pattern=pattern.pattern,
+                    response_message=self.SELF_HARM_RESPONSE,
+                )
+
+        # Phase 2: CSAM check → zero-tolerance (no whitelist bypass)
+        for pattern in self._csam_patterns:
+            if pattern.search(query_lower):
+                self.security_event("CSAM_BLOCKED", query, pattern.pattern)
+                return HarmDetectionResult(
+                    action=HarmAction.BLOCK,
+                    category=HarmCategory.CHILD_EXPLOITATION,
+                    matched_pattern=pattern.pattern,
+                    response_message=self.HARMFUL_CONTENT_BLOCK_MESSAGE,
+                )
+
+        # Phase 3: Legal framing whitelist → PASS immediately
+        for pattern in self._legal_whitelist_patterns:
+            if pattern.search(query_lower):
+                return HarmDetectionResult(
+                    action=HarmAction.PASS,
+                    legal_whitelist_matched=True,
+                )
+
+        # Phase 4: Direct threat patterns → BLOCK (no conjunction needed)
+        for pattern, category in self.DIRECT_THREAT_PATTERNS:
+            compiled = re.compile(pattern, re.IGNORECASE)
+            if compiled.search(query_lower):
+                self.security_event("HARMFUL_CONTENT_BLOCKED", query, pattern)
+                return HarmDetectionResult(
+                    action=HarmAction.BLOCK,
+                    category=category,
+                    matched_pattern=pattern,
+                    response_message=self.HARMFUL_CONTENT_BLOCK_MESSAGE,
+                )
+
+        # Phase 5: Action-verb + dangerous-topic conjunction
+        has_action_verb = any(p.search(query_lower) for p in self._action_verb_patterns)
+        if has_action_verb:
+            for category, patterns in self._dangerous_topic_compiled.items():
+                for pattern in patterns:
+                    if pattern.search(query_lower):
+                        self.security_event("HARMFUL_CONTENT_BLOCKED", query, pattern.pattern)
+                        return HarmDetectionResult(
+                            action=HarmAction.BLOCK,
+                            category=category,
+                            matched_pattern=pattern.pattern,
+                            response_message=self.HARMFUL_CONTENT_BLOCK_MESSAGE,
+                        )
+
+        return HarmDetectionResult(action=HarmAction.PASS)
+
+    def check_output_leakage(self, response: str) -> Tuple[str, List[str]]:
+        """Check and sanitize output for self-referential leakage.
+        Returns (sanitized_text, list_of_sanitized_items). Never crashes."""
+        try:
+            sanitized = response
+            removed_items: list[str] = []
+            replacement = "[intern information borttagen]"
+
+            for pattern, label in self._output_leakage_patterns:
+                matches = pattern.findall(sanitized)
+                for match in matches:
+                    match_str = match if isinstance(match, str) else match[0]
+                    if match_str and match_str not in removed_items:
+                        removed_items.append(f"{label}: {match_str}")
+                sanitized = pattern.sub(replacement, sanitized)
+
+            if removed_items:
+                self.security_event(
+                    "OUTPUT_SANITIZED",
+                    response[:200],
+                    "; ".join(removed_items[:5]),
+                )
+                self.logger.warning(
+                    f"Output leakage detected: {len(removed_items)} items sanitized"
+                )
+
+            return sanitized, removed_items
+        except Exception as e:
+            self.logger.error(f"Output leakage check failed (non-fatal): {e}")
+            return response, []
+
     def check_security_violations(self, text: str) -> Tuple[bool, List[str]]:
         """
         Check text for security violations.
@@ -317,6 +612,13 @@ class GuardrailService(BaseService):
                 self.logger.warning(f"Security violation detected: {match}")
 
         has_violation = len(violations) > 0
+
+        if has_violation:
+            self.security_event(
+                "INJECTION_DETECTED",
+                text,
+                "; ".join(violations[:3]),
+            )
 
         return has_violation, violations
 
@@ -375,11 +677,19 @@ class GuardrailService(BaseService):
         Returns:
             Tuple of (is_safe, reason_if_unsafe)
         """
-        # Check for security violations
+        # Check harmful content FIRST
+        harm_result = self.check_harmful_content(query)
+        if harm_result.action == HarmAction.COMPASSIONATE:
+            return False, f"SELF_HARM_DETECTED:{harm_result.response_message}"
+        elif harm_result.action == HarmAction.BLOCK:
+            return False, harm_result.response_message
+
+        # Then check injection patterns (existing code)
         has_violations, violations = self.check_security_violations(query)
 
         if has_violations:
             reason = f"Security violation detected: {'; '.join(violations)}"
+            self.security_event("INJECTION_BLOCKED", query, "; ".join(violations[:3]))
             self.logger.error(f"Query safety check failed: {reason}")
             return False, reason
 
@@ -390,6 +700,8 @@ class GuardrailService(BaseService):
             return False, reason
 
         # Check for suspicious patterns (all caps, many special chars)
+        if not query:
+            return True, None
         all_caps_ratio = sum(1 for c in query if c.isupper()) / len(query)
         special_char_ratio = sum(1 for c in query if not c.isalnum() and c != " ") / len(query)
 

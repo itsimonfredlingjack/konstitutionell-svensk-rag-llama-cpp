@@ -88,7 +88,7 @@ class CriticService(BaseService):
         # Configuration for self-reflection
         self.reflection_enabled = getattr(config.settings, "crag_enable_self_reflection", False)
         self.reflection_model = getattr(
-            config.settings, "crag_grader_model", "Qwen2.5-0.5B-Instruct-Q5_K_M.gguf"
+            config.settings, "crag_grader_model", "Ministral-3-14B-Instruct-2512-Q4_K_M.gguf"
         )
         self.reflection_timeout = getattr(config.settings, "crag_reflection_timeout", 15.0)
 

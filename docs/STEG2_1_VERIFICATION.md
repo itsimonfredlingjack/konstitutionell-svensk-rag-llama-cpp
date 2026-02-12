@@ -14,7 +14,7 @@
   - Delar upp i chunks (~500 tokens)
   - Genererar kontextsammanfattning via LLM (Qwen 0.5B)
   - Prependar kontext till chunk: `[KONTEXT] {summary}\n\n[TEXT] {original}`
-  - Embeddar berikad text med BGE-M3
+  - Embeddar berikad text med Jina v3
   - Sparar original text i metadata
 
 ### 2. ContextualChromaDBIndexer Klass
@@ -53,7 +53,7 @@
    
    [TEXT] {original_chunk}
    ↓
-5. Embedding: BGE-M3 embeds enriched text
+5. Embedding: Jina v3 embeds enriched text
    ↓
 6. ChromaDB Storage:
    - documents: enriched_text (for embedding/search)

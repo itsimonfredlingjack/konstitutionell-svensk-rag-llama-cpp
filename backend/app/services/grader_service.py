@@ -1,6 +1,6 @@
 """
 Grader Service - Document Relevance Assessment for CRAG
-Uses lightweight LLM (Qwen 0.5B) to grade retrieved documents
+Uses primary LLM (Ministral-3-14B) to grade retrieved documents
 
 CRAG Component: Grade Node
 Purpose: Filter out irrelevant documents before generation to prevent
@@ -21,6 +21,11 @@ from .llm_service import LLMService, get_llm_service
 from .retrieval_service import SearchResult
 
 logger = get_logger(__name__)
+
+# GBNF grammar: forces output to exactly {"relevance":"yes"} or {"relevance":"no"}
+GRADING_GRAMMAR = r"""root ::= "{" ws "\"relevance\"" ws ":" ws value ws "}"
+value ::= "\"yes\"" | "\"no\""
+ws ::= " "?"""
 
 
 @dataclass
@@ -101,7 +106,7 @@ class GraderService(BaseService):
     Grader Service - Document Relevance Assessment for CRAG.
 
     Features:
-    - Uses lightweight LLM (Qwen 0.5B) for fast relevance assessment
+    - Uses primary LLM (Ministral-3-14B) for relevance assessment
     - Parallel grading of multiple documents
     - Configurable relevance threshold
     - Timeout protection and error handling
@@ -133,7 +138,7 @@ class GraderService(BaseService):
         # Configuration
         self.grade_threshold = getattr(config.settings, "crag_grade_threshold", 0.3)
         self.grader_model = getattr(
-            config.settings, "crag_grader_model", "Qwen2.5-0.5B-Instruct-Q5_K_M.gguf"
+            config.settings, "crag_grader_model", "Ministral-3-14B-Instruct-2512-Q4_K_M.gguf"
         )
         self.max_concurrent = getattr(config.settings, "crag_max_concurrent_grading", 5)
         self.grade_timeout = getattr(config.settings, "crag_grade_timeout", 10.0)
@@ -343,8 +348,8 @@ class GraderService(BaseService):
                 config_override={
                     "temperature": 0.1,  # Low temperature for consistent grading
                     "top_p": 0.9,
-                    "num_predict": 256,
-                    "model": self.grader_model,
+                    "num_predict": 32,  # Minimal JSON is ~20 tokens
+                    "grammar": GRADING_GRAMMAR,
                 },
             ):
                 if token:
@@ -382,103 +387,74 @@ class GraderService(BaseService):
         Returns:
             Formatted prompt string
         """
-        return f"""Bedöm om detta dokument är relevant för frågan.
+        return f"""Är detta dokument relevant för frågan? Svara ENDAST med JSON.
 
 FRÅGA: {query}
 
-DOKUMENT:
-Titel: {document.title}
-Typ: {document.doc_type or "Okänd"}
-Datum: {document.date or "Okänt"}
-Innehåll: {document.snippet}
+DOKUMENT: {document.title} ({document.doc_type or "okänd"})
+{document.snippet[:500]}
 
-KONSTITUTIONELLA REGLER FÖR RELEVANS:
-1. EXAKT MATCH: Dokumentet handlar om samma ämne som frågan
-2. SEMANTISK RELEVANS: Begrepp och termer överlappar meningsfullt
-3. LAGSTIFTNING: Lagtexter och förordningar är relevanta för juridiska frågor
-4. AVANCERA: Dokument om personuppgifter är relevanta för GDPR-frågor
+Relevant = dokumentet besvarar eller direkt relaterar till frågan.
+Irrelevant = dokumentet handlar om något annat.
 
-BESLUTSKRITERIER:
-- Relevant: Dokumentet innehåller information som direkt besvarar eller relaterar till frågan
-- Irrelevant: Dokumentet handlar om något helt annat eller saknar koppling till frågan
-
-Returnera endast giltig JSON:
-{{
-  "relevant": true/false,
-  "reason": "Förklaring på svenska varför dokumentet är relevant/irrelevant",
-  "score": 0.0-1.0 (konfidens i beslutet)
-}}
-
-EXEMPEL PÅ SVAR:
-{{"relevant": true, "reason": "Dokumentet handlar om GDPR artikel 6 vilket direkt besvarar frågan om laglig grund", "score": 0.9}}
-{{"relevant": false, "reason": "Dokumentet handlar om skattefrågor vilket inte relaterar till frågan om GDPR", "score": 0.1}}"""
+Svara med EXAKT ett av dessa:
+{{"relevance":"yes"}}
+{{"relevance":"no"}}"""
 
     def _parse_grading_response(self, doc_id: str, response: str, threshold: float) -> GradeResult:
         """
-        Parse LLM response and create GradeResult.
+        Parse minimal JSON grading response: {"relevance":"yes"} or {"relevance":"no"}.
 
-        Args:
-            doc_id: Document identifier
-            response: Raw LLM response
-            threshold: Relevance threshold
-
-        Returns:
-            GradeResult with parsed data
+        Falls back to keyword detection if JSON parsing fails.
+        The threshold parameter is unused with binary grading but kept for API compat.
         """
         try:
-            # Clean response - extract JSON
-            response = response.strip()
+            cleaned = response.strip()
 
-            # Find JSON in response (might be wrapped in text)
-            start_idx = response.find("{")
-            end_idx = response.rfind("}") + 1
+            start_idx = cleaned.find("{")
+            end_idx = cleaned.rfind("}") + 1
 
             if start_idx == -1 or end_idx == 0:
                 raise ValueError("No JSON found in response")
 
-            json_str = response[start_idx:end_idx]
+            parsed = json.loads(cleaned[start_idx:end_idx])
 
-            # Parse JSON
-            parsed = json.loads(json_str)
-
-            # Extract fields
-            relevant = bool(parsed.get("relevant", False))
-            reason = str(parsed.get("reason", "Ingen förklaring given"))
-            score = float(parsed.get("score", 0.0))
-
-            # Ensure score is in valid range
-            score = max(0.0, min(1.0, score))
-
-            # Apply threshold to determine relevance
-            final_relevant = relevant and score >= threshold
-
-            # Calculate confidence (higher when score is far from threshold)
-            if score >= threshold:
-                confidence = min(1.0, (score - threshold) / (1.0 - threshold) + 0.5)
+            # Support both new minimal format and legacy format
+            relevance_val = parsed.get("relevance", parsed.get("relevant", "no"))
+            if isinstance(relevance_val, bool):
+                relevant = relevance_val
             else:
-                confidence = min(1.0, (threshold - score) / threshold + 0.5)
+                relevant = str(relevance_val).lower().strip() in ("yes", "true")
+
+            score = 1.0 if relevant else 0.0
+            reason = parsed.get("reason", "yes" if relevant else "no")
 
             return GradeResult(
                 doc_id=doc_id,
-                relevant=final_relevant,
+                relevant=relevant,
                 reason=reason,
                 score=score,
-                confidence=confidence,
-                latency_ms=0.0,  # Will be set by caller
+                confidence=1.0 if relevant else 0.8,
+                latency_ms=0.0,
             )
 
         except (json.JSONDecodeError, ValueError, KeyError) as e:
-            self.logger.warning(
-                f"Failed to parse grading response for {doc_id}: {e}. Response: {response[:200]}"
+            # Fallback: keyword detection in raw response
+            lower = response.lower()
+            relevant = (
+                '"yes"' in lower or '"relevant": true' in lower or '"relevance":"yes"' in lower
             )
 
-            # Return conservative fallback
+            self.logger.warning(
+                f"JSON parse failed for {doc_id}, keyword fallback → {relevant}: {e}"
+            )
+
             return GradeResult(
                 doc_id=doc_id,
-                relevant=False,  # Conservative: assume irrelevant if can't parse
-                reason=f"Kunde inte tolka bedömning: {str(e)[:50]}",
-                score=0.0,
-                confidence=0.0,
+                relevant=relevant,
+                reason=f"Keyword fallback: {str(e)[:50]}",
+                score=1.0 if relevant else 0.0,
+                confidence=0.5,
                 latency_ms=0.0,
             )
 

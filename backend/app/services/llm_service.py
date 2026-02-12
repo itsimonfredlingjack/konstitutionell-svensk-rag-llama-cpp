@@ -428,6 +428,10 @@ class LLMService(BaseService):
                 if config_override
                 else self._config.num_predict,
             }
+
+            # Pass through GBNF grammar constraint if provided
+            if config_override and config_override.get("grammar"):
+                payload["grammar"] = config_override["grammar"]
         else:
             # Ollama format
             model_options = {

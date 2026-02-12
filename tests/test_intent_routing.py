@@ -18,35 +18,35 @@ from backend.app.services.intent_routing import (
 
 def test_parliament_trace_routing():
     config = get_routing_for_intent(QueryIntent.PARLIAMENT_TRACE)
-    assert "riksdag_documents_p1_bge_m3_1024" in config.primary
-    assert "swedish_gov_docs_bge_m3_1024" in config.primary
+    assert "riksdag_documents_p1_jina_v3_1024" in config.primary
+    assert "swedish_gov_docs_jina_v3_1024" in config.primary
     assert config.secondary_budget == 0
 
 
 def test_policy_arguments_routing():
     config = get_routing_for_intent(QueryIntent.POLICY_ARGUMENTS)
-    assert "diva_research_bge_m3_1024" in config.secondary
+    assert "diva_research_jina_v3_1024" in config.secondary
     assert config.secondary_budget == 2
     assert config.require_separation is True
 
 
 def test_research_synthesis_routing():
     config = get_routing_for_intent(QueryIntent.RESEARCH_SYNTHESIS)
-    assert "diva_research_bge_m3_1024" in config.primary
+    assert "diva_research_jina_v3_1024" in config.primary
     assert config.secondary_budget == 0
 
 
 def test_legal_text_routing():
     config = get_routing_for_intent(QueryIntent.LEGAL_TEXT)
-    assert "sfs_lagtext_bge_m3_1024" in config.primary
-    assert "diva_research_bge_m3_1024" not in config.primary
-    assert "diva_research_bge_m3_1024" not in config.secondary
+    assert "sfs_lagtext_jina_v3_1024" in config.primary
+    assert "diva_research_jina_v3_1024" not in config.primary
+    assert "diva_research_jina_v3_1024" not in config.secondary
 
 
 def test_practical_process_routing():
     config = get_routing_for_intent(QueryIntent.PRACTICAL_PROCESS)
-    assert "procedural_guides_bge_m3_1024" in config.primary
-    assert "sfs_lagtext_bge_m3_1024" in config.primary
+    assert "procedural_guides_jina_v3_1024" in config.primary
+    assert "sfs_lagtext_jina_v3_1024" in config.primary
 
 
 def test_unknown_uses_all_primary():
@@ -150,8 +150,8 @@ class TestGetAllCollectionsForIntent:
         collections = get_all_collections_for_intent(QueryIntent.POLICY_ARGUMENTS)
         # Primary should be first
         assert collections[0] in [
-            "riksdag_documents_p1_bge_m3_1024",
-            "swedish_gov_docs_bge_m3_1024",
+            "riksdag_documents_p1_jina_v3_1024",
+            "swedish_gov_docs_jina_v3_1024",
         ]
 
     def test_includes_all_tiers(self):
@@ -159,12 +159,12 @@ class TestGetAllCollectionsForIntent:
 
         collections = get_all_collections_for_intent(QueryIntent.POLICY_ARGUMENTS)
         # Check primary
-        assert "riksdag_documents_p1_bge_m3_1024" in collections
-        assert "swedish_gov_docs_bge_m3_1024" in collections
+        assert "riksdag_documents_p1_jina_v3_1024" in collections
+        assert "swedish_gov_docs_jina_v3_1024" in collections
         # Check support
-        assert "sfs_lagtext_bge_m3_1024" in collections
+        assert "sfs_lagtext_jina_v3_1024" in collections
         # Check secondary
-        assert "diva_research_bge_m3_1024" in collections
+        assert "diva_research_jina_v3_1024" in collections
 
     def test_empty_for_smalltalk(self):
         """SMALLTALK returns empty list."""

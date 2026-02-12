@@ -4,7 +4,7 @@ Instruktioner för Claude Code i detta repository.
 
 ## Projektöversikt
 
-Constitutional AI är ett RAG-system för svenska myndighetsdokument (1.37M+ dokument: 538K juridiska/myndighets + 829K DiVA-forskning). ChromaDB med BAAI/bge-m3 embeddings (1024 dim) för semantisk sökning, llama-server (llama.cpp) för lokal LLM-inferens, FastAPI backend på port 8900, React+Vite+Three.js frontend på port 3001.
+Constitutional AI är ett RAG-system för svenska myndighetsdokument (1.37M+ dokument: 538K juridiska/myndighets + 829K DiVA-forskning). ChromaDB med Jina Embeddings v3 (1024 dim, asymmetrisk encoding) för semantisk sökning, llama-server (llama.cpp) för lokal LLM-inferens, FastAPI backend på port 8900, React+Vite+Three.js frontend på port 3001.
 
 Fristående git-repo i `AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/`.
 
@@ -85,9 +85,9 @@ User Query → Frontend → POST /api/constitutional/agent/query/stream
       → RetrievalService → ChromaDB (1.37M+ docs)
       → BM25Service (sparse keyword search)
       → RAGFusion (multi-query + RRF-merge)
-    → RerankingService (BGE cross-encoder)
+    → RerankingService (Jina cross-encoder)
     → GraderService (Qwen 0.5B, binär relevansgradering)
-    → LLMService → llama-server (Mistral-Nemo-Instruct-2407)
+    → LLMService → llama-server (Ministral-3-14B-Instruct-2512)
     → GuardrailService (Jail Warden v2, blockerar hallucinationer i EVIDENCE)
     → CriticService (Critic-Revise loop)
   → SSE streaming → Frontend
@@ -106,8 +106,8 @@ Tre frågelägen:
 | `retrieval_orchestrator.py` | Fas 1-4 retrieval med adaptiv eskalering |
 | `retrieval_service.py` | ChromaDB vektorsökning |
 | `llm_service.py` | llama-server integration med streaming |
-| `embedding_service.py` | BAAI/bge-m3 embeddings |
-| `reranking_service.py` | BGE cross-encoder reranking |
+| `embedding_service.py` | Jina v3 embeddings (asymmetrisk) |
+| `reranking_service.py` | Jina cross-encoder reranking |
 | `grader_service.py` | Dokumentrelevans (Qwen 0.5B) |
 | `graph_service.py` | LangGraph state machine för CRAG |
 | `guardrail_service.py` | Hallucinationsdetektion |
@@ -184,13 +184,13 @@ Conventional commits: `feat(scope): description`, `fix(scope): description`, etc
 ## Data
 
 - **ChromaDB**: `chromadb_data/` (~37GB, exkluderat från git)
-- **Collections** (alla suffixade `_bge_m3_1024`): `swedish_gov_docs` (304K), `riksdag_documents_p1` (230K), `sfs_lagtext`, `procedural_guides`, DiVA-collections (829K)
+- **Collections** (alla suffixade `_jina_v3_1024`): `swedish_gov_docs` (304K), `riksdag_documents_p1` (230K), `sfs_lagtext`, `procedural_guides`, DiVA-collections (829K)
 - **Totalt**: 1.37M+ dokument (538K juridiska/myndighets + 829K DiVA-forskning)
-- **Embeddings**: BAAI/bge-m3 (1024 dimensioner)
-- **Reranker**: BAAI/bge-reranker-v2-m3
-- **LLM**: Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server port 8080
-- **Grading-modell**: Qwen2.5-0.5B-Instruct-Q5_K_M.gguf
-- **Fallback-modell**: Mistral-Nemo (samma som primary, ingen separat fallback)
+- **Embeddings**: jinaai/jina-embeddings-v3 (1024 dim, CC-BY-NC-4.0)
+- **Reranker**: jinaai/jina-reranker-v2-base-multilingual
+- **LLM**: Ministral-3-14B-Instruct-2512-Q4_K_M.gguf via llama-server port 8080
+- **Grading-modell**: Qwen2.5-0.5B-Instruct-Q8_0.gguf
+- **Fallback-modell**: Ministral-3-14B (samma som primary, ingen separat fallback)
 - **CRAG**: Aktiverat i .env (grading + self-reflection)
 
 ## Guardrails

@@ -2,8 +2,8 @@
 
 # --- KONFIGURATION ---
 LLAMA_BIN="./llama.cpp/build/bin/llama-server"
-MODEL_PATH="models/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf"
-DRAFT_PATH="models/Qwen2.5-0.5B-Instruct-Q8_0.gguf"
+MODEL_PATH="models/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf"
+DRAFT_PATH=""  # Speculative decoding disabled — Qwen draft incompatible with Ministral tokenizer
 BACKEND_PORT=8900
 LLM_PORT=8080
 FRONTEND_PORT=3001
@@ -27,11 +27,6 @@ if [ ! -f "$MODEL_PATH" ]; then
   exit 1
 fi
 
-if [ ! -f "$DRAFT_PATH" ]; then
-  echo "❌ ERROR: Draft model not found at $DRAFT_PATH"
-  exit 1
-fi
-
 if [ ! -d "$FRONTEND_DIR" ]; then
   echo "❌ ERROR: Frontend directory not found at $FRONTEND_DIR"
   exit 1
@@ -47,17 +42,17 @@ fuser -k $FRONTEND_PORT/tcp > /dev/null 2>&1
 sleep 2
 
 # 2. STARTA LLAMA SERVER (RAG ENGINE)
-echo "🧠 Starting Mistral-Nemo Engine (Port $LLM_PORT)..."
-# Vi använder inställningarna vi testade fram: 16k context, 60 GPU-lager, Q8 cache
+echo "🧠 Starting Ministral-3-14B Engine (Port $LLM_PORT)..."
+# Ministral-3-14B Q4_K_M (8.24GB) — 8K context, all layers on GPU, Q8 KV cache
 $LLAMA_BIN \
   -m "$MODEL_PATH" \
-  --model-draft "$DRAFT_PATH" \
-  -c 16384 \
-  -ngl 60 \
+  -c 8192 \
+  -ngl 99 \
   -ctk q8_0 -ctv q8_0 \
+  --spec-type ngram-simple --draft-max 64 \
   --port $LLM_PORT \
   --host 0.0.0.0 \
-  --ctx-size 16384 \
+  --ctx-size 8192 \
   --parallel 2 \
   -fa on \
   > "$LOG_DIR/llama_server.log" 2>&1 &
@@ -89,7 +84,7 @@ echo -e "\n✅ LLM Engine is READY!"
 # 4. STARTA BACKEND (ORCHESTRATOR)
 echo "🤖 Starting Python Backend (Port $BACKEND_PORT)..."
 export LLM_API_BASE="http://localhost:$LLM_PORT/v1"
-export LLM_MODEL="Mistral-Nemo-Instruct-2407-Q5_K_M.gguf"
+export LLM_MODEL="Ministral-3-14B-Instruct-2512-Q4_K_M.gguf"
 
 cd backend
 python3 -m uvicorn app.main:app --host 0.0.0.0 --port $BACKEND_PORT > "../$LOG_DIR/backend.log" 2>&1 &

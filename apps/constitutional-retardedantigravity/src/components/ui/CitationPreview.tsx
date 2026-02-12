@@ -43,7 +43,7 @@ export function CitationPreview() {
       className="w-72 bg-stone-950/75 backdrop-blur-xl border border-teal-700/20 rounded-xl p-4 shadow-2xl pointer-events-none"
     >
       <div className="text-[10px] uppercase font-mono text-teal-300 mb-1">
-        Source Preview
+        Källförhandsgranskning
       </div>
       <h4 className="text-sm font-medium text-white mb-2 leading-tight">
         {source.title}

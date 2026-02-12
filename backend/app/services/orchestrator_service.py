@@ -82,7 +82,7 @@ class OrchestratorService(BaseService):
     3. Document retrieval (Phase 1-4 RetrievalOrchestrator)
     4. LLM generation (Ministral 3 14B)
     5. Guardrail validation (Jail Warden v2)
-    6. Optional reranking (BGE cross-encoder)
+    6. Optional reranking (Jina cross-encoder)
 
     Thread Safety:
         - All services are singletons
@@ -278,8 +278,10 @@ class OrchestratorService(BaseService):
             is_safe, safety_reason = self.guardrail.check_query_safety(question)
             if not is_safe:
                 self.logger.warning(f"Query blocked by safety check: {safety_reason}")
+                if safety_reason and safety_reason.startswith("SELF_HARM_DETECTED:"):
+                    raise SecurityViolationError(safety_reason)
                 raise SecurityViolationError(
-                    f"Fragan blockerades av sakerhetsskal: {safety_reason}"
+                    f"Frågan blockerades av säkerhetsskäl: {safety_reason}"
                 )
 
             # STEP 1: Query classification
@@ -547,6 +549,13 @@ class OrchestratorService(BaseService):
             # Build final result
             final_answer = guardrail_result.corrected_text
 
+            # Output leakage sanitization
+            final_answer, leakage_items = self.guardrail.check_output_leakage(final_answer)
+            if leakage_items:
+                reasoning_steps.append(
+                    f"Output sanitized: {len(leakage_items)} internal references removed"
+                )
+
             # Determine evidence level
             evidence_level = self.query_processor.determine_evidence_level(
                 sources=[{"score": s.score, "doc_type": s.doc_type} for s in sources],
@@ -646,17 +655,35 @@ class OrchestratorService(BaseService):
 
         except SecurityViolationError as e:
             logger.error(f"Security violation in RAG pipeline: {e}")
+            error_str = str(e)
+
+            # Self-harm: compassionate response (not a security error)
+            if error_str.startswith("SELF_HARM_DETECTED:"):
+                compassionate_msg = error_str.split("SELF_HARM_DETECTED:", 1)[1].strip()
+                return RAGResult(
+                    answer=compassionate_msg,
+                    sources=[],
+                    reasoning_steps=["Self-harm concern detected — compassionate response"],
+                    metrics=RAGPipelineMetrics(),
+                    mode=mode if isinstance(mode, ResponseMode) else ResponseMode.ASSIST,
+                    guardrail_status=WardenStatus.UNCHANGED,
+                    evidence_level="NONE",
+                    success=True,
+                    thought_chain=None,
+                )
+
             return RAGResult(
-                answer="Säkerhetsöverträckelse. Din fråga innehåller otillåten innehåll.",
+                answer="Din fråga kunde inte behandlas av säkerhetsskäl. "
+                "Omformulera gärna din fråga.",
                 sources=[],
-                reasoning_steps=[f"Security violation: {str(e)}"],
-                metrics=RAGPipelineMetrics(),
+                reasoning_steps=[f"Security violation: {error_str}"],
+                metrics=RAGPipelineMetrics(saknas_underlag=True),
                 mode=mode if isinstance(mode, ResponseMode) else ResponseMode.ASSIST,
                 guardrail_status=WardenStatus.ERROR,
                 evidence_level="NONE",
                 success=False,
-                error=str(e),
-                thought_chain=None,  # NEW
+                error=error_str,
+                thought_chain=None,
             )
 
         except Exception as e:

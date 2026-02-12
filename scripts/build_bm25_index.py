@@ -40,12 +40,12 @@ CHROMADB_PATH = Path(__file__).parent.parent / "chromadb_data"
 # Output index path
 OUTPUT_PATH = Path(__file__).parent.parent / "data" / "bm25_index"
 
-# Collections to index (BGE-M3 1024-dim collections only)
+# Collections to index (Jina v3 1024-dim collections)
 COLLECTIONS_TO_INDEX = [
-    "sfs_lagtext_bge_m3_1024",
-    "riksdag_documents_p1_bge_m3_1024",
-    "swedish_gov_docs_bge_m3_1024",
-    "diva_research_bge_m3_1024",
+    "sfs_lagtext_jina_v3_1024",
+    "riksdag_documents_p1_jina_v3_1024",
+    "swedish_gov_docs_jina_v3_1024",
+    "diva_research_jina_v3_1024",
 ]
 
 # Batch size for ChromaDB extraction

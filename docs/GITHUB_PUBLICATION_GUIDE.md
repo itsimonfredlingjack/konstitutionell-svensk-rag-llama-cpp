@@ -113,8 +113,8 @@ Denna guide beskriver hur man strukturerar projektet för GitHub-publicering med
 - **Frontend**: React + TypeScript + Vite
 - **Vector DB**: ChromaDB (1.37M+ dokument: 538K legal/gov + 829K DiVA research)
 - **LLM**: Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server (port 8080)
-- **Embeddings**: BAAI/bge-m3 (1024 dimensions)
-- **Reranker**: BAAI/bge-reranker-v2-m3
+- **Embeddings**: jinaai/jina-embeddings-v3 (1024 dimensions)
+- **Reranker**: jinaai/jina-reranker-v2-base-multilingual
 
 ## Services
 
@@ -207,12 +207,12 @@ Response → Frontend → User
 
 - **ChromaDB Path**: `/home/ai-server/.../chromadb_data/` (exkluderas från git)
 - **LLM Runtime**: llama-server (llama.cpp, port 8080) with Mistral-Nemo-Instruct-2407-Q5_K_M.gguf (primary), gpt-sw3 (fallback)
-- **Embedding Model**: BAAI/bge-m3 (1024 dimensions)
-- **Reranker**: BAAI/bge-reranker-v2-m3
+- **Embedding Model**: jinaai/jina-embeddings-v3 (1024 dimensions)
+- **Reranker**: jinaai/jina-reranker-v2-base-multilingual
 - **API Port**: 8900
 - **Systemd Service**: `constitutional-ai-backend`
 - **CRAG**: Enabled (self-reflection + grading active)
-- **Collections**: All suffixed with `_bge_m3_1024`
+- **Collections**: All suffixed with `_jina_v3_1024`
 
 ## För AI-modeller som ska arbeta med projektet
 

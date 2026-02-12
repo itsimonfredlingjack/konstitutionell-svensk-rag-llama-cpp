@@ -8,11 +8,11 @@ from backend.app.services.source_hierarchy import (
 
 def test_collection_tier_assignment():
     """Each collection maps to correct tier."""
-    assert COLLECTION_TIERS["sfs_lagtext_bge_m3_1024"] == SourceTier.A
-    assert COLLECTION_TIERS["riksdag_documents_p1_bge_m3_1024"] == SourceTier.A
-    assert COLLECTION_TIERS["swedish_gov_docs_bge_m3_1024"] == SourceTier.B
-    assert COLLECTION_TIERS["procedural_guides_bge_m3_1024"] == SourceTier.B
-    assert COLLECTION_TIERS["diva_research_bge_m3_1024"] == SourceTier.C
+    assert COLLECTION_TIERS["sfs_lagtext_jina_v3_1024"] == SourceTier.A
+    assert COLLECTION_TIERS["riksdag_documents_p1_jina_v3_1024"] == SourceTier.A
+    assert COLLECTION_TIERS["swedish_gov_docs_jina_v3_1024"] == SourceTier.B
+    assert COLLECTION_TIERS["procedural_guides_jina_v3_1024"] == SourceTier.B
+    assert COLLECTION_TIERS["diva_research_jina_v3_1024"] == SourceTier.C
 
 
 def test_tier_priority_ordering():
@@ -30,11 +30,11 @@ def test_sort_by_priority():
     """sort_by_priority orders results by tier (A first)."""
     hierarchy = SourceHierarchy()
     results = [
-        {"source": "diva_research_bge_m3_1024", "text": "C tier"},
-        {"source": "sfs_lagtext_bge_m3_1024", "text": "A tier"},
-        {"source": "swedish_gov_docs_bge_m3_1024", "text": "B tier"},
+        {"source": "diva_research_jina_v3_1024", "text": "C tier"},
+        {"source": "sfs_lagtext_jina_v3_1024", "text": "A tier"},
+        {"source": "swedish_gov_docs_jina_v3_1024", "text": "B tier"},
     ]
     sorted_results = hierarchy.sort_by_priority(results)
-    assert sorted_results[0]["source"] == "sfs_lagtext_bge_m3_1024"
-    assert sorted_results[1]["source"] == "swedish_gov_docs_bge_m3_1024"
-    assert sorted_results[2]["source"] == "diva_research_bge_m3_1024"
+    assert sorted_results[0]["source"] == "sfs_lagtext_jina_v3_1024"
+    assert sorted_results[1]["source"] == "swedish_gov_docs_jina_v3_1024"
+    assert sorted_results[2]["source"] == "diva_research_jina_v3_1024"

@@ -35,7 +35,7 @@ class TestLegalTextRouting:
 
     def test_primary_is_sfs(self):
         cfg = get_routing_for_intent(QueryIntent.LEGAL_TEXT)
-        assert cfg.primary == ["sfs_lagtext_bge_m3_1024"]
+        assert cfg.primary == ["sfs_lagtext_jina_v3_1024"]
 
     def test_secondary_empty(self):
         cfg = get_routing_for_intent(QueryIntent.LEGAL_TEXT)
@@ -48,29 +48,29 @@ class TestLegalTextRouting:
     def test_never_diva_in_primary(self):
         """CRITICAL INVARIANT: LEGAL_TEXT must NEVER include DiVA in primary."""
         cfg = get_routing_for_intent(QueryIntent.LEGAL_TEXT)
-        assert "diva_research_bge_m3_1024" not in cfg.primary
+        assert "diva_research_jina_v3_1024" not in cfg.primary
 
     def test_never_diva_in_support(self):
         """CRITICAL INVARIANT: LEGAL_TEXT must NEVER include DiVA in support."""
         cfg = get_routing_for_intent(QueryIntent.LEGAL_TEXT)
-        assert "diva_research_bge_m3_1024" not in cfg.support
+        assert "diva_research_jina_v3_1024" not in cfg.support
 
     def test_never_diva_in_secondary(self):
         """CRITICAL INVARIANT: LEGAL_TEXT must NEVER include DiVA in secondary."""
         cfg = get_routing_for_intent(QueryIntent.LEGAL_TEXT)
-        assert "diva_research_bge_m3_1024" not in cfg.secondary
+        assert "diva_research_jina_v3_1024" not in cfg.secondary
 
     def test_never_diva_anywhere(self):
         """CRITICAL INVARIANT: DiVA must not appear in any LEGAL_TEXT collection list."""
         cfg = get_routing_for_intent(QueryIntent.LEGAL_TEXT)
         all_cols = cfg.primary + cfg.support + cfg.secondary
-        assert "diva_research_bge_m3_1024" not in all_cols
+        assert "diva_research_jina_v3_1024" not in all_cols
 
 
 class TestResearchSynthesisRouting:
     def test_diva_is_primary(self):
         cfg = get_routing_for_intent(QueryIntent.RESEARCH_SYNTHESIS)
-        assert cfg.primary == ["diva_research_bge_m3_1024"]
+        assert cfg.primary == ["diva_research_jina_v3_1024"]
 
     def test_secondary_empty(self):
         cfg = get_routing_for_intent(QueryIntent.RESEARCH_SYNTHESIS)
@@ -88,11 +88,11 @@ class TestParliamentTraceRouting:
 
     def test_has_riksdag_primary(self):
         cfg = get_routing_for_intent(QueryIntent.PARLIAMENT_TRACE)
-        assert "riksdag_documents_p1_bge_m3_1024" in cfg.primary
+        assert "riksdag_documents_p1_jina_v3_1024" in cfg.primary
 
     def test_has_diva_secondary(self):
         cfg = get_routing_for_intent(QueryIntent.PARLIAMENT_TRACE)
-        assert "diva_research_bge_m3_1024" in cfg.secondary
+        assert "diva_research_jina_v3_1024" in cfg.secondary
 
 
 class TestPolicyArgumentsRouting:
@@ -102,7 +102,7 @@ class TestPolicyArgumentsRouting:
 
     def test_has_riksdag_primary(self):
         cfg = get_routing_for_intent(QueryIntent.POLICY_ARGUMENTS)
-        assert "riksdag_documents_p1_bge_m3_1024" in cfg.primary
+        assert "riksdag_documents_p1_jina_v3_1024" in cfg.primary
 
     def test_secondary_budget_2(self):
         cfg = get_routing_for_intent(QueryIntent.POLICY_ARGUMENTS)
@@ -120,7 +120,7 @@ class TestPracticalProcessRouting:
 
     def test_procedural_guides_in_primary(self):
         cfg = get_routing_for_intent(QueryIntent.PRACTICAL_PROCESS)
-        assert "procedural_guides_bge_m3_1024" in cfg.primary
+        assert "procedural_guides_jina_v3_1024" in cfg.primary
 
 
 class TestSmalltalkRouting:
@@ -144,7 +144,7 @@ class TestSmalltalkRouting:
 class TestUnknownRouting:
     def test_has_diva_secondary(self):
         cfg = get_routing_for_intent(QueryIntent.UNKNOWN)
-        assert "diva_research_bge_m3_1024" in cfg.secondary
+        assert "diva_research_jina_v3_1024" in cfg.secondary
 
     def test_secondary_budget_2(self):
         cfg = get_routing_for_intent(QueryIntent.UNKNOWN)

@@ -17,7 +17,7 @@
 - ✅ **Funktionalitet**:
   - Skapar/rensar `constitutional_examples` collection
   - Läser in JSON-exemplen (EVIDENCE och ASSIST)
-  - Vektorisera `user`-fältet (frågan) med BGE-M3
+  - Vektorisera `user`-fältet (frågan) med Jina v3
   - Sparar hela JSON-objektet i metadata (`example_json`)
 
 ### 3. Example Structure
@@ -83,7 +83,7 @@
 ```
 User Query
   ↓
-Generate Embedding (BGE-M3)
+Generate Embedding (Jina v3)
   ↓
 Search constitutional_examples collection
   ↓ (filter by mode)
@@ -110,14 +110,14 @@ Insert into {{CONSTITUTIONAL_EXAMPLES}}
 
 ### ChromaDB Collection
 - **Name**: `constitutional_examples`
-- **Embedding Model**: BGE-M3 (1024 dim)
+- **Embedding Model**: Jina v3 (1024 dim)
 - **Indexed Field**: `user` (question)
 - **Stored Field**: `example_json` (full JSON in metadata)
 
 ### Retrieval Parameters
 - **k**: 2 (top-2 examples)
 - **Filter**: By mode (EVIDENCE/ASSIST)
-- **Embedding**: Same model as main retrieval (BGE-M3)
+- **Embedding**: Same model as main retrieval (Jina v3)
 
 ### Error Handling
 - Collection missing: Returns empty list (graceful degradation)

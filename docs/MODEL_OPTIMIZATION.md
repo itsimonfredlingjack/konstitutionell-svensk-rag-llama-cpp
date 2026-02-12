@@ -12,15 +12,15 @@ Constitutional AI använder llama-server (llama.cpp) med lokala modeller för at
 
 ### Modeller
 
-- **Primär modell:** Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server (port 8080)
+- **Primär modell:** Ministral-3-14B-Instruct-2512-Q4_K_M.gguf via llama-server (port 8080)
 - **Fallback modell:** Samma som primär (ingen separat fallback-modell nedladdad)
-- **Grader-modell:** Qwen2.5-0.5B-Instruct-Q5_K_M.gguf (CRAG document grading)
-- **Draft-modell:** Qwen2.5-0.5B-Q8_0.gguf (speculative decoding)
-- **Embedding modell:** BAAI/bge-m3 (1024 dimensions)
-- **Reranker:** BAAI/bge-reranker-v2-m3
+- **Grader-modell:** Qwen2.5-0.5B-Instruct-Q8_0.gguf (CRAG document grading)
+- **Draft-modell:** Ingen (speculative decoding avaktiverat — inkompatibel tokenizer)
+- **Embedding modell:** jinaai/jina-embeddings-v3 (1024 dim, asymmetric LoRA, CC-BY-NC-4.0)
+- **Reranker:** jinaai/jina-reranker-v2-base-multilingual (XLM-RoBERTa, 278M params, CC-BY-NC-4.0)
 - **Vector DB:** ChromaDB
 - **CRAG:** Enabled (grading active, self-reflection disabled)
-- **Collections:** All suffixed with `_bge_m3_1024`
+- **Collections:** All suffixed with `_jina_v3_1024`
 - **Timeout:** 120 sekunder (llama-server timeout)
 
 ---

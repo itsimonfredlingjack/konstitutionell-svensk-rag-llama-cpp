@@ -152,7 +152,7 @@ class EmbeddingError(ConstitutionalAIError):
 
 class RerankingError(ConstitutionalAIError):
     """
-    Reranking (BGE cross-encoder) failed.
+    Reranking (Jina cross-encoder) failed.
 
     HTTP equivalent: 500 Internal Server Error
     """
@@ -208,6 +208,16 @@ class QueryClassificationError(ConstitutionalAIError):
 class SecurityViolationError(ConstitutionalAIError):
     """
     Jail Warden detected a security violation.
+
+    HTTP equivalent: 403 Forbidden
+    """
+
+    pass
+
+
+class HarmfulContentError(ConstitutionalAIError):
+    """
+    Harmful content detected in query.
 
     HTTP equivalent: 403 Forbidden
     """

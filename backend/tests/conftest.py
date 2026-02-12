@@ -108,7 +108,7 @@ def mock_config_settings():
     settings.chromadb_path = "/tmp/test_chromadb"
     settings.pdf_cache_path = "/tmp/test_pdf_cache"
     settings.default_collections = ["test_collection"]
-    settings.embedding_model = "BAAI/bge-m3"
+    settings.embedding_model = "jinaai/jina-embeddings-v3"
     settings.expected_embedding_dim = 1024
     settings.llm_base_url = "http://localhost:8080/v1"
     settings.llm_timeout = 5.0

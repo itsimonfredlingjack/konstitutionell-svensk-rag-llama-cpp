@@ -85,6 +85,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ queryResult }) => {
                     "border border-stone-200/60",
                     "shadow-sm"
                 )}
+                role="region"
+                aria-label="AI-svar"
+                aria-live="polite"
             >
                 {/* Floating Confidence Badge */}
                 <div className="absolute -top-3 left-5 sm:left-6">

@@ -55,7 +55,14 @@ async def stream_query(
         is_safe, safety_reason = guardrail.check_query_safety(question)
         if not is_safe:
             logger.warning(f"Query blocked by safety check: {safety_reason}")
-            yield f"data: {_json({'type': 'error', 'error': 'Fragan blockerades av sakerhetsskal'})}\n\n"
+            # Self-harm: compassionate response (not an error)
+            if safety_reason and safety_reason.startswith("SELF_HARM_DETECTED:"):
+                compassionate_msg = safety_reason.split("SELF_HARM_DETECTED:", 1)[1].strip()
+                yield f"data: {_json({'type': 'metadata', 'mode': 'assist'})}\n\n"
+                yield f"data: {_json({'type': 'token', 'content': compassionate_msg})}\n\n"
+                yield f"data: {_json({'type': 'done'})}\n\n"
+                return
+            yield f"data: {_json({'type': 'error', 'error': 'Din fråga kunde inte behandlas av säkerhetsskäl.'})}\n\n"
             return
 
         # Step 1: Classify query
@@ -274,6 +281,13 @@ async def stream_query(
         )
         if guardrail_result.corrections:
             yield f"data: {_json({'type': 'corrections', 'corrections': [c.original_term + ' → ' + c.corrected_term for c in guardrail_result.corrections], 'corrected_text': guardrail_result.corrected_text})}\n\n"
+
+        # Output leakage sanitization
+        sanitized_answer, leakage_items = guardrail.check_output_leakage(
+            guardrail_result.corrected_text if guardrail_result.corrections else full_answer
+        )
+        if leakage_items:
+            yield f"data: {_json({'type': 'corrections', 'corrections': [f'[intern information borttagen: {len(leakage_items)} objekt]'], 'corrected_text': sanitized_answer})}\n\n"
 
         total_ms = (time.perf_counter() - start_time) * 1000
         yield f"data: {_json({'type': 'done', 'total_time_ms': total_ms})}\n\n"

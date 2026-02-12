@@ -41,10 +41,10 @@ Din research identifierar en omfattande plan för att transformera det nuvarande
 
 ### FASE 2: Arkitekturförbättringar (Hög Impact/Medel Insats) - 2-3 veckor
 
-#### 2.1 ✅ Implementera BGE-M3 för Embeddings **DONE**
-- ✅ BAAI/bge-m3 implementerad (1024 dimensions)
+#### 2.1 ✅ Implementera Jina v3 för Embeddings **DONE**
+- ✅ jinaai/jina-embeddings-v3 implementerad (1024 dimensions)
 - ✅ BAAI/bge-reranker-v2-m3 aktiverad
-- ✅ ChromaDB collections re-indexerade med `_bge_m3_1024` suffix
+- ✅ ChromaDB collections re-indexerade med `_jina_v3_1024` suffix
 - ✅ 1.37M+ documents indexerade
 - **Status**: I produktion
 
@@ -79,7 +79,7 @@ Din research identifierar en omfattande plan för att transformera det nuvarande
 | Komponent | Ursprunglig | Nuvarande (2026-02-07) |
 |-----------|-------------|------------------------|
 | LLM | gpt-sw3 | ✅ Mistral-Nemo-Instruct-2407-Q5_K_M.gguf |
-| Embedding | sentence-BERT | ✅ BAAI/bge-m3 (1024d) |
+| Embedding | sentence-BERT | ✅ jinaai/jina-embeddings-v3 (1024d) |
 | Reranker | None | ✅ BAAI/bge-reranker-v2-m3 |
 | Vector DB | Qdrant | ✅ ChromaDB |
 | RAG | Linjär | ✅ CRAG (enabled) |
@@ -94,7 +94,7 @@ Din research identifierar en omfattande plan för att transformera det nuvarande
 ## ✅ Genomförda Förbättringar (2026-02-07)
 
 1. ✅ **Mistral-Nemo-Instruct-2407-Q5_K_M.gguf** - Optimal 12B-modell aktiverad
-2. ✅ **BAAI/bge-m3** embeddings - 1024 dimensions
+2. ✅ **jinaai/jina-embeddings-v3** embeddings - 1024 dimensions
 3. ✅ **BAAI/bge-reranker-v2-m3** - Reranking aktiverad
 4. ✅ **ChromaDB** - Migrerad från Qdrant
 5. ✅ **CRAG enabled** - Self-reflection + grading

@@ -189,7 +189,7 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                 onClick={(e) => handleStageClick(e, stage.id)}
                                 className={clsx(
                                     "flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer group",
-                                    "min-h-[44px] min-w-[44px] rounded-lg py-1 transition-colors hover:bg-stone-200/50",
+                                    "min-h-[44px] min-w-[44px] sm:min-w-0 rounded-lg py-1 transition-colors hover:bg-stone-200/50",
                                     "focus-ring",
                                     isActiveDetail && "bg-stone-200/80 ring-1 ring-stone-300"
                                 )}
@@ -278,6 +278,7 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                                 <span
                                     className={clsx(
                                         "text-[9px] font-mono uppercase tracking-wide transition-colors duration-300",
+                                        "hidden sm:inline",
                                         isDone
                                             ? stageColors.text
                                             : isCurrent
@@ -317,7 +318,7 @@ export const CompactPipeline: React.FC<CompactPipelineProps> = ({
                             ? "FEL"
                             : runState === "complete"
                                 ? "KLART"
-                                : `${Math.round(progressPercent)}%`}
+                                : <><span className="sm:hidden">{stages[currentDisplayStage]?.label} </span>{`${Math.round(progressPercent)}%`}</>}
                     </motion.span>
                     <ChevronDown
                         className={clsx(

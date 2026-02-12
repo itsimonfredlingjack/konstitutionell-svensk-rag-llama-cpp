@@ -1,19 +1,19 @@
 [Unit]
-Description=Constitutional AI LLM (llama-server with Mistral-Nemo)
+Description=Constitutional AI LLM (llama-server with Ministral-3-14B)
 After=network.target
 
 [Service]
 Type=simple
 WorkingDirectory=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI
 ExecStart=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/llama.cpp/build/bin/llama-server \
-    -m models/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf \
-    --model-draft models/Qwen2.5-0.5B-Instruct-Q8_0.gguf \
-    -c 16384 \
-    -ngl 60 \
+    -m models/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf \
+    -c 8192 \
+    -ngl 99 \
     -ctk q8_0 -ctv q8_0 \
+    --spec-type ngram-simple --draft-max 64 \
     --port 8080 \
     --host 0.0.0.0 \
-    --ctx-size 16384 \
+    --ctx-size 8192 \
     --parallel 2 \
     -fa on
 Restart=always

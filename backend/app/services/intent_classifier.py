@@ -164,43 +164,43 @@ class IntentClassifier:
 
     INTENT_COLLECTIONS = {
         QueryIntent.PARLIAMENT_TRACE: [
-            "riksdag_documents_p1_bge_m3_1024",  # Primary: riksdag docs
-            "swedish_gov_docs_bge_m3_1024",
-            "sfs_lagtext_bge_m3_1024",
+            "riksdag_documents_p1_jina_v3_1024",  # Primary: riksdag docs
+            "swedish_gov_docs_jina_v3_1024",
+            "sfs_lagtext_jina_v3_1024",
         ],
         QueryIntent.POLICY_ARGUMENTS: [
-            "riksdag_documents_p1_bge_m3_1024",  # Primary: party debates/motions
-            "swedish_gov_docs_bge_m3_1024",
+            "riksdag_documents_p1_jina_v3_1024",  # Primary: party debates/motions
+            "swedish_gov_docs_jina_v3_1024",
         ],
         QueryIntent.RESEARCH_SYNTHESIS: [
-            "diva_research_bge_m3_1024",  # Primary: akademisk forskning
-            "swedish_gov_docs_bge_m3_1024",
-            "riksdag_documents_p1_bge_m3_1024",
+            "diva_research_jina_v3_1024",  # Primary: akademisk forskning
+            "swedish_gov_docs_jina_v3_1024",
+            "riksdag_documents_p1_jina_v3_1024",
         ],
         QueryIntent.PRACTICAL_PROCESS: [
-            "procedural_guides_bge_m3_1024",  # Primary: procedural guides
-            "sfs_lagtext_bge_m3_1024",
-            "swedish_gov_docs_bge_m3_1024",
-            "riksdag_documents_p1_bge_m3_1024",
+            "procedural_guides_jina_v3_1024",  # Primary: procedural guides
+            "sfs_lagtext_jina_v3_1024",
+            "swedish_gov_docs_jina_v3_1024",
+            "riksdag_documents_p1_jina_v3_1024",
         ],
         QueryIntent.LEGAL_TEXT: [
-            "sfs_lagtext_bge_m3_1024",  # Primary: law text
-            "riksdag_documents_p1_bge_m3_1024",
-            "swedish_gov_docs_bge_m3_1024",
+            "sfs_lagtext_jina_v3_1024",  # Primary: law text
+            "riksdag_documents_p1_jina_v3_1024",
+            "swedish_gov_docs_jina_v3_1024",
         ],
         QueryIntent.EDGE_ABBREVIATION: [
-            "sfs_lagtext_bge_m3_1024",
-            "riksdag_documents_p1_bge_m3_1024",
+            "sfs_lagtext_jina_v3_1024",
+            "riksdag_documents_p1_jina_v3_1024",
         ],
         QueryIntent.EDGE_CLARIFICATION: [
-            "sfs_lagtext_bge_m3_1024",
-            "swedish_gov_docs_bge_m3_1024",
+            "sfs_lagtext_jina_v3_1024",
+            "swedish_gov_docs_jina_v3_1024",
         ],
         QueryIntent.SMALLTALK: [],  # No retrieval needed
         QueryIntent.UNKNOWN: [
-            "sfs_lagtext_bge_m3_1024",
-            "riksdag_documents_p1_bge_m3_1024",
-            "swedish_gov_docs_bge_m3_1024",
+            "sfs_lagtext_jina_v3_1024",
+            "riksdag_documents_p1_jina_v3_1024",
+            "swedish_gov_docs_jina_v3_1024",
         ],
     }
 

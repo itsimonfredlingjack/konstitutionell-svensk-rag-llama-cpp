@@ -24,7 +24,7 @@ export function ThoughtChain({ thought }: ThoughtChainProps) {
                     </div>
                     <div>
                         <div className="text-[11px] font-bold text-teal-800/80 uppercase tracking-wider group-hover:text-teal-900 transition-colors">
-                            System Self-Reflection
+                            Systemets självgranskning
                         </div>
                     </div>
                 </div>
@@ -59,7 +59,7 @@ export function ThoughtChain({ thought }: ThoughtChainProps) {
 
                             <div className="mt-3 flex items-center gap-1.5 text-[10px] text-teal-600/50 font-mono uppercase tracking-widest border-t border-teal-700/5 pt-2">
                                 <Sparkles size={10} />
-                                CRAG Verification Complete
+                                CRAG-verifiering klar
                             </div>
                         </div>
                     </motion.div>

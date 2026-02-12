@@ -28,7 +28,7 @@ curl http://localhost:8900/api/constitutional/health   # Backend health check
 - **CLI Framework**: Rich terminal UI with Typer for all command-line interfaces
 - **Testing**: Comprehensive pytest suites, especially for Swedish document processing
 - **Document Processing**: Specialized pipelines for Swedish government documents (SFS, propositioner, etc.)
-- **AI Integration**: llama-server (llama.cpp) local models with BAAI/bge-m3 embeddings (1024 dims)
+- **AI Integration**: llama-server (llama.cpp) local models with jinaai/jina-embeddings-v3 embeddings (1024 dims)
 
 ### Architecture Patterns
 - **Agentic RAG**: Direct RAG pattern with Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server (port 8080)

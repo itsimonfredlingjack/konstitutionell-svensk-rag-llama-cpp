@@ -14,7 +14,7 @@
 |--------|-------|
 | Total Documents | 1.37M+ (538K legal/gov + 829K DiVA research) |
 | Vector Dimensions | 1024 |
-| Embedding Model | BAAI/bge-m3 |
+| Embedding Model | jinaai/jina-embeddings-v3 |
 | Storage | ChromaDB |
 | LLM | Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server |
 
@@ -106,13 +106,13 @@ All Constitutional AI-logik är nu fristående i `09_CONSTITUTIONAL-AI/backend/`
 
 ## Collections (ChromaDB)
 
-All collections are suffixed with `_bge_m3_1024`.
+All collections are suffixed with `_jina_v3_1024`.
 
 | Collection | Documents | Dimensions | Use Case |
 |------------|-----------|------------|----------|
-| riksdag_documents_p1_bge_m3_1024 | 230K | 1024 | Riksdagen docs |
-| swedish_gov_docs_bge_m3_1024 | 308K | 1024 | Swedish gov docs |
-| diva_research_bge_m3_1024 | 829K | 1024 | DiVA research papers |
+| riksdag_documents_p1_jina_v3_1024 | 230K | 1024 | Riksdagen docs |
+| swedish_gov_docs_jina_v3_1024 | 308K | 1024 | Swedish gov docs |
+| diva_research_jina_v3_1024 | 829K | 1024 | DiVA research papers |
 
 ---
 

@@ -51,7 +51,7 @@ The Constitutional AI system serves as an intelligent document Q&A system for Sw
 | **Vector DB** | ChromaDB | — | Semantic search storage |
 | **LLM Backend** | llama.cpp (llama-server) | — | OpenAI-compatible local LLM (Ollama as optional fallback) |
 | **RAG Framework** | LangChain + LangGraph | — | Chain orchestration & agentic flows |
-| **Embeddings** | BGE-M3 | v2/v3 | Multi-lingual dense embeddings |
+| **Embeddings** | Jina v3 | 570M | Asymmetric multilingual embeddings |
 | **Sparse Search** | BM25 | rank-bm25 | Lexical full-text search |
 | **Async Runtime** | asyncio | — | Concurrent I/O |
 
@@ -148,8 +148,8 @@ Frontend displays results
 | **rag_fusion.py** | 629 | Query expansion and result fusion |
 | **query_rewriter.py** | 539 | Query enhancement and rewriting |
 | **bm25_service.py** | 271 | Lexical BM25 search |
-| **embedding_service.py** | 209 | BGE-M3 embedding generation |
-| **reranking_service.py** | 356 | Cross-encoder document reranking |
+| **embedding_service.py** | 209 | Jina v3 embedding generation (asymmetric) |
+| **reranking_service.py** | 340 | Jina cross-encoder document reranking |
 
 #### LLM Integration & Generation
 
@@ -343,9 +343,9 @@ Return Swedish refusal: "Tyvärr kan jag inte besvara denna fråga utifrån de d
 
 ### Overview
 
-ChromaDB stores all Swedish government documents embedded with BGE-M3 multi-lingual embeddings.
+ChromaDB stores all Swedish government documents embedded with Jina v3 multilingual embeddings.
 
-### Collections (all suffixed `_bge_m3_1024`)
+### Collections (all suffixed `_jina_v3_1024`)
 
 | Collection | Purpose | Documents |
 |-----------|---------|-----------|
@@ -359,11 +359,11 @@ ChromaDB stores all Swedish government documents embedded with BGE-M3 multi-ling
 
 ### Embedding Details
 
-- **Model**: BAAI/bge-m3
+- **Model**: jinaai/jina-embeddings-v3
 - **Dimension**: 1024
 - **Languages**: 100+ including Swedish
 - **Metric**: Cosine similarity
-- **Reranker**: BAAI/bge-reranker-v2-m3 (cross-encoder)
+- **Reranker**: jinaai/jina-reranker-v2-base-multilingual (cross-encoder, XLM-RoBERTa, 278M params)
 - **Storage**: ~37GB disk-backed (SQLite + parquet)
 
 ---
@@ -377,12 +377,12 @@ The system runs **llama-server** (from llama.cpp) as its primary LLM backend, ex
 ```bash
 # Production configuration on ai-server
 llama-server \
-    -m /models/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf \
+    -m /models/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf \
     --host 0.0.0.0 --port 8080 \
-    -c 32768 -ngl 99
+    -c 8192 -ngl 99
 ```
 
-**Production Model**: Mistral-Nemo-Instruct-2407-Q5_K_M (12B params, Q5_K_M quantization)
+**Production Model**: Ministral-3-14B-Instruct-2512-Q4_K_M (14B params, Q4_K_M quantization)
 
 #### Optional Fallback: Ollama
 
@@ -533,7 +533,7 @@ API_BASE_URL=http://localhost:8900
 
 # LLM
 CONST_LLM_BASE_URL=http://localhost:8080/v1
-CONST_CONSTITUTIONAL_MODEL=Mistral-Nemo-Instruct-2407-Q5_K_M.gguf
+CONST_CONSTITUTIONAL_MODEL=Ministral-3-14B-Instruct-2512-Q4_K_M.gguf
 CONST_LLM_TIMEOUT=60000
 
 # ChromaDB

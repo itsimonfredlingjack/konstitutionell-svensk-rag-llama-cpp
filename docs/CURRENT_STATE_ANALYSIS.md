@@ -14,7 +14,7 @@
 - ✅ **Critic→Revise Loop** - Implementerat men disabled
 
 ### Embeddings & Reranking
-- ✅ **BAAI/bge-m3** - Redan implementerat!
+- ✅ **jinaai/jina-embeddings-v3** - Redan implementerat!
 - ✅ **BAAI/bge-reranker-v2-m3** - Redan implementerat!
 - ✅ **1024 dimension embeddings** - Korrekt konfigurerat
 - ✅ **ChromaDB** - Vector database i produktion
@@ -77,7 +77,7 @@
 - ✅ **1.37M+ documents** (538K legal/gov + 829K DiVA research)
 - ✅ **Port 8900** - Backend produktion
 - ✅ **Mistral-Nemo-Instruct-2407-Q5_K_M.gguf** via llama-server (port 8080)
-- ✅ **All collections suffixed with** `_bge_m3_1024`
+- ✅ **All collections suffixed with** `_jina_v3_1024`
 
 ---
 

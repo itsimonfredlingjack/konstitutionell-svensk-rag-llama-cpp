@@ -47,8 +47,8 @@ def mock_chromadb_client():
 
     # Create mock collections with sample data
     collections = {
-        "sfs_lagtext_bge_m3_1024": create_mock_collection(
-            "sfs_lagtext_bge_m3_1024",
+        "sfs_lagtext_jina_v3_1024": create_mock_collection(
+            "sfs_lagtext_jina_v3_1024",
             [
                 {
                     "id": "sfs_1",
@@ -59,8 +59,8 @@ def mock_chromadb_client():
                 {"id": "sfs_2", "title": "SFS Law 2", "text": "More legal text", "doc_type": "sfs"},
             ],
         ),
-        "riksdag_documents_p1_bge_m3_1024": create_mock_collection(
-            "riksdag_documents_p1_bge_m3_1024",
+        "riksdag_documents_p1_jina_v3_1024": create_mock_collection(
+            "riksdag_documents_p1_jina_v3_1024",
             [
                 {
                     "id": "rd_1",
@@ -76,8 +76,8 @@ def mock_chromadb_client():
                 },
             ],
         ),
-        "swedish_gov_docs_bge_m3_1024": create_mock_collection(
-            "swedish_gov_docs_bge_m3_1024",
+        "swedish_gov_docs_jina_v3_1024": create_mock_collection(
+            "swedish_gov_docs_jina_v3_1024",
             [
                 {
                     "id": "gov_1",
@@ -87,8 +87,8 @@ def mock_chromadb_client():
                 }
             ],
         ),
-        "diva_research_bge_m3_1024": create_mock_collection(
-            "diva_research_bge_m3_1024",
+        "diva_research_jina_v3_1024": create_mock_collection(
+            "diva_research_jina_v3_1024",
             [
                 {
                     "id": "diva_1",
@@ -110,8 +110,8 @@ def mock_chromadb_client():
                 },
             ],
         ),
-        "procedural_guides_bge_m3_1024": create_mock_collection(
-            "procedural_guides_bge_m3_1024",
+        "procedural_guides_jina_v3_1024": create_mock_collection(
+            "procedural_guides_jina_v3_1024",
             [
                 {
                     "id": "proc_1",
@@ -152,9 +152,9 @@ def orchestrator(mock_chromadb_client, mock_embedding_function):
         chromadb_client=mock_chromadb_client,
         embedding_function=mock_embedding_function,
         default_collections=[
-            "sfs_lagtext_bge_m3_1024",
-            "riksdag_documents_p1_bge_m3_1024",
-            "swedish_gov_docs_bge_m3_1024",
+            "sfs_lagtext_jina_v3_1024",
+            "riksdag_documents_p1_jina_v3_1024",
+            "swedish_gov_docs_jina_v3_1024",
         ],
     )
 
@@ -172,7 +172,7 @@ class TestSearchResultTierField:
             title="Test",
             snippet="Test content",
             score=0.9,
-            source="sfs_lagtext_bge_m3_1024",
+            source="sfs_lagtext_jina_v3_1024",
             tier="A",
         )
         assert result.tier == "A"
@@ -184,7 +184,7 @@ class TestSearchResultTierField:
             title="Test",
             snippet="Test content",
             score=0.9,
-            source="sfs_lagtext_bge_m3_1024",
+            source="sfs_lagtext_jina_v3_1024",
         )
         assert result.tier is None
 
@@ -211,8 +211,8 @@ class TestRetrievalResultMetadata:
         from backend.app.services.retrieval_orchestrator import RetrievalMetrics
 
         routing = {
-            "primary": ["riksdag_documents_p1_bge_m3_1024"],
-            "secondary": ["diva_research_bge_m3_1024"],
+            "primary": ["riksdag_documents_p1_jina_v3_1024"],
+            "secondary": ["diva_research_jina_v3_1024"],
             "secondary_budget": 2,
         }
         result = RetrievalResult(
@@ -265,7 +265,7 @@ class TestPolicyArgumentsTwoPass:
 
         # Should have routing_used with secondary collections
         assert result.routing_used is not None
-        assert "diva_research_bge_m3_1024" in result.routing_used.get("secondary", [])
+        assert "diva_research_jina_v3_1024" in result.routing_used.get("secondary", [])
 
         # Should have some DiVA results
         diva_results = [r for r in result.results if "diva" in r.source.lower()]
@@ -307,7 +307,7 @@ class TestParliamentTraceNoDiva:
         # Should NOT have DiVA in secondary
         assert result.routing_used is not None
         secondary = result.routing_used.get("secondary", [])
-        assert "diva_research_bge_m3_1024" not in secondary
+        assert "diva_research_jina_v3_1024" not in secondary
 
         # Should have NO DiVA results
         diva_results = [r for r in result.results if "diva" in r.source.lower()]
@@ -334,7 +334,7 @@ class TestLegalTextSfsPrimary:
         # Should have SFS in primary
         assert result.routing_used is not None
         primary = result.routing_used.get("primary", [])
-        assert "sfs_lagtext_bge_m3_1024" in primary
+        assert "sfs_lagtext_jina_v3_1024" in primary
 
         # SFS results should appear (first ones due to tier priority)
         sfs_results = [r for r in result.results if "sfs" in r.source.lower()]
@@ -453,7 +453,7 @@ class TestIntentClassificationIntegration:
         # Note: This may match RESEARCH_SYNTHESIS which has DiVA as PRIMARY
         if result.intent == "research":
             primary = result.routing_used.get("primary", [])
-            assert "diva_research_bge_m3_1024" in primary
+            assert "diva_research_jina_v3_1024" in primary
 
 
 # ==================== Test: Routing metadata in result ====================

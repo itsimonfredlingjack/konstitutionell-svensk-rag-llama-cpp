@@ -282,19 +282,19 @@ class TestIntentCollections:
 
     def test_legal_text_has_sfs(self):
         cols = IntentClassifier.INTENT_COLLECTIONS[QueryIntent.LEGAL_TEXT]
-        assert "sfs_lagtext_bge_m3_1024" in cols
+        assert "sfs_lagtext_jina_v3_1024" in cols
 
     def test_research_has_diva(self):
         cols = IntentClassifier.INTENT_COLLECTIONS[QueryIntent.RESEARCH_SYNTHESIS]
-        assert "diva_research_bge_m3_1024" in cols
+        assert "diva_research_jina_v3_1024" in cols
 
     def test_parliament_has_riksdag(self):
         cols = IntentClassifier.INTENT_COLLECTIONS[QueryIntent.PARLIAMENT_TRACE]
-        assert "riksdag_documents_p1_bge_m3_1024" in cols
+        assert "riksdag_documents_p1_jina_v3_1024" in cols
 
     def test_practical_has_procedural(self):
         cols = IntentClassifier.INTENT_COLLECTIONS[QueryIntent.PRACTICAL_PROCESS]
-        assert "procedural_guides_bge_m3_1024" in cols
+        assert "procedural_guides_jina_v3_1024" in cols
 
     def test_backward_compat_sfs_primary_alias(self):
         assert (
@@ -317,7 +317,7 @@ class TestIntentCollections:
 class TestGetCollectionsForIntent:
     def test_known_intent(self, classifier: IntentClassifier):
         cols = classifier.get_collections_for_intent(QueryIntent.LEGAL_TEXT)
-        assert "sfs_lagtext_bge_m3_1024" in cols
+        assert "sfs_lagtext_jina_v3_1024" in cols
 
     def test_unknown_intent_falls_back(self, classifier: IntentClassifier):
         """An unrecognized intent (simulated) falls back to UNKNOWN collections."""
@@ -355,9 +355,9 @@ class TestIntentResult:
             intent=QueryIntent.LEGAL_TEXT,
             confidence=0.85,
             matched_patterns=["legal:test"],
-            suggested_collections=["sfs_lagtext_bge_m3_1024"],
+            suggested_collections=["sfs_lagtext_jina_v3_1024"],
         )
         assert r.intent == QueryIntent.LEGAL_TEXT
         assert r.confidence == 0.85
         assert r.matched_patterns == ["legal:test"]
-        assert r.suggested_collections == ["sfs_lagtext_bge_m3_1024"]
+        assert r.suggested_collections == ["sfs_lagtext_jina_v3_1024"]

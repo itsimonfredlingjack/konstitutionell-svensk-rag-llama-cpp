@@ -52,7 +52,7 @@
 ### Constitutional Examples
 - ✅ **Collection**: `constitutional_examples` skapad
 - ✅ **Examples**: 6 exempel seedade (3 EVIDENCE, 3 ASSIST)
-- ✅ **Embeddings**: User-frågor embeddade med BGE-M3
+- ✅ **Embeddings**: User-frågor embeddade med Jina v3
 - ✅ **Metadata**: Fullständigt JSON sparat i metadata
 
 ---

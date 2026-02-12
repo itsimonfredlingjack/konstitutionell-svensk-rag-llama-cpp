@@ -33,7 +33,7 @@
 **Fokus**: Optimering för 12GB VRAM
 - GGUF vs EXL2
 - Modellval (Mistral-Nemo 12B, Qwen 2.5 14B)
-- BGE-M3 embeddings
+- Jina v3 embeddings
 - CRAG med LangGraph
 - Contextual Retrieval
 - Light GraphRAG
@@ -46,7 +46,7 @@
 **Från**: AI-konstitution för lokal inferens.docx
 
 Systemet ska omstruktureras till en graf med noder:
-- `retrieve_node`: Hämtar dokument (BGE-M3)
+- `retrieve_node`: Hämtar dokument (Jina v3)
 - `grade_documents`: Bedömer relevans (Qwen 0.5B)
 - `generate_node`: Genererar svar (Mistral-Nemo 12B)
 - `critique_node`: Granskar svaret (Mistral-Nemo self-reflection)
@@ -140,7 +140,7 @@ Tvinga modellen att svara i JSON:
 - ✅ Critic→Revise Loop - **IMPLEMENTERAT!** (men disabled)
 
 ### Embeddings & Reranking
-- ✅ BGE-M3 (BAAI/bge-m3)
+- ✅ Jina v3 (jinaai/jina-embeddings-v3)
 - ✅ BGE reranker-v2-m3
 
 ### Retrieval

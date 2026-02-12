@@ -28,7 +28,7 @@ pytest-asyncio>=0.23.0
 chromadb>=0.4.0
 
 # Embeddings
-sentence-transformers>=2.2.0
+sentence-transformers>=2.7.0  # Bumped from 2.2.0 for Jina v3 task-aware encoding
 torch>=2.0.0
 
 # Reranking

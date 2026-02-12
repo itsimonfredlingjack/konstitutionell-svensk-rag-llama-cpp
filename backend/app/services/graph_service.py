@@ -124,7 +124,7 @@ _query_processor = get_query_processor_service(_config)
 
 async def retrieve_node(state: GraphState) -> Dict[str, Any]:
     """
-    Retrieve Node - Fetches documents from vector database (BGE-M3).
+    Retrieve Node - Fetches documents from vector database (Jina v3).
 
     Args:
         state: Current graph state
@@ -164,7 +164,7 @@ async def grade_documents_node(state: GraphState) -> Dict[str, Any]:
     """
     Grade Documents Node - Filters documents by relevance using GraderService.
 
-    Uses Qwen 0.5B to grade each document (binary: yes/no).
+    Uses primary LLM to grade each document (binary: yes/no).
     Filters out irrelevant documents.
     Sets web_search=True if all documents are filtered out.
 
@@ -225,7 +225,7 @@ async def grade_documents_node(state: GraphState) -> Dict[str, Any]:
 
 async def generate_node(state: GraphState) -> Dict[str, Any]:
     """
-    Generate Node - Generates LLM response using Mistral-Nemo.
+    Generate Node - Generates LLM response using Ministral-3-14B.
 
     Uses system prompt (EVIDENCE or ASSIST) based on config.
     Generates answer based only on filtered documents.

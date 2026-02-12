@@ -1,6 +1,6 @@
 """
-Reranking Service - BGE Cross-Encoder Wrapper
-Wrapper for BGE reranker-v2-m3 cross-encoder model
+Reranking Service - Jina Reranker v2 Cross-Encoder Wrapper
+Wrapper for Jina reranker-v2-base-multilingual cross-encoder model
 """
 
 import asyncio
@@ -19,13 +19,13 @@ logger = get_logger(__name__)
 @dataclass
 class RerankingConfig:
     """
-    Configuration for BGE reranker service.
+    Configuration for Jina Reranker v2 service.
     """
 
-    model: str = "BAAI/bge-reranker-v2-m3"
-    max_length: int = 512
+    model: str = "jinaai/jina-reranker-v2-base-multilingual"
+    max_length: int = 1024  # Jina supports 1024 tokens (upgraded from 512)
     batch_size: int = 16
-    device: str = "cuda"  # or 'cpu'
+    device: str = "cpu"  # GPU exclusively reserved for LLM
 
 
 @dataclass
@@ -50,19 +50,20 @@ class RerankingResult:
 
 class RerankingService(BaseService):
     """
-    Reranking Service - BGE cross-encoder wrapper.
+    Reranking Service - Jina Reranker v2 cross-encoder wrapper.
 
     Features:
     - Cross-encoder reranking (query, doc) pairs
     - Batch processing for efficiency
-    - VRAM management (model loading/unloading)
-    - Score normalization and calibration
+    - CPU-only (GPU reserved for LLM)
+    - Scores are pre-normalized (0-1 range, no sigmoid needed)
 
     Model Info:
-    - BGE reranker-v2-m3
-    - ~1.2GB VRAM when loaded
+    - jinaai/jina-reranker-v2-base-multilingual (XLM-RoBERTa, 278M params)
+    - ~0.6GB RAM when loaded on CPU
     - Latency: ~10-30ms per batch
-    - Max length: 512 tokens
+    - Max length: 1024 tokens
+    - License: CC-BY-NC-4.0
     """
 
     # Global model cache (lazy-loaded)
@@ -83,50 +84,28 @@ class RerankingService(BaseService):
 
     def _load_model(self) -> None:
         """
-        Load BGE reranker model (lazy loading).
+        Load Jina reranker model (lazy loading).
 
         Only called on first reranking operation.
-        Falls back to CPU if CUDA is out of memory.
+        Always loads on CPU to keep GPU free for LLM.
         """
         if self._is_loaded:
             return
 
         try:
-            import torch
             from sentence_transformers import CrossEncoder
 
-            self.logger.info(f"Loading BGE reranker model: {self.config.reranking_model}")
+            self.logger.info(f"Loading Jina reranker model: {self.config.reranking_model}")
 
-            # Try CUDA first
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            try:
-                # Load cross-encoder on CUDA
-                self._model = CrossEncoder(
-                    self.config.reranking_model,
-                    max_length=512,
-                    device=device,
-                    trust_remote_code=True,
-                )
-                self._is_loaded = True
-                self.logger.info(f"BGE reranker model loaded on {device} (~1.2GB VRAM)")
-            except RuntimeError as e:
-                # Check if CUDA OOM error
-                if "out of memory" in str(e).lower() or "cuda" in str(e).lower():
-                    self.logger.warning(f"CUDA OOM when loading reranker, falling back to CPU: {e}")
-                    # Clear CUDA cache
-                    if torch.cuda.is_available():
-                        torch.cuda.empty_cache()
-                    # Load on CPU instead
-                    self._model = CrossEncoder(
-                        self.config.reranking_model,
-                        max_length=512,
-                        device="cpu",
-                        trust_remote_code=True,
-                    )
-                    self._is_loaded = True
-                    self.logger.info("BGE reranker model loaded on CPU (fallback)")
-                else:
-                    raise
+            self._model = CrossEncoder(
+                self.config.reranking_model,
+                max_length=1024,
+                device="cpu",
+                trust_remote_code=True,
+                automodel_args={"torch_dtype": "auto"},
+            )
+            self._is_loaded = True
+            self.logger.info("Jina reranker model loaded on CPU (~0.6GB RAM)")
 
         except Exception as e:
             self.logger.error(f"Failed to load reranker: {e}")
@@ -142,9 +121,9 @@ class RerankingService(BaseService):
         # Load config
         self._model_config = RerankingConfig(
             model=self.config.reranking_model,
-            max_length=512,
+            max_length=1024,
             batch_size=16,
-            device="cuda",
+            device="cpu",
         )
 
         self._mark_initialized()
@@ -165,7 +144,7 @@ class RerankingService(BaseService):
         Clears the singleton, so next rerank() will reload model.
         """
         if self._model is not None:
-            self.logger.info("Unloading BGE reranker model")
+            self.logger.info("Unloading Jina reranker model")
             del self._model
             self._model = None
             self._is_loaded = False
@@ -192,7 +171,7 @@ class RerankingService(BaseService):
         top_k: Optional[int] = None,
     ) -> RerankingResult:
         """
-        Rerank documents for a query using BGE cross-encoder.
+        Rerank documents for a query using Jina cross-encoder.
 
         Scores each (query, document) pair and sorts by score.
 
@@ -230,7 +209,6 @@ class RerankingService(BaseService):
             original_scores = [doc.get("score", 0.0) for doc in documents]
 
             # Create (query, doc) pairs for cross-encoder
-            # BGE format: list of (query, passage) tuples
             pairs = list(zip([query] * len(documents), doc_texts))
 
             self.logger.info(f"Reranking {len(documents)} documents for query: '{query[:50]}...'")
@@ -243,16 +221,13 @@ class RerankingService(BaseService):
                 pairs,
             )
 
-            # Normalize scores (sigmoid-like transformation)
-            # BGE outputs logits, convert to 0-1 range
-            import numpy as np
-
-            normalized_scores = 1 / (1 + np.exp(-np.array(scores)))
+            # Jina returns pre-normalized scores (0-1 range), no sigmoid needed
+            normalized_scores = list(scores)
 
             latency_ms = (time.perf_counter() - start_time) * 1000
 
             # Sort by new scores (highest first)
-            scored_docs = list(zip(documents, normalized_scores.tolist()))
+            scored_docs = list(zip(documents, normalized_scores))
             scored_docs.sort(key=lambda x: -x[1])  # Sort by score descending
 
             # Extract reranked results

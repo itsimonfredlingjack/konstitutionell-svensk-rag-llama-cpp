@@ -21,10 +21,10 @@ docs/             Dokumentation och arkitektur
 |-----------|--------|
 | API | FastAPI 0.109+, Uvicorn, Pydantic v2 |
 | Vector DB | ChromaDB (~37GB, 1.37M+ dokument) |
-| Embeddings | BAAI/bge-m3 (1024 dimensioner) |
-| Reranker | BAAI/bge-reranker-v2-m3 (cross-encoder) |
-| LLM | Mistral-Nemo-Instruct-2407 Q5_K_M (8.7GB) via llama-server |
-| Grading-modell | Qwen2.5-0.5B-Instruct Q5_K_M (dokument-relevansgradering) |
+| Embeddings | jinaai/jina-embeddings-v3 (1024 dim, asymmetrisk encoding) |
+| Reranker | jinaai/jina-reranker-v2-base-multilingual (cross-encoder, XLM-RoBERTa, 278M params) |
+| LLM | Ministral-3-14B-Instruct-2512 Q4_K_M (8.24GB) via llama-server |
+| Grading-modell | Qwen2.5-0.5B-Instruct Q8_0 (dokument-relevansgradering) |
 | Pipeline | LangGraph (CRAG med relevance grading + self-reflection) |
 | Sparse search | BM25 |
 | Fusion | RAG-Fusion med Reciprocal Rank Fusion |
@@ -64,9 +64,9 @@ Query → IntentClassifier → QueryRewriter
     ├─ Fas 2: Query-dekontextualisering
     ├─ Fas 3: RAG-Fusion (multi-query + RRF-merge)
     └─ Fas 4: Adaptiv retrieval (confidence-baserad eskalering)
-  → Reranking (BGE cross-encoder)
+  → Reranking (Jina cross-encoder)
   → GraderService (Qwen 0.5B, binär relevansgradering per dokument)
-  → LLM (Mistral-Nemo, streamas via SSE)
+  → LLM (Ministral-3-14B, streamas via SSE)
   → GuardrailService (blockerar hallucinationer i EVIDENCE-läge)
   → CriticService (Critic-Revise loop)
   → Svar till frontend
@@ -80,8 +80,8 @@ Query → IntentClassifier → QueryRewriter
 | `retrieval_orchestrator.py` | Fas 1–4 retrieval med adaptiv eskalering |
 | `retrieval_service.py` | ChromaDB vektorsökning |
 | `llm_service.py` | llama-server (OpenAI-kompatibelt API) med streaming |
-| `embedding_service.py` | BAAI/bge-m3 embeddingberäkning |
-| `reranking_service.py` | BGE cross-encoder reranking |
+| `embedding_service.py` | Jina v3 embeddingberäkning |
+| `reranking_service.py` | Jina cross-encoder reranking |
 | `grader_service.py` | Dokumentrelevansgradering (Qwen 0.5B) |
 | `graph_service.py` | LangGraph state machine för CRAG |
 | `guardrail_service.py` | Hallucinationsdetektion (Jail Warden v2) |
@@ -117,7 +117,7 @@ Query → IntentClassifier → QueryRewriter
 
 ## Datakällor
 
-### ChromaDB-collections (alla suffixade `_bge_m3_1024`)
+### ChromaDB-collections (alla suffixade `_jina_v3_1024`)
 
 | Collection | Dokument | Innehåll |
 |------------|----------|----------|
