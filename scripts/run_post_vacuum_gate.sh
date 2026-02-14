@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+umask 077
+
 LOG_DIR="logs"
 RUN_ID="$(date '+%Y%m%d_%H%M%S')"
 MASTER_LOG="${MASTER_LOG:-$LOG_DIR/post_vacuum_gate_${RUN_ID}.log}"
@@ -29,6 +31,16 @@ TRUTH_JSON="${TRUTH_JSON:-$LOG_DIR/runtime_truth_post_vacuum_${RUN_ID}.json}"
 
 RUN_STARTED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
 
+# Endpoints (allow overrides for non-default ports/deployments).
+LLM_HEALTH_URL="${LLM_HEALTH_URL:-http://localhost:8080/health}"
+LLM_HEALTH_EXPECT="${LLM_HEALTH_EXPECT:-ok}"
+BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://localhost:8900/api/constitutional/health}"
+BACKEND_HEALTH_EXPECT="${BACKEND_HEALTH_EXPECT:-healthy}"
+BACKEND_QUERY_URL="${BACKEND_QUERY_URL:-http://localhost:8900/api/constitutional/agent/query}"
+
+CURL_CONNECT_TIMEOUT="${CURL_CONNECT_TIMEOUT:-2}"
+CURL_MAX_TIME="${CURL_MAX_TIME:-5}"
+
 mkdir -p "$LOG_DIR"
 
 log() {
@@ -47,9 +59,9 @@ scan_text_for_patterns() {
   local patterns="$2"
 
   if have_rg; then
-    echo "$text" | rg -i "$patterns" >/dev/null 2>&1
+    echo "$text" | rg -i -- "$patterns" >/dev/null 2>&1
   else
-    echo "$text" | grep -Eiq "$patterns"
+    echo "$text" | grep -Eiq -- "$patterns"
   fi
 }
 
@@ -59,9 +71,21 @@ extract_last_matching_line() {
   local pattern="$2"
 
   if have_rg; then
-    echo "$text" | rg "$pattern" | tail -n 1 || true
+    echo "$text" | rg -- "$pattern" | tail -n 1 || true
   else
-    echo "$text" | grep -E "$pattern" | tail -n 1 || true
+    echo "$text" | grep -E -- "$pattern" | tail -n 1 || true
+  fi
+}
+
+extract_last_line_containing() {
+  # Usage: extract_last_line_containing "<text>" "<substring>"
+  local text="$1"
+  local substring="$2"
+
+  if have_rg; then
+    echo "$text" | rg -F -- "$substring" | tail -n 1 || true
+  else
+    echo "$text" | grep -F -- "$substring" | tail -n 1 || true
   fi
 }
 
@@ -79,8 +103,8 @@ wait_for_http_ok_json_status() {
   local i=0
   while (( i < max_attempts )); do
     local body
-    body="$(curl -sS "$url" || true)"
-    if python3 - "$body" "$expect" <<'PY'
+    body="$(curl -fsS --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" "$url" || true)"
+    if "$VENV_PY" - "$body" "$expect" <<'PY'
 import json
 import sys
 
@@ -144,14 +168,14 @@ run_integrity_gate() {
 start_services_and_wait_ready() {
   log "Starting constitutional-ai-llm.service"
   systemctl --user start constitutional-ai-llm.service
-  if ! wait_for_http_ok_json_status "http://localhost:8080/health" "ok" 120 5; then
+  if ! wait_for_http_ok_json_status "$LLM_HEALTH_URL" "$LLM_HEALTH_EXPECT" 120 5; then
     die "LLM health check did not become OK in time."
   fi
   log "LLM health: OK"
 
   log "Starting constitutional-ai-backend.service"
   systemctl --user start constitutional-ai-backend.service
-  if ! wait_for_http_ok_json_status "http://localhost:8900/api/constitutional/health" "healthy" 90 2; then
+  if ! wait_for_http_ok_json_status "$BACKEND_HEALTH_URL" "$BACKEND_HEALTH_EXPECT" 90 2; then
     die "Backend health check did not become healthy in time."
   fi
   log "Backend health: OK"
@@ -174,12 +198,14 @@ run_enforced_benchmarks() {
 runtime_truth_snapshot() {
   log "Capturing runtime truth snapshot (resolved_collection + fallback_used + HNSW scan)"
 
+  local run_tag="gate_run_id:${RUN_ID}"
+
   # Trigger one canonical query so observability has a fresh entry.
-  curl -sS -X POST "http://localhost:8900/api/constitutional/agent/query" \
+  curl -fsS --connect-timeout "$CURL_CONNECT_TIMEOUT" --max-time "$CURL_MAX_TIME" -X POST "$BACKEND_QUERY_URL" \
     -H "Content-Type: application/json" \
     -H "X-Retrieval-Strategy: adaptive" \
-    -d '{"question":"Vad säger arbetsmiljölagen om arbetsgivarens ansvar?","mode":"evidence","use_agent":false}' \
-    >/dev/null || true
+    -d "{\"question\":\"Vad säger arbetsmiljölagen om arbetsgivarens ansvar? (${run_tag})\",\"mode\":\"evidence\",\"use_agent\":false}" \
+    >/dev/null
 
   local journal_out
   journal_out="$(journalctl --user -u constitutional-ai-backend.service --since "$RUN_STARTED_AT" --no-pager || true)"
@@ -196,17 +222,18 @@ runtime_truth_snapshot() {
   fi
 
   local last_line
-  last_line="$(extract_last_matching_line "$journal_out" "retrieval_request_observability")"
+  last_line="$(extract_last_line_containing "$journal_out" "$run_tag")"
   if [[ -z "$last_line" ]]; then
-    die "No retrieval_request_observability log line found in journal window."
+    die "No runtime truth log line found for this run (tag=$run_tag)."
   fi
 
-  python3 - "$last_line" "$TRUTH_JSON" <<'PY'
+  "$VENV_PY" - "$last_line" "$TRUTH_JSON" "$run_tag" <<'PY'
 import json
 import sys
 
 line = sys.argv[1]
 out_path = sys.argv[2]
+run_tag = sys.argv[3]
 
 json_start = line.find("{")
 if json_start < 0:
@@ -214,8 +241,18 @@ if json_start < 0:
 
 payload = json.loads(line[json_start:])
 
+p_event = str(payload.get("event") or "")
+if p_event != "retrieval_request_observability":
+    raise SystemExit(f"Unexpected event in truth-check line: {p_event!r}")
+
+q = str(payload.get("query") or "")
+if run_tag not in q:
+    raise SystemExit("Truth-check line does not match this run_tag")
+
 pairs = payload.get("resolved_collection", [])
 violations = []
+if not pairs:
+    violations.append({"component": "resolved_collection", "reason": "missing_or_empty"})
 for pair in pairs:
     requested = str(pair.get("requested") or "")
     resolved = str(pair.get("resolved") or "")

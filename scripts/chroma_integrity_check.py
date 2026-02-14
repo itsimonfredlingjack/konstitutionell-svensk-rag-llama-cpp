@@ -121,6 +121,16 @@ def _parse_args() -> argparse.Namespace:
         default="logs/chroma_integrity_report.json",
         help="Write structured report JSON to this path (default: logs/chroma_integrity_report.json).",
     )
+    parser.add_argument(
+        "--expected-dim",
+        type=int,
+        default=None,
+        help=(
+            "Expected embedding dimension to use for probe vectors. "
+            "If omitted, the script tries to load it from backend config; "
+            "if that fails, it falls back to 1024."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -138,13 +148,17 @@ def _load_expected_dim() -> int:
 
     This avoids pulling in sentence-transformers and large HF models during the gate.
     """
-    repo_root = Path(__file__).resolve().parent.parent
-    os.sys.path.insert(0, str(repo_root / "backend"))
-    from app.services.config_service import get_config_service
+    try:
+        repo_root = Path(__file__).resolve().parent.parent
+        os.sys.path.insert(0, str(repo_root / "backend"))
+        from app.services.config_service import get_config_service
 
-    config = get_config_service()
-    dim = int(getattr(config.settings, "expected_embedding_dim", 1024))
-    return max(1, dim)
+        config = get_config_service()
+        dim = int(getattr(config.settings, "expected_embedding_dim", 1024))
+        return max(1, dim)
+    except Exception:
+        # Keep the gate robust even if backend imports/config fail.
+        return 1024
 
 
 def _build_probe_embeddings(dim: int, queries: list[str]) -> list[list[float]]:
@@ -336,7 +350,8 @@ def main() -> None:
 
     client = chromadb.PersistentClient(path=str(chroma_path))
 
-    dim = _load_expected_dim()
+    dim = int(args.expected_dim) if args.expected_dim is not None else _load_expected_dim()
+    dim = max(1, dim)
     probe_embeddings = _build_probe_embeddings(dim, list(DEFAULT_TEST_QUERIES))
 
     reports: list[CollectionReport] = []
