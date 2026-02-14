@@ -52,7 +52,7 @@ class WorkflowToTrainingConverter:
                 )
                 if system_match:
                     prompts.append(system_match.group(1))
-            except:
+            except Exception:
                 pass
 
         # Kolla efter prompts i jsCode
@@ -68,7 +68,6 @@ class WorkflowToTrainingConverter:
     def extract_workflow_logic(self, workflow_data: dict[str, Any]) -> str:
         """Skapar en beskrivning av workflow-logiken."""
         nodes = workflow_data.get("nodes", [])
-        connections = workflow_data.get("connections", {})
 
         logic_parts = []
 
@@ -95,7 +94,6 @@ class WorkflowToTrainingConverter:
 
     def generate_workflow_description(self, workflow_data: dict[str, Any]) -> str:
         """Genererar en naturlig beskrivning av vad workflowen gör."""
-        name = workflow_data.get("name", "Unknown Workflow")
         nodes = workflow_data.get("nodes", [])
 
         # Identifiera huvudfunktioner baserat på node-typer

@@ -21,7 +21,7 @@ def extract_python_functions(content: str, filepath: str) -> list[dict]:
         return examples
 
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             # Hämta docstring
             docstring = ast.get_docstring(node) or ""
 
@@ -35,7 +35,7 @@ def extract_python_functions(content: str, filepath: str) -> list[dict]:
                 end_line = node.end_lineno
                 lines = content.split("\n")[start_line:end_line]
                 func_code = "\n".join(lines)
-            except:
+            except Exception:
                 continue
 
             # Skapa instruktion baserat på funktionsnamn och docstring
@@ -79,7 +79,7 @@ def extract_python_classes(content: str, filepath: str) -> list[dict]:
                 class_code = "\n".join(lines)
                 if node.end_lineno > start_line + 100:
                     class_code += "\n    # ... (truncated)"
-            except:
+            except Exception:
                 continue
 
             if docstring:

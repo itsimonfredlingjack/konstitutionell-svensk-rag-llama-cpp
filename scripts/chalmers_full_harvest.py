@@ -185,7 +185,7 @@ def main():
             try:
                 print(f"\n[BATCH {batch_num}] Fetching... ", end="", flush=True)
                 xml_text = fetch_batch(resumption_token)
-                records, new_token, complete_size, cursor = parse_response(xml_text)
+                records, new_token, complete_size, _cursor = parse_response(xml_text)
 
                 consecutive_errors = 0  # Reset on success
 

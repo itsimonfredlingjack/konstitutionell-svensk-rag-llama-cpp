@@ -52,10 +52,6 @@ def extract_timeline_entries(content: str, source: str) -> list[dict]:
         entry_content = match.group(2).strip()
 
         if len(entry_content) > 100:
-            # Extrahera ämne om det finns
-            subject_match = re.search(r"\*\*Ämne:\*\*\s*(.+)", entry_content)
-            subject = subject_match.group(1) if subject_match else f"händelse {date}"
-
             examples.append(
                 {
                     "instruction": f"Vad hände {date} i GU-ärendet?",

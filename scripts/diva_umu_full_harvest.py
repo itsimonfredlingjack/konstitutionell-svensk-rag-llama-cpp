@@ -15,6 +15,7 @@ Uses resumptionToken for pagination.
 import json
 import time
 import xml.etree.ElementTree as ET
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 
@@ -231,7 +232,7 @@ def load_checkpoint():
     try:
         with open(CHECKPOINT_FILE, encoding="utf-8") as f:
             return json.load(f)
-    except:
+    except Exception:
         return None
 
 
@@ -308,7 +309,7 @@ def main():
             try:
                 total_expected = int(result)
                 print(f"Total expected documents: {total_expected}")
-            except:
+            except Exception:
                 pass
 
         all_documents.extend(records)
@@ -397,10 +398,8 @@ def main():
         json.dump(output_data, f, ensure_ascii=False, indent=2)
 
     # Remove checkpoint file
-    try:
+    with suppress(Exception):
         Path(CHECKPOINT_FILE).unlink()
-    except:
-        pass
 
     print("\n" + "=" * 60)
     print("HARVEST SUMMARY")

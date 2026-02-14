@@ -251,7 +251,7 @@ def harvest_institution(code: str, name: str, expected_count: int) -> tuple[int,
             if token_elem is not None and token_elem.text:
                 resumption_token = token_elem.text.strip()
                 complete_size = token_elem.get("completeListSize", "unknown")
-                cursor = token_elem.get("cursor", "?")
+                # Cursor is informational only; keep retrieval logic minimal.
 
                 # Progress report
                 elapsed = time.time() - start_time

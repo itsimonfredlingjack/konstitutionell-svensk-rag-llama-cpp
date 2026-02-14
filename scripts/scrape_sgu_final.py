@@ -69,7 +69,7 @@ class SGUScraperFinal:
                 async with self.session.get(url) as response:
                     if response.status == 200:
                         return await response.text()
-            except:
+            except Exception:
                 pass
         return None
 
@@ -83,7 +83,7 @@ class SGUScraperFinal:
                     if content_length and int(content_length) > PDF_MAX_SIZE:
                         return None
                     return await response.read()
-            except:
+            except Exception:
                 pass
         return None
 
@@ -103,14 +103,14 @@ class SGUScraperFinal:
                     text = page.extract_text()
                     if text:
                         text_parts.append(text)
-                except:
+                except Exception:
                     continue
 
             full_text = "\n".join(text_parts)
             full_text = re.sub(r"\s+", " ", full_text).strip()
 
             return full_text if len(full_text) > 200 else None
-        except:
+        except Exception:
             return None
 
     async def process_pdf_link(self, url: str, title: str, year: str = "unknown") -> dict | None:

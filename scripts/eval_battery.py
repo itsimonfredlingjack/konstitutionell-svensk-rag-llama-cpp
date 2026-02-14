@@ -579,7 +579,7 @@ DU SKA ALDRIG SKRIVA KOD. Bara planera."""
         # Coherence tests
         print(f"\n[1/3] Logical Coherence ({len(coh_tasks)} tests)")
         print("-" * 40)
-        for i, task in enumerate(coh_tasks):
+        for task in coh_tasks:
             print(
                 f"  Running {task['id']} ({task.get('category', 'unknown')})...",
                 end=" ",

@@ -252,7 +252,7 @@ def main():
     print(f"{'=' * 60}")
 
     total = 0
-    for code, data in results.items():
+    for _code, data in results.items():
         print(f"{data['name']:40} | {data['records']:6} docs")
         total += data["records"]
 

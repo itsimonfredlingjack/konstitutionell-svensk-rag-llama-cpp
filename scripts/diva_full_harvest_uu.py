@@ -229,7 +229,7 @@ def harvest_oai():
             if token_elem is not None and token_elem.text:
                 resumption_token = token_elem.text.strip()
                 complete_size = token_elem.get("completeListSize", "unknown")
-                cursor = token_elem.get("cursor", "?")
+                # Cursor is informational only.
 
                 # Progress report
                 elapsed = time.time() - start_time

@@ -262,14 +262,16 @@ class LakemedelsverketScraper:
 
             # For föreskrifter: match pattern like /sv/lagar-och-regler/foreskrifter/2024-26
             if category == "Föreskrifter":
-                if re.search(r"/foreskrifter/\d{4}-\d+", full_url):
-                    if full_url not in doc_urls:
-                        doc_urls.append(full_url)
+                if re.search(r"/foreskrifter/\d{4}-\d+", full_url) and full_url not in doc_urls:
+                    doc_urls.append(full_url)
             # For vägledningar: match pattern like /sv/lagar-och-regler/vagledningar/...
-            elif category == "Vägledningar":
-                if "/vagledningar/" in full_url and full_url != url:
-                    if full_url not in doc_urls:
-                        doc_urls.append(full_url)
+            elif (
+                category == "Vägledningar"
+                and "/vagledningar/" in full_url
+                and full_url != url
+                and full_url not in doc_urls
+            ):
+                doc_urls.append(full_url)
 
         logger.info(f"Found {len(doc_urls)} document URLs from listing")
         return doc_urls
@@ -295,9 +297,11 @@ class LakemedelsverketScraper:
                     full_url = urljoin(BASE_URL, href)
 
                     # Match föreskrift pattern for this year
-                    if re.search(rf"/foreskrifter/{year}-\d+", full_url):
-                        if full_url not in doc_urls:
-                            doc_urls.append(full_url)
+                    if (
+                        re.search(rf"/foreskrifter/{year}-\d+", full_url)
+                        and full_url not in doc_urls
+                    ):
+                        doc_urls.append(full_url)
 
                 if doc_urls:
                     break  # Found results with this pattern

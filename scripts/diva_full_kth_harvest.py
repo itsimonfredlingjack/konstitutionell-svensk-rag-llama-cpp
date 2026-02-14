@@ -250,7 +250,7 @@ def main():
 
             try:
                 xml_text = fetch_records(resumption_token)
-                records, resumption_token, size, cursor = parse_response(xml_text)
+                records, resumption_token, size, _cursor = parse_response(xml_text)
 
                 if size and not complete_size:
                     complete_size = size

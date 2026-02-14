@@ -208,7 +208,7 @@ class LantmaterietScraper:
                     print(f"  SKIP: Already in database: {metadata['filename']}")
                     self.stats["pdfs_skipped"] += 1
                     return False
-            except:
+            except Exception:
                 pass
 
             # Store in ChromaDB

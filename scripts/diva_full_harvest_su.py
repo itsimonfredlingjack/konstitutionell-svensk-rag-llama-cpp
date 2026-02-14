@@ -225,8 +225,6 @@ def main():
     total_expected = None
     errors = 0
     max_errors = 10
-    deleted_count = 0
-
     # Check for checkpoint
     checkpoint = load_checkpoint()
     if checkpoint and checkpoint.get("resumption_token"):
