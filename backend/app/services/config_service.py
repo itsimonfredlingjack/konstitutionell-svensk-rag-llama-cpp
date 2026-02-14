@@ -141,6 +141,7 @@ class ConfigSettings(BaseSettings):
 
     # BM25 hybrid search — disabled by default to reduce RAM (~3-4GB index)
     bm25_enabled: bool = False
+    bm25_index_path: str = ""  # Override FTS5 DB path; empty = default
 
     # Cutover guardrails (fail-closed once migration is verified)
     cutover_enforce_jina_collections: bool = False
@@ -380,6 +381,10 @@ class ConfigService:
     @property
     def bm25_enabled(self) -> bool:
         return self._settings.bm25_enabled
+
+    @property
+    def bm25_index_path(self) -> str:
+        return self._settings.bm25_index_path
 
     @property
     def score_threshold(self) -> float:

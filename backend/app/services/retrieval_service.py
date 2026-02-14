@@ -385,7 +385,8 @@ class RetrievalService(BaseService):
                 # Initialize BM25 service for hybrid search (config-gated)
                 bm25_service = None
                 if self.config.bm25_enabled:
-                    bm25_service = get_bm25_service()
+                    bm25_path = self.config.bm25_index_path or None
+                    bm25_service = get_bm25_service(index_path=bm25_path)
                     if bm25_service.is_available():
                         logger.info(f"BM25 service available at {bm25_service.index_path}")
                     else:

@@ -616,9 +616,10 @@ class RetrievalOrchestrator:
         if not self._bm25_service or not self._bm25_service.index_path.exists():
             return 0
         try:
-            return sum(
-                p.stat().st_size for p in self._bm25_service.index_path.rglob("*") if p.is_file()
-            )
+            p = self._bm25_service.index_path
+            if p.is_file():
+                return p.stat().st_size
+            return sum(f.stat().st_size for f in p.rglob("*") if f.is_file())
         except Exception:
             return 0
 
