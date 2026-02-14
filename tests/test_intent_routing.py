@@ -20,7 +20,8 @@ def test_parliament_trace_routing():
     config = get_routing_for_intent(QueryIntent.PARLIAMENT_TRACE)
     assert "riksdag_documents_p1_jina_v3_1024" in config.primary
     assert "swedish_gov_docs_jina_v3_1024" in config.primary
-    assert config.secondary_budget == 0
+    assert "diva_research_jina_v3_1024" in config.secondary
+    assert config.secondary_budget == 2
 
 
 def test_policy_arguments_routing():
@@ -52,7 +53,8 @@ def test_practical_process_routing():
 def test_unknown_uses_all_primary():
     config = get_routing_for_intent(QueryIntent.UNKNOWN)
     assert len(config.primary) == 3
-    assert config.secondary_budget == 0
+    assert "diva_research_jina_v3_1024" in config.secondary
+    assert config.secondary_budget == 2
 
 
 def test_smalltalk_has_empty_primary():
@@ -187,9 +189,9 @@ class TestHasSecondaryRetrieval:
         assert has_secondary_retrieval(QueryIntent.LEGAL_TEXT) is False
 
     def test_false_for_parliament_trace(self):
-        """PARLIAMENT_TRACE has no secondary retrieval."""
+        """PARLIAMENT_TRACE has secondary retrieval enabled."""
 
-        assert has_secondary_retrieval(QueryIntent.PARLIAMENT_TRACE) is False
+        assert has_secondary_retrieval(QueryIntent.PARLIAMENT_TRACE) is True
 
     def test_false_for_research_synthesis(self):
         """RESEARCH_SYNTHESIS has no secondary retrieval (DiVA is primary)."""
@@ -197,9 +199,9 @@ class TestHasSecondaryRetrieval:
         assert has_secondary_retrieval(QueryIntent.RESEARCH_SYNTHESIS) is False
 
     def test_false_for_unknown(self):
-        """UNKNOWN intent has no secondary retrieval."""
+        """UNKNOWN intent has secondary retrieval enabled."""
 
-        assert has_secondary_retrieval(QueryIntent.UNKNOWN) is False
+        assert has_secondary_retrieval(QueryIntent.UNKNOWN) is True
 
     def test_false_for_smalltalk(self):
         """SMALLTALK has no secondary retrieval."""

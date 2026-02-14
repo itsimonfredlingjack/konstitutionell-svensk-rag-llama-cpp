@@ -18,6 +18,8 @@ from unittest.mock import AsyncMock, MagicMock
 from app.services.streaming_service import stream_query
 from app.services.query_processor_service import ResponseMode
 
+pytestmark = pytest.mark.asyncio
+
 
 # ── Helpers ───────────────────────────────────────────────────────
 

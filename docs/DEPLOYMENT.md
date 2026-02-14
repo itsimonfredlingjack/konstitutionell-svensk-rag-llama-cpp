@@ -2,6 +2,17 @@
 
 Production deployment guide for the Swedish government document RAG system.
 
+## Document status
+
+This is the active deployment runbook for local and production-like setup.
+
+- **Status:** Active
+- **Last reviewed:** February 13, 2026
+- **Canonical source of truth:** `docs/DEPLOYMENT.md`
+- **Model and stack guidance:** `docs/deep-research-by-claude.md`,
+  `docs/deep-research-by-chatgpt.md`,
+  `docs/README_DOCS_AND_RAG_INSTRUCTIONS.md`
+
 ## System Requirements
 
 | Component | Minimum | Recommended |
@@ -23,10 +34,12 @@ cp backend/.env.example backend/.env
 # Edit backend/.env — set CONST_CHROMADB_PATH, CONST_API_KEY, etc.
 
 # 2. Download GGUF model (first time only)
-# Place the model file in the llama_models Docker volume:
+# Place the model file in the llama_models Docker volume.
+# Current production model: Ministral-3-14B-Instruct-2512 (see docs/MODEL_OPTIMIZATION.md and docs/deep-research-by-*.md)
 mkdir -p llama_models
-wget -O llama_models/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf \
-    https://huggingface.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF/resolve/main/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf
+# Example (adjust URL to your chosen GGUF source):
+# wget -O llama_models/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf \
+#     https://huggingface.co/.../Ministral-3-14B-Instruct-2512-Q4_K_M.gguf
 
 # 3. Start services
 docker compose up -d
@@ -57,21 +70,21 @@ Option A: **llama.cpp (llama-server)** — primary, used in production
 git clone https://github.com/ggerganov/llama.cpp
 cd llama.cpp && make -j$(nproc) LLAMA_CUDA=1
 
-# Download model
-wget -O /path/to/models/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf \
-    https://huggingface.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF/resolve/main/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf
+# Download model (current production: Ministral-3-14B-Instruct-2512; see docs/MODEL_OPTIMIZATION.md)
+# wget -O /path/to/models/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf \
+#     https://huggingface.co/.../Ministral-3-14B-Instruct-2512-Q4_K_M.gguf
 
 # Start server (OpenAI-compatible API on port 8080)
 ./llama-server \
-    -m /path/to/models/Mistral-Nemo-Instruct-2407-Q5_K_M.gguf \
+    -m /path/to/models/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf \
     --host 0.0.0.0 --port 8080 \
-    -c 32768 -ngl 99
+    -c 8192 -ngl 99
 ```
 
 Option B: **Ollama** (optional fallback — not used in production)
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
-ollama pull mistral-nemo
+ollama pull <compatible-model>
 # Runs on http://localhost:11434
 # To use: set CONST_LLM_BASE_URL=http://localhost:11434/v1
 ```

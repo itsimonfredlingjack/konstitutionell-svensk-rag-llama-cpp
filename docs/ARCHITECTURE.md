@@ -3,8 +3,22 @@
 **Project**: Swedish Government Document Retrieval Augmented Generation (RAG) System  
 **Framework**: FastAPI 0.109+ (Python 3.12) backend + React 19 + TypeScript frontend  
 **Location**: `/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/`  
-**Last Updated**: 2026-02-11
-**Version**: 1.1
+**Last Updated**: 2026-02-12
+**Version**: 1.2
+
+---
+
+## Document status
+
+This is the canonical architecture reference for the active Constitutional AI
+stack.
+
+- **Status**: Canonical
+- **Last reviewed**: February 13, 2026
+- **Canonical source of truth**: `docs/ARCHITECTURE.md`
+- **Model and stack guidance**: `docs/deep-research-by-claude.md`,
+  `docs/deep-research-by-chatgpt.md`,
+  `docs/README_DOCS_AND_RAG_INSTRUCTIONS.md`
 
 ---
 
@@ -366,6 +380,58 @@ ChromaDB stores all Swedish government documents embedded with Jina v3 multiling
 - **Reranker**: jinaai/jina-reranker-v2-base-multilingual (cross-encoder, XLM-RoBERTa, 278M params)
 - **Storage**: ~37GB disk-backed (SQLite + parquet)
 
+### Re-indexering
+
+Re-indexering krävs när embedding-modellen byts, eller när dokument behöver flyttas till en ny
+vektorrymd (till exempel från en äldre modell till Jina v3). Utan re-indexering riskerar retrieval
+att ge felaktiga eller tomma träffar trots att dokument finns i ChromaDB.
+
+Kör re-indexeringsskriptet från repo-roten:
+
+```bash
+# Snabb validering (100 dokument, inga writes)
+python scripts/reindex_corpus.py --dry-run
+
+# Full re-indexering på CPU
+python scripts/reindex_corpus.py
+
+# Full re-indexering på GPU
+python scripts/reindex_corpus.py --device gpu
+```
+
+Förväntad körtid:
+- **CPU**: cirka 15-25 timmar
+- **GPU**: cirka 1.5-2.5 timmar
+
+Vid GPU-körning måste `llama-server` stoppas först så att VRAM frigörs för
+embedding-modellen.
+
+### Retrieval Pipeline 2026
+
+Aktuell produktionspipeline för juridisk fråga-svar i Constitutional AI:
+
+```text
+User Query
+→ Query Expansion (Ministral LLM, 3 reformuleringar, GBNF-constrained)
+→ Parallel: Dense Retrieval (Jina v3, task=retrieval.query) + BM25 (expanded terms)
+→ Reciprocal Rank Fusion (k=60)
+→ Cross-Encoder Reranking (Jina Reranker v2, CPU, top-30 → top-5)
+→ CRAG Grading (Ministral, GBNF grammar, per dokument)
+→ LLM Generation (Ministral-3-14B)
+```
+
+Resursbudget (riktvärden):
+
+- **GPU (12 GB)**:
+  - Ministral-3-14B Q4_K_M: ~8.2 GB
+  - KV cache (q8_0, 8K context): ~1.0-1.8 GB beroende på kontextlängd och parallellism
+  - CUDA/runtime-overhead: ~0.5-1.0 GB
+- **CPU/RAM**:
+  - Jina embeddings v3: ~2.3 GB
+  - Jina Reranker v2: ~560 MB
+  - BM25 index: ~2-4 GB
+  - FastAPI + ChromaDB + process-overhead: varierar med workload
+
 ---
 
 ## LLM Integration
@@ -601,6 +667,6 @@ Docker Compose or Systemd services (see docker-compose.yml, systemd/)
 
 ---
 
-**Document Version**: 1.1
-**Last Updated**: 2026-02-11
+**Document Version**: 1.2
+**Last Updated**: 2026-02-12
 **Author**: Claude Code

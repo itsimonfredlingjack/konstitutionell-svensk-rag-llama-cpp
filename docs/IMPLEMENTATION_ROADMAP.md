@@ -6,6 +6,20 @@
 
 ---
 
+## Dokumentstatus
+
+Detta dokument är den aktiva roadmapen för genomförandeordning och driftnära
+förbättringar.
+
+- **Status**: Active
+- **Senast granskad**: February 13, 2026
+- **Kanonisk källa**: `docs/IMPLEMENTATION_ROADMAP.md`
+- **Stack- och modellbeslut**: `docs/deep-research-by-claude.md`,
+  `docs/deep-research-by-chatgpt.md`,
+  `docs/README_DOCS_AND_RAG_INSTRUCTIONS.md`
+
+---
+
 ## 🎯 Översikt
 
 Din research identifierar en omfattande plan för att transformera det nuvarande RAG-systemet till en toppmodern, konstitutionell AI-lösning.
@@ -23,10 +37,10 @@ Din research identifierar en omfattande plan för att transformera det nuvarande
 - **Mål**: `process_query()` <100 rader
 - **Effort**: 2-3 dagar
 
-#### 1.2 ✅ Byt Modell till Mistral-Nemo 12B Q5_K_M **DONE**
-- ✅ Mistral-Nemo-Instruct-2407-Q5_K_M.gguf aktiverad via llama-server
+#### 1.2 ✅ Byt Modell till Ministral 3 14B **DONE**
+- ✅ Ministral-3-14B-Instruct-2512-Q4_K_M.gguf aktiverad via llama-server (Migration 2026)
 - ✅ Konfigurerad med llama-server på port 8080
-- **Status**: Implementerad och i produktion
+- **Status**: Implementerad och i produktion. För stack/modellval se `docs/deep-research-by-claude.md` och `docs/deep-research-by-chatgpt.md`.
 
 #### 1.3 Aktivera KV-Cache Kvantisering (Q8_0) 🔴 **HÖG PRIORITET**
 - "Gratis uppgradering" som halverar minnesanvändning
@@ -43,7 +57,7 @@ Din research identifierar en omfattande plan för att transformera det nuvarande
 
 #### 2.1 ✅ Implementera Jina v3 för Embeddings **DONE**
 - ✅ jinaai/jina-embeddings-v3 implementerad (1024 dimensions)
-- ✅ BAAI/bge-reranker-v2-m3 aktiverad
+- ✅ jinaai/jina-reranker-v2-base-multilingual aktiverad
 - ✅ ChromaDB collections re-indexerade med `_jina_v3_1024` suffix
 - ✅ 1.37M+ documents indexerade
 - **Status**: I produktion
@@ -68,19 +82,19 @@ Din research identifierar en omfattande plan för att transformera det nuvarande
 ## 🎯 Konkret Nästa Steg (Denna Vecka)
 
 1. **Slutför Refactoring** (2-3 dagar)
-2. **Byt Modell till Mistral-Nemo 12B** (1 dag)
+2. ~~Byt Modell till Mistral-Nemo 12B~~ → **Ministral 3 14B** (redan genomförd, Migration 2026)
 3. **Aktivera KV-cache kvantisering** (1 timme)
-4. **Aktivera spekulativ avkodning** (2-3 timmar)
+4. **Aktivera spekulativ avkodning** (n-gram eller draft; se deep-research-docs)
 
 ---
 
 ## 📊 Jämförelse: Ursprunglig vs. Nuvarande
 
-| Komponent | Ursprunglig | Nuvarande (2026-02-07) |
+| Komponent | Ursprunglig | Nuvarande (2026-02) |
 |-----------|-------------|------------------------|
-| LLM | gpt-sw3 | ✅ Mistral-Nemo-Instruct-2407-Q5_K_M.gguf |
+| LLM | legacy gpt-sw3 (historical) | ✅ Ministral-3-14B-Instruct-2512-Q4_K_M.gguf |
 | Embedding | sentence-BERT | ✅ jinaai/jina-embeddings-v3 (1024d) |
-| Reranker | None | ✅ BAAI/bge-reranker-v2-m3 |
+| Reranker | None | ✅ jinaai/jina-reranker-v2-base-multilingual |
 | Vector DB | Qdrant | ✅ ChromaDB |
 | RAG | Linjär | ✅ CRAG (enabled) |
 | Port | 8000 | ✅ 8900 |
@@ -93,9 +107,9 @@ Din research identifierar en omfattande plan för att transformera det nuvarande
 
 ## ✅ Genomförda Förbättringar (2026-02-07)
 
-1. ✅ **Mistral-Nemo-Instruct-2407-Q5_K_M.gguf** - Optimal 12B-modell aktiverad
+1. ✅ **Ministral-3-14B-Instruct-2512-Q4_K_M.gguf** - Produktionsmodell (Migration 2026)
 2. ✅ **jinaai/jina-embeddings-v3** embeddings - 1024 dimensions
-3. ✅ **BAAI/bge-reranker-v2-m3** - Reranking aktiverad
+3. ✅ **jinaai/jina-reranker-v2-base-multilingual** - Reranking aktiverad
 4. ✅ **ChromaDB** - Migrerad från Qdrant
 5. ✅ **CRAG enabled** - Self-reflection + grading
 6. ✅ **1.37M+ documents** - Korpus utökad (538K legal/gov + 829K DiVA)

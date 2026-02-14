@@ -11,6 +11,19 @@ env:
   NODE_VERSION: "20"
 
 jobs:
+  docs-canonical:
+    name: Docs Canonicality Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Validate canonical docs references
+        run: python scripts/check_docs_canonical.py
+
   backend-lint:
     name: Backend Lint & Type Check
     runs-on: ubuntu-latest

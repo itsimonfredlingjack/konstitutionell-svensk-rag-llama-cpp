@@ -116,6 +116,8 @@ class ConfigSettings(BaseSettings):
     # Query Processing
     query_decontextualization_enabled: bool = True
     query_expansion_enabled: bool = True
+    query_expansion_count: int = 3
+    query_expansion_use_grammar: bool = True
     max_query_variants: int = 3
 
     # Adaptive Retrieval
@@ -136,6 +138,18 @@ class ConfigSettings(BaseSettings):
     # EPR hybrid search: use RAG-Fusion multi-query in EPR routing
     epr_use_rag_fusion: bool = True
     epr_fusion_num_queries: int = 3
+
+    # Cutover guardrails (fail-closed once migration is verified)
+    cutover_enforce_jina_collections: bool = False
+    cutover_allowed_fallback_collections: list[str] = []
+
+    # Benchmark DoD gates
+    benchmark_max_pipeline_ms_avg: float = 15000.0
+    benchmark_max_pipeline_ms_p95: float = 25000.0
+    benchmark_min_live_success_rate: float = 0.95
+    benchmark_min_dense_hits_avg: float = 1.0
+    benchmark_min_bm25_hits_avg: float = 1.0
+    benchmark_min_crag_yes_rate_top5: float = 0.20
 
     # CORS
     cors_origins: list[str] = [
@@ -341,6 +355,18 @@ class ConfigService:
         return self._settings.max_concurrent_queries
 
     @property
+    def query_expansion_enabled(self) -> bool:
+        return self._settings.query_expansion_enabled
+
+    @property
+    def query_expansion_count(self) -> int:
+        return self._settings.query_expansion_count
+
+    @property
+    def query_expansion_use_grammar(self) -> bool:
+        return self._settings.query_expansion_use_grammar
+
+    @property
     def rrf_bm25_weight(self) -> float:
         return self._settings.rrf_bm25_weight
 
@@ -351,6 +377,14 @@ class ConfigService:
     @property
     def score_threshold(self) -> float:
         return self._settings.score_threshold
+
+    @property
+    def cutover_enforce_jina_collections(self) -> bool:
+        return self._settings.cutover_enforce_jina_collections
+
+    @property
+    def cutover_allowed_fallback_collections(self) -> list[str]:
+        return self._settings.cutover_allowed_fallback_collections
 
     @property
     def retrieval_timeout_default(self) -> float:

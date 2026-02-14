@@ -343,10 +343,14 @@ async def readiness_check(
 
     try:
         # Check LLM service
-        if hasattr(orchestrator, "llm") and orchestrator.llm:
+        if hasattr(orchestrator, "llm_service") and orchestrator.llm_service:
             try:
-                llm_healthy = await orchestrator.llm.health_check()
-                model_name = getattr(orchestrator.llm, "model_name", "unknown")
+                llm_healthy = await orchestrator.llm_service.health_check()
+                model_name = getattr(
+                    orchestrator.config.settings,
+                    "constitutional_model",
+                    "unknown",
+                )
                 if llm_healthy:
                     checks["llm_service"] = ServiceCheck(status="ok", details={"model": model_name})
                 else:

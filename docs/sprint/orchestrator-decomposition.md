@@ -94,7 +94,7 @@ Extract:
 **Already extracted services that are fine:**
 - `llm_service.py` (705 lines) — LLM communication ✅
 - `retrieval_service.py` (883 lines) — document retrieval ✅
-- `reranking_service.py` (356 lines) — BGE reranking ✅
+- `reranking_service.py` (356 lines) — Jina reranker v2 ✅
 - `guardrail_service.py` (607 lines) — safety validation ✅
 - `grader_service.py` (529 lines) — CRAG grading ✅
 - `critic_service.py` (522 lines) — self-reflection ✅

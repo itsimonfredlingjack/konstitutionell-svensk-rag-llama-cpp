@@ -291,11 +291,11 @@ class TestPolicyArgumentsTwoPass:
 
 
 class TestParliamentTraceNoDiva:
-    """Test that PARLIAMENT_TRACE intent never searches DiVA."""
+    """Test that PARLIAMENT_TRACE uses bounded DiVA secondary retrieval."""
 
     @pytest.mark.asyncio
     async def test_parliament_trace_no_diva(self, orchestrator):
-        """PARLIAMENT_TRACE should not include DiVA results."""
+        """PARLIAMENT_TRACE may include DiVA, but only within configured budget."""
         # Query that triggers PARLIAMENT_TRACE intent
         query = "Hur har riksdagen behandlat klimatfrågan?"
 
@@ -304,14 +304,15 @@ class TestParliamentTraceNoDiva:
         # Should have correct intent
         assert result.intent == "parliament_trace"
 
-        # Should NOT have DiVA in secondary
+        # Secondary DiVA retrieval is enabled for this intent.
         assert result.routing_used is not None
         secondary = result.routing_used.get("secondary", [])
-        assert "diva_research_jina_v3_1024" not in secondary
+        assert "diva_research_jina_v3_1024" in secondary
+        assert result.routing_used.get("secondary_budget") == 2
 
-        # Should have NO DiVA results
+        # DiVA chunks should be bounded by secondary budget.
         diva_results = [r for r in result.results if "diva" in r.source.lower()]
-        assert len(diva_results) == 0, "PARLIAMENT_TRACE should never include DiVA"
+        assert len(diva_results) <= 2
 
 
 # ==================== Test: LEGAL_TEXT uses SFS primary ====================

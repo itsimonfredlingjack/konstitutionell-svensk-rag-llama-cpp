@@ -31,10 +31,9 @@ curl http://localhost:8900/api/constitutional/health   # Backend health check
 - **AI Integration**: llama-server (llama.cpp) local models with jinaai/jina-embeddings-v3 embeddings (1024 dims)
 
 ### Architecture Patterns
-- **Agentic RAG**: Direct RAG pattern with Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server (port 8080)
-  - gpt-sw3-6.7b-v2-instruct-Q5_K_M.gguf available as optional fallback
-- **Response Modes**: EVIDENCE (temp 0.2, strict), ASSIST (temp 0.4), CHAT (temp 0.7)
-- **Structured Outputs**: OpenAI-compatible JSON mode via llama-server med JSON Schema
+- **Agentic RAG**: Direct RAG pattern with Ministral-3-14B-Instruct-2512 via llama-server (port 8080). For stack and model choices, see **`docs/deep-research-by-claude.md`** and **`docs/deep-research-by-chatgpt.md`**.
+- **Response Modes**: EVIDENCE (temp 0.15–0.2, strict), ASSIST (temp 0.4), CHAT (temp 0.7)
+- **Structured Outputs**: OpenAI-compatible JSON mode via llama-server with JSON Schema
 - **Swedish Processing**: Rate limiting for government APIs, Swedish text processing, ChromaDB vector operations
 - **Error Handling**: Graceful degradation for document parsing, comprehensive logging for scraping operations
 - **State Management**: React hooks for frontend, SQLite for scraper state tracking
@@ -45,7 +44,7 @@ curl http://localhost:8900/api/constitutional/health   # Backend health check
 - **Swedish Terms**: Use proper Swedish terminology (myndighetsdokument, propositioner, riksdagen)
 
 ### Critical Notes
-- **Model Configuration**: Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server with OpenAI-compatible API (port 8080), gpt-sw3 (fallback)
+- **Model Configuration**: Ministral-3-14B-Instruct-2512 (Q4_K_M) via llama-server with OpenAI-compatible API (port 8080). RAG stack and model decisions: see `docs/README_DOCS_AND_RAG_INSTRUCTIONS.md` and the deep-research docs.
 - **Rate Limiting**: Always respect Swedish government site limits (5-10s between requests)
 - **ChromaDB**: 1.37M+ documents indexed (538K legal/gov + 829K DiVA research), use semantic search for legal document retrieval
 - **Git Workflow**: This is NOT a git repository, use direct file operations

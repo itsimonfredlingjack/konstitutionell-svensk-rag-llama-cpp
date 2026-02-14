@@ -161,6 +161,7 @@ class TestAnswerContracts:
 
 
 @pytest.mark.unit
+@pytest.mark.asyncio
 async def test_process_query_returns_rag_result(mock_orchestrator):
     """Test process_query returns RAGResult regardless of internal errors.
 
@@ -183,6 +184,7 @@ async def test_process_query_returns_rag_result(mock_orchestrator):
 
 
 @pytest.mark.unit
+@pytest.mark.asyncio
 async def test_process_query_chat_mode(mock_orchestrator, mock_query_processor):
     """Test chat mode bypasses RAG pipeline."""
     from app.services.query_processor_service import ResponseMode
@@ -203,6 +205,7 @@ async def test_process_query_chat_mode(mock_orchestrator, mock_query_processor):
 
 
 @pytest.mark.unit
+@pytest.mark.asyncio
 async def test_process_query_security_block(mock_orchestrator, mock_guardrail_service):
     """Test that unsafe queries return error result (orchestrator catches SecurityViolationError)."""
     mock_guardrail_service.check_query_safety = MagicMock(

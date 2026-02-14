@@ -14,7 +14,7 @@ class TestCitationDataclass:
 
     def test_citation_has_required_fields(self):
         """Citation dataclass must have all required fields."""
-        from backend.app.services.orchestrator_service import Citation
+        from backend.app.services.rag_models import Citation
 
         # Create a Citation instance
         citation = Citation(
@@ -35,7 +35,7 @@ class TestCitationDataclass:
         """Citation should be a proper dataclass."""
         from dataclasses import is_dataclass
 
-        from backend.app.services.orchestrator_service import Citation
+        from backend.app.services.rag_models import Citation
 
         assert is_dataclass(Citation), "Citation must be a dataclass"
 
@@ -43,7 +43,7 @@ class TestCitationDataclass:
         """All Citation fields should be strings."""
         from dataclasses import fields
 
-        from backend.app.services.orchestrator_service import Citation
+        from backend.app.services.rag_models import Citation
 
         citation_fields = {f.name: f.type for f in fields(Citation)}
 

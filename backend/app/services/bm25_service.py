@@ -100,7 +100,11 @@ class BM25Service:
 
             # Get doc count if available
             try:
-                self._doc_count = self._search_engine.index.n_docs
+                # retriv exposes doc count on the retriever object (preferred).
+                # Older implementations may expose it on the underlying index.
+                self._doc_count = int(getattr(self._search_engine, "doc_count", 0) or 0)
+                if not self._doc_count and getattr(self._search_engine, "index", None) is not None:
+                    self._doc_count = int(getattr(self._search_engine.index, "n_docs", 0) or 0)
             except Exception:
                 self._doc_count = 0
 

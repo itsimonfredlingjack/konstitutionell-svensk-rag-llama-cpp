@@ -74,6 +74,8 @@ API-docs: `http://localhost:8900/docs` (Swagger) och `/redoc`.
 
 ## Arkitektur
 
+**RAG-stack och modellval:** För beslut om modeller, retrieval-arkitektur och migrationsrekommendationer, använd **`docs/deep-research-by-claude.md`** och **`docs/deep-research-by-chatgpt.md`** som kanoniska källor. Se även `docs/README_DOCS_AND_RAG_INSTRUCTIONS.md` för vilka dokument som är aktuella vs arkiverade.
+
 ### RAG-pipeline
 
 ```

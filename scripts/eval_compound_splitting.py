@@ -176,7 +176,7 @@ class CompoundSplittingEvaluator:
             # Progress indicator
             status = "✓" if result.recall_at_10_with >= result.recall_at_10_without else "○"
             print(
-                f"  [{i+1:02d}/{len(queries)}] {status} {result.query_id}: "
+                f"  [{i + 1:02d}/{len(queries)}] {status} {result.query_id}: "
                 f"R@10 {result.recall_at_10_with:.0%} vs {result.recall_at_10_without:.0%}"
             )
 

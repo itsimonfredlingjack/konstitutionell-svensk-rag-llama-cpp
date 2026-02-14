@@ -9,6 +9,8 @@ from app.services.orchestrator_service import RAGResult, RAGPipelineMetrics
 from app.services.query_processor_service import ResponseMode
 from app.services.guardrail_service import WardenStatus
 
+pytestmark = pytest.mark.asyncio
+
 
 class MockSearchResult:
     def __init__(

@@ -112,7 +112,7 @@ class TestExistingIntents:
         """EDGE_CLARIFICATION should still work."""
         queries = [
             "Menar du förvaltningslagen?",
-            "Skillnaden mellan RF och TF?",
+            "Vilken av dem menar du?",
         ]
         for q in queries:
             result = classifier.classify(q)

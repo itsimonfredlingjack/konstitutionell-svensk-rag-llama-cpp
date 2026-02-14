@@ -20,6 +20,7 @@ Adaptive Retrieval (Phase 4):
 """
 
 import asyncio
+import json
 import logging
 import re
 import time
@@ -42,6 +43,7 @@ from .rag_fusion import (
 
 # BM25 Sidecar for hybrid search
 from .bm25_service import BM25Service
+from .query_expansion_service import QueryExpansionService
 
 # EPR: Evidence Policy Routing (Phase 5)
 from .source_hierarchy import SourceHierarchy, SourceTier
@@ -82,6 +84,37 @@ def get_canonical_doc_id(doc_id: str) -> str:
         logger.debug(f"Canonical doc ID: '{doc_id}' → '{canonical}'")
 
     return canonical
+
+
+def _get_collection_with_fallback(client, requested_name: str, emit_log: bool = True):
+    """
+    Resolve a collection with compatibility fallback for pre-reindex stores.
+
+    During migration, runtime may request *_jina_v3_1024 while the live ChromaDB
+    still contains *_bge_m3_1024. This fallback keeps retrieval functional until
+    re-indexing is completed.
+    """
+    candidates = [requested_name]
+    if requested_name.endswith("_jina_v3_1024"):
+        candidates.append(requested_name.replace("_jina_v3_1024", "_bge_m3_1024"))
+
+    last_error = None
+    for candidate in candidates:
+        try:
+            collection = client.get_collection(name=candidate)
+            if emit_log and candidate != requested_name:
+                logger.warning(
+                    "Collection fallback active: requested=%s resolved=%s",
+                    requested_name,
+                    candidate,
+                )
+            return candidate, collection
+        except Exception as exc:  # pragma: no cover - defensive path
+            last_error = exc
+
+    if emit_log:
+        logger.warning(f"Collection {requested_name} not found: {last_error}")
+    return None
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -136,6 +169,17 @@ class RetrievalMetrics:
     fusion_gain: float = 0.0
     rrf_latency_ms: float = 0.0
     expansion_latency_ms: float = 0.0
+    llm_query_expansion_used: bool = False
+    llm_query_expansion_latency_ms: float = 0.0
+    llm_query_expansion_count: int = 0
+    llm_query_expansion_grammar_used: bool = False
+    llm_query_expansion_parsing_method: str = "none"
+    llm_query_expansions: List[str] = field(default_factory=list)
+
+    # Cutover guardrails (fail-closed once enforced)
+    cutover_enforced: bool = False
+    cutover_violation: bool = False
+    cutover_violation_collections: List[str] = field(default_factory=list)
 
     # Phase 4: Adaptive retrieval metrics
     adaptive_used: bool = False
@@ -188,6 +232,19 @@ class RetrievalMetrics:
                 "fusion_gain": round(self.fusion_gain, 4),
                 "rrf_latency_ms": round(self.rrf_latency_ms, 2),
                 "expansion_latency_ms": round(self.expansion_latency_ms, 2),
+            },
+            "query_expansion": {
+                "used": self.llm_query_expansion_used,
+                "latency_ms": round(self.llm_query_expansion_latency_ms, 2),
+                "count": self.llm_query_expansion_count,
+                "grammar_used": self.llm_query_expansion_grammar_used,
+                "parsing_method": self.llm_query_expansion_parsing_method,
+                "queries": self.llm_query_expansions,
+            },
+            "cutover": {
+                "enforced": self.cutover_enforced,
+                "violation": self.cutover_violation,
+                "violation_collections": self.cutover_violation_collections,
             },
             "adaptive": {
                 "used": self.adaptive_used,
@@ -356,10 +413,11 @@ async def parallel_collection_search(
     # Get all collections
     collections = []
     for name in collection_names:
-        try:
-            collections.append((name, client.get_collection(name=name)))
-        except Exception as e:
-            logger.warning(f"Collection {name} not found: {e}")
+        resolved = _get_collection_with_fallback(client, name)
+        if resolved is None:
+            continue
+        resolved_name, collection = resolved
+        collections.append((name, resolved_name, collection))
 
     if not collections:
         return [], metrics
@@ -373,7 +431,7 @@ async def parallel_collection_search(
             where_filter=where_filter,
             timeout_seconds=timeout_seconds,
         )
-        for name, coll in collections
+        for _, _, coll in collections
     ]
 
     # Execute all in parallel
@@ -384,10 +442,16 @@ async def parallel_collection_search(
     collection_latencies = []
 
     for i, result in enumerate(results_list):
-        coll_name = collections[i][0]
+        requested_name, resolved_name, _ = collections[i]
+        coll_name = resolved_name
 
         if isinstance(result, Exception):
-            logger.error(f"Collection {coll_name} failed: {result}")
+            logger.error(
+                "Collection %s (requested as %s) failed: %s",
+                coll_name,
+                requested_name,
+                result,
+            )
             continue
 
         results, latency_ms, timed_out = result
@@ -511,6 +575,15 @@ class RetrievalOrchestrator:
         bm25_weight: float = 1.5,  # Weight for BM25 in RRF (1.0 = equal, 1.5 = favor exact terms)
         rrf_k: float = 30.0,  # RRF k constant (lower = top results dominate)
         score_threshold: float = 0.35,  # Min similarity score for EPR results
+        query_expansion_service: Optional[QueryExpansionService] = None,
+        query_expansion_enabled: bool = True,
+        query_expansion_count: int = 3,
+        use_epr_fusion: bool = True,
+        epr_fusion_num_queries: int = 3,
+        embedding_model_name: Optional[str] = None,
+        reranker_model_name: Optional[str] = None,
+        cutover_enforce_jina_collections: bool = False,
+        cutover_allowed_fallback_collections: Optional[List[str]] = None,
     ):
         self.client = chromadb_client
         self.embed_fn = embedding_function
@@ -519,15 +592,222 @@ class RetrievalOrchestrator:
         self.expander = query_expander or QueryExpander(max_queries=3)
         self._query_semaphore = asyncio.Semaphore(self.MAX_CONCURRENT_QUERIES)
         # Use passed collections or fall back to class default
-        self._default_collections = default_collections or self._default_collections
+        self._default_collections = default_collections or self.DEFAULT_COLLECTIONS
         # BM25 sidecar for hybrid search (lazy load if not provided)
         self._bm25_service = bm25_service
         self._bm25_weight = bm25_weight
         self._rrf_k = rrf_k
         self._score_threshold = score_threshold
+        self._query_expansion_service = query_expansion_service
+        self._query_expansion_enabled = query_expansion_enabled
+        self._query_expansion_count = query_expansion_count
         # EPR RAG-Fusion settings
-        self._use_epr_fusion = True
-        self._epr_fusion_num_queries = 3
+        self._use_epr_fusion = use_epr_fusion
+        self._epr_fusion_num_queries = epr_fusion_num_queries
+        self._embedding_model_name = embedding_model_name or "unknown"
+        self._reranker_model_name = reranker_model_name or "unknown"
+        self._cutover_enforce_jina_collections = cutover_enforce_jina_collections
+        self._cutover_allowed_fallback_collections = {
+            value.casefold() for value in (cutover_allowed_fallback_collections or [])
+        }
+
+    def _get_bm25_index_size_bytes(self) -> int:
+        """Return on-disk BM25 index size in bytes (best-effort)."""
+        if not self._bm25_service or not self._bm25_service.index_path.exists():
+            return 0
+        try:
+            return sum(
+                p.stat().st_size for p in self._bm25_service.index_path.rglob("*") if p.is_file()
+            )
+        except Exception:
+            return 0
+
+    def _get_bm25_observability(self) -> Dict[str, Any]:
+        """Return best-effort BM25 observability payload for structured logs."""
+        if not self._bm25_service:
+            return {
+                "available": False,
+                "loaded": False,
+                "doc_count": 0,
+                "index_path": None,
+                "index_size_bytes": 0,
+            }
+
+        try:
+            stats = dict(self._bm25_service.get_stats())
+        except Exception:
+            # Defensive fallback if bm25 service doesn't expose stats for any reason.
+            stats = {
+                "available": bool(getattr(self._bm25_service, "is_available", lambda: False)()),
+                "loaded": bool(getattr(self._bm25_service, "is_loaded", lambda: False)()),
+                "index_path": str(getattr(self._bm25_service, "index_path", "")) or None,
+                "doc_count": 0,
+            }
+
+        stats["index_size_bytes"] = self._get_bm25_index_size_bytes()
+        return stats
+
+    def _resolve_collection_pairs(self, requested_collections: List[str]) -> List[Dict[str, Any]]:
+        """Resolve requested collections and capture fallback mapping."""
+        pairs: List[Dict[str, Any]] = []
+        seen: set[tuple[str, str]] = set()
+        for requested in requested_collections:
+            resolved = _get_collection_with_fallback(self.client, requested, emit_log=False)
+            if resolved is None:
+                pair = (requested, "__missing__")
+                if pair in seen:
+                    continue
+                seen.add(pair)
+                pairs.append(
+                    {
+                        "requested": requested,
+                        "resolved": None,
+                        "fallback_used": False,
+                        "exists": False,
+                    }
+                )
+                continue
+
+            resolved_name, _ = resolved
+            pair = (requested, resolved_name)
+            if pair in seen:
+                continue
+            seen.add(pair)
+            pairs.append(
+                {
+                    "requested": requested,
+                    "resolved": resolved_name,
+                    "fallback_used": requested != resolved_name,
+                    "exists": True,
+                }
+            )
+
+        return pairs
+
+    def _enforce_cutover_policy(
+        self,
+        requested_collections: List[str],
+        metrics: Optional[RetrievalMetrics] = None,
+    ) -> None:
+        """
+        Enforce collection cutover policy.
+
+        When enabled, retrieval fails closed if requested Jina collections are resolved
+        via fallback (for example to *_bge_m3_1024) or are missing.
+        """
+        pairs = self._resolve_collection_pairs(requested_collections)
+        violations: List[str] = []
+
+        for pair in pairs:
+            requested = str(pair.get("requested") or "")
+            if not requested:
+                continue
+            if requested.casefold() in self._cutover_allowed_fallback_collections:
+                continue
+            if pair.get("fallback_used") or not pair.get("exists", False):
+                violations.append(requested)
+
+        if metrics:
+            metrics.cutover_enforced = self._cutover_enforce_jina_collections
+            metrics.cutover_violation = bool(violations)
+            metrics.cutover_violation_collections = sorted(set(violations))
+
+        if self._cutover_enforce_jina_collections and violations:
+            unique_violations = sorted(set(violations))
+            raise RuntimeError(
+                "CUTOVER_VIOLATION: fallback/missing collection detected while "
+                f"cutover enforcement is enabled: {unique_violations}"
+            )
+
+    def _log_observability(
+        self,
+        *,
+        query: str,
+        metrics: RetrievalMetrics,
+        requested_collections: List[str],
+    ) -> None:
+        """Emit structured JSON observability log for each retrieval request."""
+        payload = {
+            "event": "retrieval_request_observability",
+            "strategy": metrics.strategy,
+            "query": query,
+            "embedding_model_name": self._embedding_model_name,
+            "reranker_model_name": self._reranker_model_name,
+            "requested_collections": requested_collections,
+            "bm25": self._get_bm25_observability(),
+            "resolved_collection": self._resolve_collection_pairs(requested_collections),
+            "query_expansions": metrics.llm_query_expansions,
+            "expansion_grammar_used": metrics.llm_query_expansion_grammar_used,
+            "expansion_parsing_method": metrics.llm_query_expansion_parsing_method,
+            "cutover_enforced": metrics.cutover_enforced,
+            "cutover_violation": metrics.cutover_violation,
+            "cutover_violation_collections": metrics.cutover_violation_collections,
+        }
+        logger.info(json.dumps(payload, ensure_ascii=False))
+
+    async def _get_llm_expansions(
+        self,
+        query: str,
+        metrics: Optional[RetrievalMetrics] = None,
+    ) -> List[str]:
+        """Generate extra lexical query variants via one LLM call (fail-open)."""
+        if not (
+            self._query_expansion_enabled
+            and self._query_expansion_service
+            and query
+            and query.strip()
+        ):
+            return []
+
+        try:
+            result = await self._query_expansion_service.expand(
+                query=query,
+                count=self._query_expansion_count,
+            )
+            if metrics:
+                metrics.llm_query_expansion_latency_ms = result.latency_ms
+                metrics.llm_query_expansion_count = len(result.queries)
+                metrics.llm_query_expansion_used = bool(result.queries)
+                metrics.llm_query_expansions = list(result.queries)
+                metrics.llm_query_expansion_grammar_used = bool(result.grammar_applied)
+                metrics.llm_query_expansion_parsing_method = result.parsing_method
+            return result.queries
+        except Exception as exc:
+            logger.warning(f"LLM query expansion failed (continuing without expansion): {exc}")
+            if metrics:
+                metrics.llm_query_expansion_used = False
+                metrics.llm_query_expansion_grammar_used = False
+                metrics.llm_query_expansion_parsing_method = "none"
+            return []
+
+    def _build_bm25_query(
+        self,
+        base_query: str,
+        rewrite_result=None,
+        llm_expansions: Optional[List[str]] = None,
+    ) -> str:
+        """Build BM25 lexical query from rewrite output plus optional LLM expansions."""
+        query_parts: List[str] = []
+        seen: set[str] = set()
+
+        lexical = base_query
+        if rewrite_result and hasattr(rewrite_result, "lexical_query"):
+            lexical = rewrite_result.lexical_query or base_query
+
+        for candidate in [lexical, *(llm_expansions or [])]:
+            cleaned = re.sub(r"\s+", " ", (candidate or "")).strip()
+            if not cleaned:
+                continue
+            key = cleaned.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            query_parts.append(cleaned)
+
+        if not query_parts:
+            return base_query
+
+        return " ".join(query_parts)
 
     async def search(
         self,
@@ -574,10 +854,12 @@ class RetrievalOrchestrator:
 
             # Execute parallel search (for both PARALLEL_V1 and REWRITE_V1)
             if strategy in (RetrievalStrategy.PARALLEL_V1, RetrievalStrategy.REWRITE_V1):
+                requested_collections = collections or self._default_collections
+                self._enforce_cutover_policy(requested_collections)
                 results, metrics = await parallel_collection_search(
                     client=self.client,
                     query_embedding=query_embedding,
-                    collection_names=collections or self._default_collections,
+                    collection_names=requested_collections,
                     n_results_per_collection=k,
                     where_filter=where_filter,
                     timeout_seconds=self.default_timeout,
@@ -610,6 +892,12 @@ class RetrievalOrchestrator:
 
                 # FIX: Override total_latency_ms to include embedding time + rewrite time
                 metrics.total_latency_ms = (time.perf_counter() - start) * 1000
+                self._enforce_cutover_policy(requested_collections, metrics)
+                self._log_observability(
+                    query=query,
+                    metrics=metrics,
+                    requested_collections=requested_collections,
+                )
 
                 return RetrievalResult(
                     results=search_results,
@@ -720,6 +1008,8 @@ class RetrievalOrchestrator:
 
         # Step 3+4: Embed+dense search and BM25 search in parallel
         collection_names = collections or self._default_collections
+        self._enforce_cutover_policy(collection_names, metrics)
+        llm_expansions = await self._get_llm_expansions(query, metrics)
 
         async def _embed_and_dense_search():
             """Embed queries and run dense search."""
@@ -762,12 +1052,15 @@ class RetrievalOrchestrator:
                 return []
             try:
                 bm25_start = time.perf_counter()
-                bm25_query = search_query
-                if rewrite_result and hasattr(rewrite_result, "lexical_query"):
-                    bm25_query = rewrite_result.lexical_query or search_query
+                bm25_query = self._build_bm25_query(search_query, rewrite_result, llm_expansions)
                 loop = asyncio.get_event_loop()
                 results = await loop.run_in_executor(
-                    None, lambda: self._bm25_service.search(bm25_query, k=k * 2)
+                    None,
+                    lambda: self._bm25_service.search(
+                        bm25_query,
+                        k=k * 2,
+                        return_docs=True,
+                    ),
                 )
                 metrics.bm25_latency_ms = (time.perf_counter() - bm25_start) * 1000
                 metrics.bm25_result_count = len(results)
@@ -836,6 +1129,11 @@ class RetrievalOrchestrator:
             f"RAG-Fusion complete: {len(search_results)} results in {metrics.total_latency_ms:.1f}ms "
             f"(queries: {metrics.num_queries}{bm25_info}, gain: {metrics.fusion_gain:.1%})"
         )
+        self._log_observability(
+            query=query,
+            metrics=metrics,
+            requested_collections=collection_names,
+        )
 
         return RetrievalResult(
             results=search_results,
@@ -887,6 +1185,10 @@ class RetrievalOrchestrator:
             if rewrite_result.expanded_abbreviations:
                 logger.info(f"Adaptive search - expanded: {rewrite_result.expanded_abbreviations}")
 
+        llm_expansions = await self._get_llm_expansions(query, metrics)
+        bm25_query_override = self._build_bm25_query(query, rewrite_result, llm_expansions)
+        self._enforce_cutover_policy(collections or self._default_collections, metrics)
+
         # Track escalation path and reason codes for decision trace
         escalation_path = []
         reason_codes = []  # NEW: Decision trace
@@ -905,6 +1207,7 @@ class RetrievalOrchestrator:
             collections=collections,
             where_filter=where_filter,
             rewrite_result=rewrite_result,
+            bm25_query_override=bm25_query_override,
         )
 
         # Compute confidence signals - NOW with original_query for lexical overlap
@@ -942,6 +1245,7 @@ class RetrievalOrchestrator:
                 collections=None,  # Search all available
                 where_filter=where_filter,
                 rewrite_result=rewrite_result,
+                bm25_query_override=bm25_query_override,
             )
 
             fusion_metrics_dict = {
@@ -977,6 +1281,7 @@ class RetrievalOrchestrator:
                     collections=None,
                     where_filter=where_filter,
                     rewrite_result=rewrite_result,
+                    bm25_query_override=bm25_query_override,
                 )
 
                 fusion_metrics_dict = {
@@ -1044,6 +1349,11 @@ class RetrievalOrchestrator:
             f"(path: {'→'.join(escalation_path)}, conf: {conf_score:.2f}, "
             f"lexical: {lexical_score:.2f}, abstain: {abstain_flag})"
         )
+        self._log_observability(
+            query=query,
+            metrics=metrics,
+            requested_collections=collections or self._default_collections,
+        )
 
         return RetrievalResult(
             results=final_results,
@@ -1060,6 +1370,7 @@ class RetrievalOrchestrator:
         collections: Optional[List[str]],
         where_filter: Optional[Dict],
         rewrite_result,
+        bm25_query_override: Optional[str] = None,
     ) -> RetrievalResult:
         """
         Execute a single fusion retrieval step.
@@ -1122,12 +1433,19 @@ class RetrievalOrchestrator:
                 return None
             try:
                 bm25_start = time.perf_counter()
-                bm25_query = search_query
-                if rewrite_result and hasattr(rewrite_result, "lexical_query"):
-                    bm25_query = rewrite_result.lexical_query or search_query
+                bm25_query = bm25_query_override or self._build_bm25_query(
+                    search_query,
+                    rewrite_result,
+                    None,
+                )
                 loop = asyncio.get_event_loop()
                 results = await loop.run_in_executor(
-                    None, lambda: self._bm25_service.search(bm25_query, k=adjusted_k * 2)
+                    None,
+                    lambda: self._bm25_service.search(
+                        bm25_query,
+                        k=adjusted_k * 2,
+                        return_docs=True,
+                    ),
                 )
                 metrics.bm25_latency_ms = (time.perf_counter() - bm25_start) * 1000
                 logger.info(
@@ -1258,8 +1576,14 @@ class RetrievalOrchestrator:
             f"secondary={routing_config.secondary}, budget={routing_config.secondary_budget}"
         )
 
+        requested_collections = routing_config.primary + routing_config.support
+        if routing_config.secondary_budget > 0 and routing_config.secondary:
+            requested_collections += routing_config.secondary
+        self._enforce_cutover_policy(requested_collections, metrics)
+
         # Generate query embedding(s) - multi-query if RAG-Fusion enabled
         use_fusion = getattr(self, "_use_epr_fusion", True)
+        rewrite_result = None
 
         if use_fusion and self.rewriter:
             # RAG-Fusion: expand to multiple query variants for better recall
@@ -1282,18 +1606,23 @@ class RetrievalOrchestrator:
             # Single query fallback
             query_embeddings = [self.embed_fn([query])[0]]
 
+        llm_expansions = await self._get_llm_expansions(query, metrics)
+
         # BM25 search (runs in parallel with Pass 1 dense search)
         async def _epr_bm25_search():
             if not (self._bm25_service and self._bm25_service.is_available()):
                 return None
             try:
                 bm25_start = time.perf_counter()
-                bm25_query = query
-                if use_fusion and rewrite_result and hasattr(rewrite_result, "lexical_query"):
-                    bm25_query = rewrite_result.lexical_query or query
+                bm25_query = self._build_bm25_query(query, rewrite_result, llm_expansions)
                 loop = asyncio.get_event_loop()
                 results = await loop.run_in_executor(
-                    None, lambda: self._bm25_service.search(bm25_query, k=k * 2)
+                    None,
+                    lambda: self._bm25_service.search(
+                        bm25_query,
+                        k=k * 2,
+                        return_docs=True,
+                    ),
                 )
                 metrics.bm25_latency_ms = (time.perf_counter() - bm25_start) * 1000
                 logger.info(
@@ -1457,6 +1786,11 @@ class RetrievalOrchestrator:
         logger.info(
             f"EPR complete: {len(unique_results)} results in {metrics.total_latency_ms:.1f}ms "
             f"(intent={detected_intent.value})"
+        )
+        self._log_observability(
+            query=query,
+            metrics=metrics,
+            requested_collections=requested_collections,
         )
 
         return RetrievalResult(

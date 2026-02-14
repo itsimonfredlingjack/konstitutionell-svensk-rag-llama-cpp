@@ -40,6 +40,7 @@ logger = get_logger(__name__)
 
 
 from .rag_models import (  # noqa: E402
+    ANSWER_CONTRACTS,  # noqa: F401 - re-exported for backward compatibility
     RAGPipelineMetrics,
     RAGResult,
     ResponseTemplates,

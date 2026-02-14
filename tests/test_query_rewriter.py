@@ -92,7 +92,9 @@ def test_no_rewrite_without_pronouns(rewriter):
     result = rewriter.rewrite(query, history=[])
 
     assert result.standalone_query == query
-    assert result.rewrite_used is False
+    # Abbreviation expansion (GDPR -> full form) counts as rewrite activity.
+    assert result.rewrite_used is True
+    assert result.needs_rewrite is False
 
 
 def test_no_rewrite_with_explicit_entities(rewriter):
@@ -250,6 +252,7 @@ class TestGuardrails:
         result = RewriteResult(
             original_query="test",
             standalone_query="GDPR samtycke",
+            expanded_query="GDPR samtycke",
             lexical_query="GDPR samtycke",
             must_include=["GDPR"],
         )
@@ -266,6 +269,7 @@ class TestGuardrails:
         result = RewriteResult(
             original_query="test",
             standalone_query="GDPR samtycke",
+            expanded_query="GDPR samtycke",
             lexical_query="GDPR samtycke",
             must_include=["GDPR", "OSL"],
         )
@@ -422,10 +426,6 @@ class TestIntegration:
         query = "Och sekretessmarkering?"
 
         result = rewriter.rewrite(query, history)
-
-        # Should pick up OSL from history (most relevant entity)
-        entities = result.detected_entities
-        entity_values = [e["value"] for e in entities]
 
         # At minimum, should produce a standalone query
         assert len(result.standalone_query) > 0

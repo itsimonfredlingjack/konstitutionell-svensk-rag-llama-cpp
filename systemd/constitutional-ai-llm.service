@@ -5,17 +5,18 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI
+Environment=LD_LIBRARY_PATH=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/llama.cpp/build/bin
 ExecStart=/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/llama.cpp/build/bin/llama-server \
     -m models/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf \
     -c 8192 \
     -ngl 99 \
     -ctk q8_0 -ctv q8_0 \
-    --spec-type ngram-simple --draft-max 64 \
     --port 8080 \
     --host 0.0.0.0 \
     --ctx-size 8192 \
     --parallel 2 \
-    -fa on
+    -fa on \
+    --spec-type ngram-simple --draft-max 64
 Restart=always
 RestartSec=10
 StandardOutput=journal

@@ -22,10 +22,8 @@ from .retrieval_service import SearchResult
 
 logger = get_logger(__name__)
 
-# GBNF grammar: forces output to exactly {"relevance":"yes"} or {"relevance":"no"}
-GRADING_GRAMMAR = r"""root ::= "{" ws "\"relevance\"" ws ":" ws value ws "}"
-value ::= "\"yes\"" | "\"no\""
-ws ::= " "?"""
+# GBNF grammar: forces canonical output {"relevance":"yes"} or {"relevance":"no"}
+GRADING_GRAMMAR = 'root ::= "{" "\\"relevance\\"" ":" value "}"\nvalue ::= "\\"yes\\"" | "\\"no\\""'
 
 
 @dataclass

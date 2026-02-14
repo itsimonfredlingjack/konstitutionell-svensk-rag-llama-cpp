@@ -326,9 +326,10 @@ class TestEscalationDecision:
     def test_escalate_on_low_top_score(self, calculator):
         """Low top_score triggers escalation."""
         signals = ConfidenceSignals(
-            top_score=0.2,  # Below threshold
+            top_score=0.01,  # Below calibrated RRF threshold (0.05)
             margin=0.5,
             must_include_hit_rate=1.0,
+            lexical_overlap=0.8,  # Avoid lexical overlap becoming primary reason
             overall_confidence=0.6,
         )
 
@@ -341,8 +342,9 @@ class TestEscalationDecision:
         """Low margin triggers escalation."""
         signals = ConfidenceSignals(
             top_score=0.8,
-            margin=0.02,  # Below threshold
+            margin=0.001,  # Below calibrated RRF margin threshold (0.006)
             must_include_hit_rate=1.0,
+            lexical_overlap=0.8,  # Avoid lexical overlap becoming primary reason
             overall_confidence=0.6,
         )
 
@@ -389,6 +391,7 @@ class TestEscalationDecision:
             margin=0.3,
             must_include_hit_rate=1.0,
             near_duplicate_ratio=0.1,
+            lexical_overlap=0.8,
             overall_confidence=0.7,
             confidence_tier="high",
         )

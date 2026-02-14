@@ -8,6 +8,7 @@ pulling in the entire orchestrator dependency chain.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from .intent_classifier import QueryIntent
 from .query_processor_service import ResponseMode
 from .guardrail_service import WardenStatus
 from .retrieval_service import SearchResult
@@ -34,8 +35,6 @@ class ResponseTemplates:
 
 
 # ── Answer Contracts ────────────────────────────────────────────────
-
-from .intent_classifier import QueryIntent
 
 ANSWER_CONTRACTS = {
     QueryIntent.PARLIAMENT_TRACE: """

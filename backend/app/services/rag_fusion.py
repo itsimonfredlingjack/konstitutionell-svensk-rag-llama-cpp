@@ -604,7 +604,19 @@ def hybrid_reciprocal_rank_fusion(
 
             # Keep doc data (first occurrence wins for metadata)
             if doc_id not in doc_data:
-                doc_data[doc_id] = doc.copy()
+                normalized_doc = doc.copy()
+
+                # BM25 often has id/text only; normalize into retrieval schema so
+                # downstream grading/reranking always gets non-empty snippets.
+                text = str(normalized_doc.get("text", "") or "").strip()
+                if not normalized_doc.get("snippet") and text:
+                    normalized_doc["snippet"] = text[:1200] + "..." if len(text) > 1200 else text
+                if not normalized_doc.get("title"):
+                    normalized_doc["title"] = normalized_doc.get("id", "Untitled")
+                if not normalized_doc.get("source"):
+                    normalized_doc["source"] = "bm25" if is_bm25 else "unknown"
+
+                doc_data[doc_id] = normalized_doc
 
     # Sort by RRF score (descending)
     sorted_ids = sorted(doc_scores.keys(), key=lambda x: doc_scores[x], reverse=True)

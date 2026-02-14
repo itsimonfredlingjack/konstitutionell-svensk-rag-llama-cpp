@@ -31,6 +31,7 @@ try:
     )
     from .query_rewriter import QueryRewriter
     from .bm25_service import get_bm25_service
+    from .query_expansion_service import get_query_expansion_service
 
     RETRIEVAL_ORCHESTRATOR_AVAILABLE = True
 except ImportError:
@@ -68,6 +69,11 @@ except ImportError:
             default_timeout=5.0,
             query_rewriter=None,
             query_expander=None,
+            query_expansion_service=None,
+            query_expansion_enabled=True,
+            query_expansion_count=3,
+            use_epr_fusion=True,
+            epr_fusion_num_queries=3,
         ):
             self.client = chromadb_client
             self.embed_fn = embedding_function
@@ -146,6 +152,12 @@ class RetrievalMetrics:
     fusion_gain: float = 0.0
     rrf_latency_ms: float = 0.0
     expansion_latency_ms: float = 0.0
+    llm_query_expansion_used: bool = False
+    llm_query_expansion_latency_ms: float = 0.0
+    llm_query_expansion_count: int = 0
+    llm_query_expansion_grammar_used: bool = False
+    llm_query_expansion_parsing_method: str = "none"
+    llm_query_expansions: List[str] = field(default_factory=list)
 
     adaptive_used: bool = False
     confidence_signals: Optional[Dict] = None
@@ -205,6 +217,14 @@ class RetrievalMetrics:
                 "final_step": self.final_step,
                 "fallback_triggered": self.fallback_triggered,
                 "reason_codes": self.reason_codes,
+            },
+            "query_expansion": {
+                "used": self.llm_query_expansion_used,
+                "latency_ms": round(self.llm_query_expansion_latency_ms, 2),
+                "count": self.llm_query_expansion_count,
+                "grammar_used": self.llm_query_expansion_grammar_used,
+                "parsing_method": self.llm_query_expansion_parsing_method,
+                "queries": self.llm_query_expansions,
             },
         }
 
@@ -370,6 +390,8 @@ class RetrievalService(BaseService):
                     logger.warning("BM25 index not found - hybrid search disabled")
                     bm25_service = None
 
+                query_expansion_service = get_query_expansion_service(self.config)
+
                 self._orchestrator = self.RetrievalOrchestrator(
                     chromadb_client=self._chromadb_client,
                     embedding_function=self._embedding_service.embed_query,
@@ -381,6 +403,19 @@ class RetrievalService(BaseService):
                     bm25_weight=self.config.rrf_bm25_weight,  # Favor exact legal terms
                     rrf_k=self.config.rrf_k,  # Lower k = top results dominate
                     score_threshold=self.config.score_threshold,
+                    query_expansion_service=query_expansion_service,
+                    query_expansion_enabled=self.config.query_expansion_enabled,
+                    query_expansion_count=self.config.query_expansion_count,
+                    use_epr_fusion=getattr(self.config.settings, "epr_use_rag_fusion", True),
+                    epr_fusion_num_queries=getattr(
+                        self.config.settings, "epr_fusion_num_queries", 3
+                    ),
+                    embedding_model_name=self.config.embedding_model,
+                    reranker_model_name=self.config.reranking_model,
+                    cutover_enforce_jina_collections=self.config.cutover_enforce_jina_collections,
+                    cutover_allowed_fallback_collections=(
+                        self.config.cutover_allowed_fallback_collections
+                    ),
                 )
                 logger.info(
                     f"RetrievalOrchestrator initialized (bm25_weight={self.config.rrf_bm25_weight}, "
@@ -505,6 +540,9 @@ class RetrievalService(BaseService):
                     history=history,
                 )
 
+                if not or_result.success and "CUTOVER_VIOLATION" in (or_result.error or ""):
+                    raise RetrievalError(or_result.error)
+
                 # Convert orchestrator results to our format
                 search_results = [
                     SearchResult(
@@ -533,6 +571,7 @@ class RetrievalService(BaseService):
                 rewrite_dict = metrics_dict.get("rewrite", {})
                 fusion_dict = metrics_dict.get("fusion", {})
                 adaptive_dict = metrics_dict.get("adaptive", {})
+                query_expansion_dict = metrics_dict.get("query_expansion", {})
 
                 metrics = RetrievalMetrics(
                     total_latency_ms=latency_dict.get("total_ms", 0.0),
@@ -566,6 +605,16 @@ class RetrievalService(BaseService):
                     fusion_gain=fusion_dict.get("fusion_gain", 0.0),
                     rrf_latency_ms=fusion_dict.get("rrf_latency_ms", 0.0),
                     expansion_latency_ms=fusion_dict.get("expansion_latency_ms", 0.0),
+                    llm_query_expansion_used=query_expansion_dict.get("used", False),
+                    llm_query_expansion_latency_ms=query_expansion_dict.get("latency_ms", 0.0),
+                    llm_query_expansion_count=query_expansion_dict.get("count", 0),
+                    llm_query_expansion_grammar_used=query_expansion_dict.get(
+                        "grammar_used", False
+                    ),
+                    llm_query_expansion_parsing_method=query_expansion_dict.get(
+                        "parsing_method", "none"
+                    ),
+                    llm_query_expansions=query_expansion_dict.get("queries", []),
                     adaptive_used=adaptive_dict.get("used", False),
                     confidence_signals=adaptive_dict.get("signals"),
                     escalation_path=adaptive_dict.get("escalation_path", []),
@@ -845,6 +894,7 @@ class RetrievalService(BaseService):
             results_dict = metrics_dict.get("results", {})
             scores_dict = metrics_dict.get("scores", {})
             timeouts_dict = metrics_dict.get("timeouts", {})
+            query_expansion_dict = metrics_dict.get("query_expansion", {})
 
             metrics = RetrievalMetrics(
                 strategy="epr_two_pass",
@@ -861,6 +911,27 @@ class RetrievalService(BaseService):
                 score_entropy=scores_dict.get("entropy", or_metrics.score_entropy),
                 dense_timeout=timeouts_dict.get("dense", or_metrics.dense_timeout),
                 bm25_timeout=timeouts_dict.get("bm25", or_metrics.bm25_timeout),
+                llm_query_expansion_used=query_expansion_dict.get(
+                    "used", getattr(or_metrics, "llm_query_expansion_used", False)
+                ),
+                llm_query_expansion_latency_ms=query_expansion_dict.get(
+                    "latency_ms", getattr(or_metrics, "llm_query_expansion_latency_ms", 0.0)
+                ),
+                llm_query_expansion_count=query_expansion_dict.get(
+                    "count", getattr(or_metrics, "llm_query_expansion_count", 0)
+                ),
+                llm_query_expansion_grammar_used=query_expansion_dict.get(
+                    "grammar_used",
+                    getattr(or_metrics, "llm_query_expansion_grammar_used", False),
+                ),
+                llm_query_expansion_parsing_method=query_expansion_dict.get(
+                    "parsing_method",
+                    getattr(or_metrics, "llm_query_expansion_parsing_method", "none"),
+                ),
+                llm_query_expansions=query_expansion_dict.get(
+                    "queries",
+                    getattr(or_metrics, "llm_query_expansions", []),
+                ),
             )
 
             logger.info(

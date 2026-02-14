@@ -8,6 +8,19 @@
 
 ---
 
+## Document status
+
+This page is an active operations overview for the current runtime stack.
+
+- **Status:** Active
+- **Last reviewed:** February 13, 2026
+- **Canonical source of truth:** `docs/system-overview.md`
+- **Model and stack guidance:** `docs/deep-research-by-claude.md`,
+  `docs/deep-research-by-chatgpt.md`,
+  `docs/README_DOCS_AND_RAG_INSTRUCTIONS.md`
+
+---
+
 ## Quick Stats
 
 | Metric | Value |
@@ -16,7 +29,7 @@
 | Vector Dimensions | 1024 |
 | Embedding Model | jinaai/jina-embeddings-v3 |
 | Storage | ChromaDB |
-| LLM | Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server |
+| LLM | Ministral-3-14B-Instruct-2512-Q4_K_M.gguf via llama-server |
 
 ---
 
@@ -57,7 +70,7 @@
 ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
 │  ChromaDB   │      │llama-server │      │    n8n      │
 │    (local)  │      │   (8080)    │      │   (5678)    │
-│ 1.37M+ docs │      │Mistral-Nemo │      │  Workflows  │
+│ 1.37M+ docs │      │Ministral-3  │      │  Workflows  │
 └─────────────┘      └─────────────┘      └─────────────┘
 ```
 
@@ -84,7 +97,7 @@
 1. ✅ simons-ai-backend.service borttagen från systemd
 2. ✅ Port 8900 ägs av constitutional-ai-backend (uvicorn binds 8000, exposed as 8900)
 3. ✅ Health endpoint svarar korrekt
-4. ✅ RAG queries fungerar (Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server, CRAG enabled)
+4. ✅ RAG queries fungerar (Ministral-3-14B-Instruct-2512 via llama-server, CRAG enabled)
 
 **System Commands:**
 ```bash

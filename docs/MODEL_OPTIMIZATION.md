@@ -2,7 +2,7 @@
 
 > Dokumentation av modellparametrar, system prompts och best practices för prompt engineering
 
-**Senast uppdaterad:** 2026-02-08
+**Senast uppdaterad:** 2026-02-12
 
 ---
 
@@ -14,14 +14,29 @@ Constitutional AI använder llama-server (llama.cpp) med lokala modeller för at
 
 - **Primär modell:** Ministral-3-14B-Instruct-2512-Q4_K_M.gguf via llama-server (port 8080)
 - **Fallback modell:** Samma som primär (ingen separat fallback-modell nedladdad)
-- **Grader-modell:** Qwen2.5-0.5B-Instruct-Q8_0.gguf (CRAG document grading)
-- **Draft-modell:** Ingen (speculative decoding avaktiverat — inkompatibel tokenizer)
+- **Grader-modell:** Ministral-3-14B-Instruct-2512-Q4_K_M.gguf (GBNF-styrd JSON-gradering)
+- **Draft-modell:** Ingen separat draft-modell i migration 2026
 - **Embedding modell:** jinaai/jina-embeddings-v3 (1024 dim, asymmetric LoRA, CC-BY-NC-4.0)
 - **Reranker:** jinaai/jina-reranker-v2-base-multilingual (XLM-RoBERTa, 278M params, CC-BY-NC-4.0)
 - **Vector DB:** ChromaDB
 - **CRAG:** Enabled (grading active, self-reflection disabled)
 - **Collections:** All suffixed with `_jina_v3_1024`
 - **Timeout:** 120 sekunder (llama-server timeout)
+
+---
+
+## Migration 2026 - Optimeringar
+
+| Optimering | Flagga/Setting | Effekt |
+|---|---|---|
+| N-gram speculation | `--spec-type ngram-simple --draft-max 64` | ~57-70% acceptance i kompatibla llama-server builds, låg extra kostnad |
+| KV cache quant | `-ctk q8_0 -ctv q8_0` | Sparar ~1-2 GB VRAM jämfört med högre precision |
+| Flash Attention | `-fa` / `--flash-attn on` | Snabbare attention och lägre minnestryck på GPU |
+| GBNF grading | `grammar` parameter i graderingsanrop | Deterministisk JSON (`{"relevance":"yes/no"}`), färre parse-fel |
+| Asymmetrisk embedding | `retrieval.query` vs `retrieval.passage` | Bättre retrieval-precision än symmetrisk embedding |
+| Hybrid search | Dense + BM25 + RRF | Fångar både semantisk och lexikal matchning |
+| Query expansion | 3 LLM-reformuleringar i BM25-väg | Bredare lexikal recall för juridiska formuleringar |
+| Cross-encoder reranking | Jina Reranker v2 (CPU) | Typiskt bättre top-k ordning (nDCG@10 förbättras) |
 
 ---
 

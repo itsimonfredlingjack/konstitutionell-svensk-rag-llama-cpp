@@ -12,7 +12,7 @@
 1. ✅ simons-ai-backend.service borttagen från systemd
 2. ✅ Port 8900 ägs av constitutional-ai-backend
 3. ✅ Health endpoint svarar korrekt
-4. ✅ RAG queries fungerar (Mistral-Nemo-Instruct-2407-Q5_K_M.gguf via llama-server, CRAG enabled)
+4. ✅ RAG queries fungerar (Ministral-3-14B-Instruct-2512 via llama-server, CRAG enabled)
 
 ## System Commands
 
