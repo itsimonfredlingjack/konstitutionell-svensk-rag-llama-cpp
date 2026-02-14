@@ -382,13 +382,20 @@ class RetrievalService(BaseService):
                 query_rewriter = QueryRewriter()
                 logger.info("QueryRewriter initialized (with abbreviation expansion)")
 
-                # Initialize BM25 service for hybrid search
-                bm25_service = get_bm25_service()
-                if bm25_service.is_available():
-                    logger.info(f"BM25 service available at {bm25_service.index_path}")
+                # Initialize BM25 service for hybrid search (config-gated)
+                bm25_service = None
+                if self.config.bm25_enabled:
+                    bm25_service = get_bm25_service()
+                    if bm25_service.is_available():
+                        logger.info(f"BM25 service available at {bm25_service.index_path}")
+                    else:
+                        logger.warning("BM25 index not found - hybrid search disabled")
+                        bm25_service = None
                 else:
-                    logger.warning("BM25 index not found - hybrid search disabled")
-                    bm25_service = None
+                    logger.info(
+                        "BM25 disabled via config (CONST_BM25_ENABLED=false). "
+                        "Dense-only retrieval active."
+                    )
 
                 query_expansion_service = get_query_expansion_service(self.config)
 

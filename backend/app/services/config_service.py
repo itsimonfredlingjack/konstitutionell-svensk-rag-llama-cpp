@@ -139,6 +139,9 @@ class ConfigSettings(BaseSettings):
     epr_use_rag_fusion: bool = True
     epr_fusion_num_queries: int = 3
 
+    # BM25 hybrid search — disabled by default to reduce RAM (~3-4GB index)
+    bm25_enabled: bool = False
+
     # Cutover guardrails (fail-closed once migration is verified)
     cutover_enforce_jina_collections: bool = False
     cutover_allowed_fallback_collections: list[str] = []
@@ -373,6 +376,10 @@ class ConfigService:
     @property
     def rrf_k(self) -> float:
         return self._settings.rrf_k
+
+    @property
+    def bm25_enabled(self) -> bool:
+        return self._settings.bm25_enabled
 
     @property
     def score_threshold(self) -> float:
