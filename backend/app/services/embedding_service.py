@@ -64,17 +64,20 @@ class EmbeddingService:
             return
 
         try:
+            import os
+
+            embed_device = os.environ.get("CONST_EMBEDDING_DEVICE", "cpu")
             logger.info(f"Loading embedding model: {self.config.embedding_model}")
-            # Force CPU to save VRAM for the LLM
+            # Default CPU to save VRAM for the LLM; override with CONST_EMBEDDING_DEVICE=cuda
             try:
                 self._model = SentenceTransformer(
                     self.config.embedding_model,
-                    device="cpu",
+                    device=embed_device,
                     trust_remote_code=True,
                 )
             except TypeError:
                 # Older sentence-transformers versions may not support trust_remote_code.
-                self._model = SentenceTransformer(self.config.embedding_model, device="cpu")
+                self._model = SentenceTransformer(self.config.embedding_model, device=embed_device)
 
             # Verify dimension on load (use query task for Jina v3)
             test_text = ["test"]

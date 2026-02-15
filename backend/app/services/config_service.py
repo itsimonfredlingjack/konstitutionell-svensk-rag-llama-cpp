@@ -147,6 +147,10 @@ class ConfigSettings(BaseSettings):
     cutover_enforce_jina_collections: bool = False
     cutover_allowed_fallback_collections: list[str] = []
 
+    # SFS Context Expansion (parent-child retrieval)
+    sfs_context_expansion_enabled: bool = True
+    sfs_context_max_siblings: int = 1
+
     # Benchmark DoD gates
     benchmark_max_pipeline_ms_avg: float = 15000.0
     benchmark_max_pipeline_ms_p95: float = 25000.0

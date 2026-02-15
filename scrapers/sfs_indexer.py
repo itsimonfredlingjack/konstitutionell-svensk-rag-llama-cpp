@@ -1,27 +1,36 @@
 #!/usr/bin/env python3
 """
-SFS Indexer - Indexerar SFS-lagtexter i ChromaDB
-================================================
+SFS Indexer - Indexerar SFS-lagtexter i ChromaDB med Jina v3 embeddings
+=======================================================================
 
-Läser scrapade SFS-filer och indexerar dem i ChromaDB med KBLab embeddings.
-Skapar en separat collection 'sfs_lagtext' för primärkällor.
+Läser scrapade SFS-filer och indexerar dem i ChromaDB med Jina v3 (1024-dim)
+via backend's EmbeddingService (asymmetrisk encoding, retrieval.passage task).
+
+Collection: sfs_lagtext_jina_v3_1024
 
 Användning:
     python sfs_indexer.py                    # Indexera alla SFS-filer
     python sfs_indexer.py --file sfs_1974_152.json  # Indexera specifik fil
     python sfs_indexer.py --stats            # Visa statistik
+    python sfs_indexer.py --reset            # Radera och återskapa collection
+    python sfs_indexer.py --search "yttrandefrihet"  # Testsök
 """
 
 import argparse
 import hashlib
 import json
 import logging
+import sys
 from datetime import datetime
 from pathlib import Path
 
 import chromadb
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
+
+# Add backend to path for EmbeddingService
+sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
+from app.services.config_service import get_config_service
+from app.services.embedding_service import get_embedding_service
 
 # Konfigurera logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -30,28 +39,29 @@ logger = logging.getLogger(__name__)
 # Paths
 CHROMADB_PATH = "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/chromadb_data"
 SFS_DATA_PATH = "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/scraped_data/sfs"
-COLLECTION_NAME = "sfs_lagtext"
+COLLECTION_NAME = "sfs_lagtext_jina_v3_1024"
 
-# Embedding model - samma som backend använder
-EMBEDDING_MODEL = "KBLab/sentence-bert-swedish-cased"
-
-
-class KBLabEmbeddingFunction:
-    """Custom embedding function using KBLab's Swedish BERT model"""
-
-    def __init__(self, model_name=EMBEDDING_MODEL):
-        logger.info(f"Laddar embedding-modell: {model_name}")
-        self.model = SentenceTransformer(model_name)
-        self.dimension = self.model.get_sentence_embedding_dimension()
-        logger.info(f"Modell laddad, dimension: {self.dimension}")
-
-    def __call__(self, input_texts):
-        embeddings = self.model.encode(input_texts, convert_to_numpy=True)
-        return embeddings.tolist()
+# Mappning från kortnamn till läsbart namn
+READABLE_NAMES = {
+    "RF": "Regeringsformen",
+    "TF": "Tryckfrihetsförordningen",
+    "YGL": "Yttrandefrihetsgrundlagen",
+    "SO": "Successionsordningen",
+    "OSL": "Offentlighets- och sekretesslagen",
+    "FL": "Förvaltningslagen",
+    "FPL": "Förvaltningsprocesslagen",
+    "KL": "Kommunallagen",
+    "RB": "Rättegångsbalken",
+    "BrB": "Brottsbalken",
+    "URL": "Upphovsrättslagen",
+    "AvtL": "Avtalslagen",
+    "SkL": "Skadeståndslagen",
+    "LVU": "Lagen om vård av unga",
+}
 
 
 class SFSIndexer:
-    """Indexerar SFS-dokument i ChromaDB"""
+    """Indexerar SFS-dokument i ChromaDB med Jina v3 embeddings."""
 
     def __init__(self, chromadb_path=CHROMADB_PATH, sfs_path=SFS_DATA_PATH):
         self.sfs_path = Path(sfs_path)
@@ -62,21 +72,32 @@ class SFSIndexer:
             path=chromadb_path, settings=Settings(anonymized_telemetry=False)
         )
 
-        # Initiera embedding function
-        self.embedding_fn = KBLabEmbeddingFunction()
+        # Initiera Jina v3 embedding service from backend
+        config = get_config_service()
+        self._embedding_service = get_embedding_service(config)
+        logger.info(f"Embedding: {config.embedding_model} ({config.expected_embedding_dim}-dim)")
 
         # Hämta eller skapa collection
         self.collection = self.client.get_or_create_collection(
             name=COLLECTION_NAME,
             metadata={
-                "description": "Svenska lagtexter (SFS) - primärkällor",
+                "description": "Svenska lagtexter (SFS) - primärkällor (Jina v3)",
                 "doc_type": "sfs",
-                "embedding_model": EMBEDDING_MODEL,
+                "embedding_model": config.embedding_model,
+                "embedding_dim": config.expected_embedding_dim,
                 "hnsw:space": "cosine",
             },
         )
 
         logger.info(f"Collection '{COLLECTION_NAME}' redo, {self.collection.count()} dokument")
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        """Generate document embeddings using Jina v3 (retrieval.passage task)."""
+        return self._embedding_service.embed_document(texts)
+
+    def embed_query(self, texts: list[str]) -> list[list[float]]:
+        """Generate query embeddings using Jina v3 (retrieval.query task)."""
+        return self._embedding_service.embed_query(texts)
 
     def load_sfs_file(self, filepath):
         """Läs en SFS JSON-fil"""
@@ -94,54 +115,77 @@ class SFSIndexer:
         Samma juridiska stycke → samma chunk-id över tid.
 
         ID-struktur: sfs_{nummer}_{kap}_{paragraf}_{moment}_{content_hash}
-
-        Args:
-            sfs_nummer: T.ex. "1974:152"
-            kapitel: T.ex. "2 kap."
-            paragraf: T.ex. "1 §"
-            text: Chunk-text (normaliseras innan hash)
-            moment: T.ex. "1 st." (optional)
-
-        Returns:
-            Deterministisk ID som är samma vid reindex
         """
-        # Normalisera text för stabil hash
-        # Ta bort whitespace-variationer, radbrytningar, etc.
-        normalized_text = " ".join(text.split())
-        normalized_text = normalized_text.strip().lower()
-
-        # Content hash (SHA256 för stabilitet, MD5 för korthet)
+        normalized_text = " ".join(text.split()).strip().lower()
         content_hash = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:12]
 
-        # Bygg deterministisk ID
-        # Format: sfs_1974_152_2kap_1§_abc123def456
         parts = ["sfs", sfs_nummer.replace(":", "_")]
 
         if kapitel:
-            # Normalisera kapitel: "2 kap." → "2kap"
             kap_clean = kapitel.replace(" ", "").replace(".", "")
             parts.append(kap_clean)
 
         if paragraf:
-            # Normalisera paragraf: "1 §" → "1§"
             para_clean = paragraf.replace(" ", "").replace(".", "")
             parts.append(para_clean)
 
         if moment:
-            # Normalisera moment: "1 st." → "1st"
             moment_clean = moment.replace(" ", "").replace(".", "")
             parts.append(moment_clean)
 
-        # Lägg till content hash sist
         parts.append(content_hash)
+        return "_".join(parts)
 
-        # Kombinera med underscore
-        stable_id = "_".join(parts)
+    def _generate_chapter_id(self, sfs_nummer: str, kapitel: str | None) -> str:
+        """Generate parent chapter ID: sfs_{nummer}_{kap}"""
+        if not kapitel:
+            return ""
+        kap_clean = kapitel.replace(" ", "").replace(".", "")
+        return f"sfs_{sfs_nummer.replace(':', '_')}_{kap_clean}"
 
-        return stable_id
+    def _build_sibling_ids(self, chunks: list[dict]) -> dict[int, dict[str, str]]:
+        """
+        Two-pass sibling ID generation.
+
+        Groups chunks by chapter, then links prev/next within each chapter.
+
+        Returns:
+            Dict mapping chunk index to {prev_paragraf_id, next_paragraf_id}
+        """
+        # First pass: generate stable IDs for all chunks
+        chunk_ids = []
+        for chunk in chunks:
+            chunk_id = self.generate_stable_id(
+                chunk.get("sfs_nummer", ""),
+                chunk.get("kapitel", ""),
+                chunk.get("paragraf", ""),
+                chunk.get("text", ""),
+            )
+            chunk_ids.append(chunk_id)
+
+        # Group chunk indices by chapter
+        chapter_groups: dict[str, list[int]] = {}
+        for idx, chunk in enumerate(chunks):
+            chapter_key = chunk.get("kapitel") or "__no_chapter__"
+            if chapter_key not in chapter_groups:
+                chapter_groups[chapter_key] = []
+            chapter_groups[chapter_key].append(idx)
+
+        # Second pass: link siblings within each chapter
+        sibling_map: dict[int, dict[str, str]] = {}
+        for indices in chapter_groups.values():
+            for pos, idx in enumerate(indices):
+                prev_id = chunk_ids[indices[pos - 1]] if pos > 0 else ""
+                next_id = chunk_ids[indices[pos + 1]] if pos < len(indices) - 1 else ""
+                sibling_map[idx] = {
+                    "prev_paragraf_id": prev_id,
+                    "next_paragraf_id": next_id,
+                }
+
+        return sibling_map
 
     def index_sfs_document(self, sfs_data, batch_size=100):
-        """Indexera ett SFS-dokument med alla dess chunks"""
+        """Indexera ett SFS-dokument med alla dess chunks."""
         chunks = sfs_data.get("chunks", [])
         if not chunks:
             logger.warning(f"Inga chunks i {sfs_data.get('sfs_nummer', 'okänd')}")
@@ -153,27 +197,34 @@ class SFSIndexer:
 
         logger.info(f"Indexerar {kortnamn} ({sfs_nummer}): {len(chunks)} chunks")
 
+        # Inject sfs_nummer into chunks for sibling ID generation
+        for chunk in chunks:
+            chunk["sfs_nummer"] = sfs_nummer
+
+        # Build sibling IDs (two-pass)
+        sibling_map = self._build_sibling_ids(chunks)
+
         indexed = 0
 
-        # Processa i batchar
         for i in range(0, len(chunks), batch_size):
-            batch = chunks[i : i + batch_size]
+            batch_indices = range(i, min(i + batch_size, len(chunks)))
+            batch = [chunks[j] for j in batch_indices]
 
             ids = []
             documents = []
             metadatas = []
 
-            for idx, chunk in enumerate(batch):
-                # Skapa STABIL, deterministisk ID
+            for batch_pos, global_idx in enumerate(batch_indices):
+                chunk = batch[batch_pos]
+
                 chunk_id = self.generate_stable_id(
                     sfs_nummer,
                     chunk.get("kapitel", ""),
                     chunk.get("paragraf", ""),
                     chunk.get("text", ""),
-                    moment=None,  # TODO: Extrahera moment från text om det finns
                 )
 
-                # Skapa sökbar text med kontext
+                # Build searchable text with context
                 kapitel_info = ""
                 if chunk.get("kapitel"):
                     kapitel_info = f"{chunk['kapitel']}"
@@ -181,12 +232,9 @@ class SFSIndexer:
                         kapitel_info += f" {chunk['kapitel_rubrik']}"
 
                 paragraf_info = chunk.get("paragraf", "")
-
-                # Kombinera för bättre sökbarhet
                 search_text = f"{kortnamn} {kapitel_info} {paragraf_info}\n{chunk['text']}"
 
-                # Skapa beskrivande titel för visning i UI
-                # Format: "RF 2 kap. 1 § - Regeringsformen" eller "BrB 3 kap. 1 § - Brottsbalken"
+                # Display title for UI
                 display_title_parts = [kortnamn]
                 if chunk.get("kapitel"):
                     display_title_parts.append(chunk["kapitel"])
@@ -194,54 +242,51 @@ class SFSIndexer:
                     display_title_parts.append(chunk["paragraf"])
                 display_title = " ".join(display_title_parts)
 
-                # Mappning från kortnamn till läsbart namn
-                READABLE_NAMES = {
-                    "RF": "Regeringsformen",
-                    "TF": "Tryckfrihetsförordningen",
-                    "YGL": "Yttrandefrihetsgrundlagen",
-                    "SO": "Successionsordningen",
-                    "OSL": "Offentlighets- och sekretesslagen",
-                    "FL": "Förvaltningslagen",
-                    "KL": "Kommunallagen",
-                    "RB": "Rättegångsbalken",
-                    "BrB": "Brottsbalken",
-                    "URL": "Upphovsrättslagen",
-                    "AvtL": "Avtalslagen",
-                    "SkL": "Skadeståndslagen",
-                    "LVU": "Lagen om vård av unga",
-                }
-
-                # Lägg till läsbart namn
                 readable_name = READABLE_NAMES.get(kortnamn)
                 if readable_name:
                     display_title += f" - {readable_name}"
                 elif titel:
-                    # Fallback: extrahera kort version av titeln
                     short_titel = titel.split("(")[0].strip() if "(" in titel else titel
                     if len(short_titel) < 50 and short_titel.lower() != kortnamn.lower():
                         display_title += f" - {short_titel}"
 
-                # RIK METADATA för felsökning och chunk lifecycle
-                # Normalisera text för content_hash
+                # Content hash for change detection
                 normalized_text = " ".join(chunk.get("text", "").split()).strip().lower()
                 content_hash = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:12]
 
+                # Sibling IDs
+                siblings = sibling_map.get(global_idx, {})
+
+                # Cross-references as JSON string
+                cross_refs = chunk.get("cross_refs")
+                cross_refs_json = json.dumps(cross_refs, ensure_ascii=False) if cross_refs else ""
+
                 metadata = {
                     # Core identifiers
-                    "doc_type": "sfs",  # VIKTIGT: Identifierar primärkälla
-                    "title": display_title,  # För backend SearchResult.title
+                    "doc_type": "sfs",
+                    "title": display_title,
                     "sfs_nummer": sfs_nummer,
                     "kortnamn": kortnamn,
-                    "titel": titel[:200],  # Fullständig titel
+                    "titel": titel[:200],
                     # Juridisk struktur
                     "kapitel": chunk.get("kapitel") or "",
                     "kapitel_rubrik": (chunk.get("kapitel_rubrik") or "")[:100],
                     "paragraf": chunk.get("paragraf") or "",
-                    "moment": "",  # TODO: Extrahera från text
+                    # Structure-aware annotations (v3.0)
+                    "stycke_count": chunk.get("stycke_count", 0),
+                    "punkt_count": chunk.get("punkt_count", 0),
+                    "cross_refs_json": cross_refs_json,
+                    "amendment_ref": chunk.get("amendment_ref") or "",
+                    # Parent-child relationships
+                    "parent_chapter_id": self._generate_chapter_id(
+                        sfs_nummer, chunk.get("kapitel")
+                    ),
+                    "prev_paragraf_id": siblings.get("prev_paragraf_id", ""),
+                    "next_paragraf_id": siblings.get("next_paragraf_id", ""),
                     # Versionshantering
                     "senast_andrad": chunk.get("senast_andrad") or "",
-                    "content_hash": content_hash,  # För change detection
-                    "parser_version": "2.0",  # Öka vid parser-ändringar
+                    "content_hash": content_hash,
+                    "parser_version": "3.0",
                     # Källor och spårbarhet
                     "source_url": chunk.get("source_url", ""),
                     "original_chunk_id": chunk.get("chunk_id", ""),
@@ -256,10 +301,10 @@ class SFSIndexer:
                 documents.append(search_text)
                 metadatas.append(metadata)
 
-            # Generera embeddings
-            embeddings = self.embedding_fn(documents)
+            # Generate embeddings with Jina v3 (document/passage task)
+            embeddings = self.embed_documents(documents)
 
-            # Lägg till i ChromaDB
+            # Add to ChromaDB
             self.collection.add(
                 ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas
             )
@@ -274,7 +319,6 @@ class SFSIndexer:
         stats = {"files_processed": 0, "chunks_indexed": 0, "errors": []}
 
         sfs_files = list(self.sfs_path.glob("sfs_*.json"))
-        # Filtrera bort fulltext-filer
         sfs_files = [f for f in sfs_files if "fulltext" not in f.name]
 
         logger.info(f"Hittade {len(sfs_files)} SFS-filer att indexera")
@@ -285,7 +329,6 @@ class SFSIndexer:
                 stats["errors"].append(str(filepath))
                 continue
 
-            # Kolla om redan indexerad
             sfs_nummer = sfs_data.get("sfs_nummer", "")
             existing = self.collection.get(where={"sfs_nummer": sfs_nummer}, limit=1)
 
@@ -307,7 +350,6 @@ class SFSIndexer:
         """Hämta statistik om collection"""
         count = self.collection.count()
 
-        # Hämta unika SFS-nummer
         sample = self.collection.get(limit=10000, include=["metadatas"])
         sfs_numbers = set()
         kortnamn_set = set()
@@ -327,8 +369,8 @@ class SFSIndexer:
         }
 
     def search(self, query, n_results=5):
-        """Sök i SFS-collection"""
-        embeddings = self.embedding_fn([query])
+        """Sök i SFS-collection (uses query embedding)"""
+        embeddings = self.embed_query([query])
 
         results = self.collection.query(
             query_embeddings=embeddings,
@@ -390,6 +432,9 @@ def main():
             meta = r["metadata"]
             print(f"{i}. {meta['kortnamn']} {meta['kapitel']} {meta['paragraf']}")
             print(f"   Distance: {r['distance']:.4f}")
+            print(
+                f"   Stycken: {meta.get('stycke_count', '?')} | Punkt: {meta.get('punkt_count', '?')}"
+            )
             print(f"   {r['text'][:200]}...")
             print()
         return
@@ -417,10 +462,10 @@ def main():
         for err in stats["errors"]:
             print(f"  - {err}")
 
-    # Visa slutlig statistik
     final_stats = indexer.get_stats()
     print(
-        f"\nTotal i collection: {final_stats['total_chunks']} chunks från {final_stats['unique_laws']} lagar"
+        f"\nTotal i collection: {final_stats['total_chunks']} chunks "
+        f"från {final_stats['unique_laws']} lagar"
     )
 
 

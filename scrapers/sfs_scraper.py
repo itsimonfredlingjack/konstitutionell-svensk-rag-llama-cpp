@@ -22,12 +22,29 @@ import argparse
 import json
 import logging
 import re
+import sys
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 
 import requests
+from sfs_structure_parser import parse_paragraf_structure
+
+# Add backend to path for reference_extractor import
+_BACKEND_DIR = str(Path(__file__).resolve().parent.parent / "backend")
+if _BACKEND_DIR not in sys.path:
+    sys.path.insert(0, _BACKEND_DIR)
+
+try:
+    from app.services.reference_extractor import (
+        extract_references,
+        references_to_metadata,
+    )
+
+    _HAS_REFERENCE_EXTRACTOR = True
+except ImportError:
+    _HAS_REFERENCE_EXTRACTOR = False
 
 # Konfigurera logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -55,6 +72,33 @@ VIKTIGA_LAGAR = [
     ("1990:52", "Lagen om särskilda bestämmelser om vård av unga (LVU)"),
 ]
 
+TIER_2_LAGAR = [
+    # Arbetsrätt
+    ("1982:80", "Lagen om anställningsskydd (LAS)"),
+    ("1976:580", "Medbestämmandelagen (MBL)"),
+    ("1977:1160", "Arbetsmiljölagen (AML)"),
+    # Skatt & ekonomi
+    ("1999:1229", "Inkomstskattelagen (IL)"),
+    ("2005:551", "Aktiebolagslagen (ABL)"),
+    ("1987:667", "Lagen om ekonomiska föreningar"),
+    # Socialrätt
+    ("2001:453", "Socialtjänstlagen (SoL)"),
+    ("1993:387", "Lagen om stöd och service (LSS)"),
+    ("2010:111", "Lag om införande av socialförsäkringsbalken"),
+    # Straff & process
+    ("1964:163", "Lag om införande av BrB"),
+    ("2014:307", "Lag om straff för penningtvättsbrott"),
+    # Miljö & plan
+    ("1998:808", "Miljöbalken (MB)"),
+    ("2010:900", "Plan- och bygglagen (PBL)"),
+    # EU-relaterat
+    ("2003:460", "Lagen om etikprövning"),
+    # Övrigt viktigt
+    ("1986:223", "Förvaltningslagen (äldre)"),
+    ("2016:1145", "Lagen om offentlig upphandling (LOU)"),
+    ("1994:1219", "Lagen om den europeiska konventionen"),
+]
+
 
 @dataclass
 class SFSChunk:
@@ -71,6 +115,12 @@ class SFSChunk:
     chunk_id: str  # Unik identifierare
     source_url: str  # Källa
     scraped_at: str  # Tidpunkt för scraping
+    # Structure-aware annotations (v3.0)
+    stycke_count: int = 0
+    punkt_count: int = 0
+    cross_refs: list[dict] | None = None
+    amendment_ref: str | None = None
+    parser_version: str = "3.0"
 
 
 @dataclass
@@ -94,8 +144,11 @@ class SFSScraper:
 
     BASE_URL = "https://data.riksdagen.se"
     RATE_LIMIT_SECONDS = 2  # Var snäll mot API:et
+    _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-    def __init__(self, output_dir: str = "scraped_data/sfs"):
+    def __init__(self, output_dir: str | None = None):
+        if output_dir is None:
+            output_dir = str(self._PROJECT_ROOT / "scraped_data" / "sfs")
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.session = requests.Session()
@@ -146,9 +199,8 @@ class SFSScraper:
                 metadata["utfardad"] = line.replace("Utfärdad:", "").strip()
             elif line.startswith("Ändrad:"):
                 metadata["senast_andrad"] = line.replace("Ändrad:", "").strip()
-            elif line.startswith("Omtryck:"):
-                if not metadata["senast_andrad"]:
-                    metadata["senast_andrad"] = line.replace("Omtryck:", "").strip()
+            elif line.startswith("Omtryck:") and not metadata["senast_andrad"]:
+                metadata["senast_andrad"] = line.replace("Omtryck:", "").strip()
 
         return metadata
 
@@ -261,6 +313,30 @@ class SFSScraper:
 
                     paragraf_text = kapitel_text[p_match.start() : paragraf_end].strip()
 
+                    # Parse structural annotations
+                    structure = parse_paragraf_structure(paragraf_text)
+
+                    # Cross-reference extraction: prefer reference_extractor (comprehensive)
+                    if _HAS_REFERENCE_EXTRACTOR:
+                        refs = extract_references(paragraf_text)
+                        cross_ref_dicts = references_to_metadata(refs) if refs else None
+                    else:
+                        cross_ref_dicts = (
+                            [
+                                {
+                                    "ref_type": r.ref_type,
+                                    "raw_text": r.raw_text,
+                                    "target_kap": r.target_kap,
+                                    "target_paragraf": r.target_paragraf,
+                                    "target_sfs": r.target_sfs,
+                                    "target_name": r.target_name,
+                                }
+                                for r in structure.cross_refs
+                            ]
+                            if structure.cross_refs
+                            else None
+                        )
+
                     # Skapa chunk
                     chunk_id = f"{sfs_nummer}_{kapitel_num}_{paragraf_num}".replace(
                         " ", "_"
@@ -279,6 +355,10 @@ class SFSScraper:
                             chunk_id=chunk_id,
                             source_url=f"{self.BASE_URL}/dokument/sfs-{sfs_nummer.replace(':', '-')}.text",
                             scraped_at=datetime.now().isoformat(),
+                            stycke_count=structure.stycke_count,
+                            punkt_count=structure.punkt_count,
+                            cross_refs=cross_ref_dicts,
+                            amendment_ref=structure.amendment_ref,
                         )
                     )
         else:
@@ -295,6 +375,30 @@ class SFSScraper:
 
                 paragraf_text = text[p_match.start() : paragraf_end].strip()
 
+                # Parse structural annotations
+                structure = parse_paragraf_structure(paragraf_text)
+
+                # Cross-reference extraction: prefer reference_extractor (comprehensive)
+                if _HAS_REFERENCE_EXTRACTOR:
+                    refs = extract_references(paragraf_text)
+                    cross_ref_dicts = references_to_metadata(refs) if refs else None
+                else:
+                    cross_ref_dicts = (
+                        [
+                            {
+                                "ref_type": r.ref_type,
+                                "raw_text": r.raw_text,
+                                "target_kap": r.target_kap,
+                                "target_paragraf": r.target_paragraf,
+                                "target_sfs": r.target_sfs,
+                                "target_name": r.target_name,
+                            }
+                            for r in structure.cross_refs
+                        ]
+                        if structure.cross_refs
+                        else None
+                    )
+
                 chunk_id = f"{sfs_nummer}_{paragraf_num}".replace(" ", "_").replace(".", "")
 
                 chunks.append(
@@ -310,6 +414,10 @@ class SFSScraper:
                         chunk_id=chunk_id,
                         source_url=f"{self.BASE_URL}/dokument/sfs-{sfs_nummer.replace(':', '-')}.text",
                         scraped_at=datetime.now().isoformat(),
+                        stycke_count=structure.stycke_count,
+                        punkt_count=structure.punkt_count,
+                        cross_refs=cross_ref_dicts,
+                        amendment_ref=structure.amendment_ref,
                     )
                 )
 
@@ -416,13 +524,42 @@ class SFSScraper:
 
         return docs
 
+    def _already_scraped(self, sfs_nummer: str) -> bool:
+        """Check if an SFS has already been scraped (JSON file exists)."""
+        filename = f"sfs_{sfs_nummer.replace(':', '_')}.json"
+        return (self.output_dir / filename).exists()
+
+    def scrape_tier2_lagar(self) -> list[SFSDocument]:
+        """Scrapa tier 2 lagar (skips already-scraped laws)"""
+        docs = []
+        skipped = 0
+        for sfs_nummer, namn in TIER_2_LAGAR:
+            if self._already_scraped(sfs_nummer):
+                logger.info(f"Hoppar över {sfs_nummer} ({namn}) — redan scrapade")
+                skipped += 1
+                continue
+
+            kortnamn_match = re.search(r"\(([A-ZÅÄÖ]+)\)", namn)
+            kortnamn = kortnamn_match.group(1) if kortnamn_match else ""
+
+            doc = self.scrape_sfs(sfs_nummer, kortnamn)
+            if doc:
+                self.save_document(doc)
+                docs.append(doc)
+
+            time.sleep(self.RATE_LIMIT_SECONDS)
+
+        logger.info(f"Tier 2 klart: {len(docs)} nya lagar, {skipped} redan befintliga")
+        return docs
+
 
 def main():
     parser = argparse.ArgumentParser(description="SFS Scraper - Hämtar lagtexter")
     parser.add_argument("--grundlagar", action="store_true", help="Hämta grundlagarna")
     parser.add_argument("--viktiga", action="store_true", help="Hämta viktiga lagar")
+    parser.add_argument("--tier2", action="store_true", help="Hämta tier 2 lagar (skips existing)")
     parser.add_argument("--sfs", type=str, help="Hämta specifik SFS (t.ex. 1974:152)")
-    parser.add_argument("--output", type=str, default="scraped_data/sfs", help="Output-katalog")
+    parser.add_argument("--output", type=str, default=None, help="Output-katalog")
 
     args = parser.parse_args()
 
@@ -437,6 +574,11 @@ def main():
         logger.info("Hämtar viktiga lagar...")
         docs = scraper.scrape_viktiga_lagar()
         logger.info(f"Klart! Hämtade {len(docs)} lagar")
+
+    elif args.tier2:
+        logger.info("Hämtar tier 2 lagar...")
+        docs = scraper.scrape_tier2_lagar()
+        logger.info(f"Klart! Hämtade {len(docs)} nya lagar")
 
     elif args.sfs:
         logger.info(f"Hämtar SFS {args.sfs}...")

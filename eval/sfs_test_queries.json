@@ -1,0 +1,277 @@
+{
+  "version": "1.0-sfs",
+  "created": "2026-02-14",
+  "description": "30 SFS-specific test queries in 3 categories (10 each): factual_sfs, cross_reference, reasoning. Used by eval/run_eval.py for retrieval hit rate and answer coverage measurement.",
+  "queries": [
+    {
+      "id": "factual_01",
+      "category": "factual_sfs",
+      "query": "Vad säger 2 kap. 1 § regeringsformen om mänskliga rättigheter?",
+      "expected_sfs": "1974:152",
+      "expected_chapter": "2",
+      "expected_section": "1",
+      "gold_answer_contains": ["fri- och rättigheter", "medborgare"]
+    },
+    {
+      "id": "factual_02",
+      "category": "factual_sfs",
+      "query": "Vad innebär 8 kap. 1 § brottsbalken om stöld?",
+      "expected_sfs": "1962:700",
+      "expected_chapter": "8",
+      "expected_section": "1",
+      "gold_answer_contains": ["stöld", "tillgrepp"]
+    },
+    {
+      "id": "factual_03",
+      "category": "factual_sfs",
+      "query": "Vad reglerar 1 kap. 1 § tryckfrihetsförordningen?",
+      "expected_sfs": "1949:105",
+      "expected_chapter": "1",
+      "expected_section": "1",
+      "gold_answer_contains": ["tryckfrihet"]
+    },
+    {
+      "id": "factual_04",
+      "category": "factual_sfs",
+      "query": "Vilka krav ställer offentlighets- och sekretesslagen på handlingsoffentlighet?",
+      "expected_sfs": "2009:400",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["sekretess", "offentlighet"]
+    },
+    {
+      "id": "factual_05",
+      "category": "factual_sfs",
+      "query": "Vad säger 6 § förvaltningslagen om service?",
+      "expected_sfs": "2017:900",
+      "expected_chapter": null,
+      "expected_section": "6",
+      "gold_answer_contains": ["service", "myndighet"]
+    },
+    {
+      "id": "factual_06",
+      "category": "factual_sfs",
+      "query": "Vad innebär avtalslagens ogiltighetsregler?",
+      "expected_sfs": "1915:218",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["ogiltighet", "avtal"]
+    },
+    {
+      "id": "factual_07",
+      "category": "factual_sfs",
+      "query": "Vilka bestämmelser finns i kommunallagen om kommunfullmäktige?",
+      "expected_sfs": "2017:725",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["fullmäktige", "kommun"]
+    },
+    {
+      "id": "factual_08",
+      "category": "factual_sfs",
+      "query": "Vad reglerar yttrandefrihetsgrundlagen om censurförbud?",
+      "expected_sfs": "1991:1469",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["yttrandefrihet", "censur"]
+    },
+    {
+      "id": "factual_09",
+      "category": "factual_sfs",
+      "query": "Vilka regler gäller för skadestånd enligt skadeståndslagen?",
+      "expected_sfs": "1972:207",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["skadestånd", "skada"]
+    },
+    {
+      "id": "factual_10",
+      "category": "factual_sfs",
+      "query": "Vad säger rättegångsbalken om vittnesplikt?",
+      "expected_sfs": "1942:740",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["vittne"]
+    },
+    {
+      "id": "cross_ref_01",
+      "category": "cross_reference",
+      "query": "Hur förhåller sig dataskyddslagen till EU:s dataskyddsförordning GDPR?",
+      "expected_sfs": "2018:218",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["personuppgift", "dataskydd"]
+    },
+    {
+      "id": "cross_ref_02",
+      "category": "cross_reference",
+      "query": "Vilka bestämmelser i regeringsformen hänvisar offentlighets- och sekretesslagen till?",
+      "expected_sfs": "2009:400",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["offentlighet", "sekretess"]
+    },
+    {
+      "id": "cross_ref_03",
+      "category": "cross_reference",
+      "query": "Hur hänger brottsbalkens straffbestämmelser ihop med rättegångsbalkens processregler?",
+      "expected_sfs": "1962:700",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["straff", "brott"]
+    },
+    {
+      "id": "cross_ref_04",
+      "category": "cross_reference",
+      "query": "Vad säger förvaltningsprocesslagen om överklagande av förvaltningsbeslut?",
+      "expected_sfs": "1971:291",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["överklag"]
+    },
+    {
+      "id": "cross_ref_05",
+      "category": "cross_reference",
+      "query": "Hur reglerar arbetsmiljölagen arbetsgivarens ansvar jämfört med skadeståndslagen?",
+      "expected_sfs": "1977:1160",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["arbetsmiljö", "arbetsgivare"]
+    },
+    {
+      "id": "cross_ref_06",
+      "category": "cross_reference",
+      "query": "Vilken koppling finns mellan LAS och medbestämmandelagen vid uppsägning?",
+      "expected_sfs": "1982:80",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["uppsägning", "anställning"]
+    },
+    {
+      "id": "cross_ref_07",
+      "category": "cross_reference",
+      "query": "Hur förhåller sig plan- och bygglagen till miljöbalken vid bygglovsprövning?",
+      "expected_sfs": "2010:900",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["bygglov", "plan"]
+    },
+    {
+      "id": "cross_ref_08",
+      "category": "cross_reference",
+      "query": "Vilka hänvisningar gör socialtjänstlagen till lagen om stöd och service LSS?",
+      "expected_sfs": "2001:453",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["stöd", "service"]
+    },
+    {
+      "id": "cross_ref_09",
+      "category": "cross_reference",
+      "query": "Hur hänvisar upphovsrättslagen till EU-rätten?",
+      "expected_sfs": "1960:729",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["upphovsrätt"]
+    },
+    {
+      "id": "cross_ref_10",
+      "category": "cross_reference",
+      "query": "Vilken koppling finns mellan lagen om offentlig upphandling och EU-direktivet?",
+      "expected_sfs": "2016:1145",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["upphandling"]
+    },
+    {
+      "id": "reasoning_01",
+      "category": "reasoning",
+      "query": "Hur skyddar svensk grundlag yttrandefriheten och vilka begränsningar tillåts?",
+      "expected_sfs": "1974:152",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["yttrandefrihet", "begränsning"]
+    },
+    {
+      "id": "reasoning_02",
+      "category": "reasoning",
+      "query": "Vilka rättsmedel finns för den som drabbas av ett felaktigt myndighetsbeslut?",
+      "expected_sfs": "2017:900",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["överklag", "beslut"]
+    },
+    {
+      "id": "reasoning_03",
+      "category": "reasoning",
+      "query": "Hur avvägs integritetsskyddet mot informationsfrihet i svensk rätt?",
+      "expected_sfs": "1974:152",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["integritet", "information"]
+    },
+    {
+      "id": "reasoning_04",
+      "category": "reasoning",
+      "query": "Vilka konsekvenser kan följa av brott mot arbetsmiljölagstiftningen?",
+      "expected_sfs": "1977:1160",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["arbetsmiljö"]
+    },
+    {
+      "id": "reasoning_05",
+      "category": "reasoning",
+      "query": "Hur skyddas visselblåsare i samspelet mellan yttrandefrihet och sekretesslagstiftning?",
+      "expected_sfs": "2009:400",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["sekretess", "yttrandefrihet"]
+    },
+    {
+      "id": "reasoning_06",
+      "category": "reasoning",
+      "query": "Vilka rättsliga principer styr proportionalitetsbedömningen vid straffmätning?",
+      "expected_sfs": "1962:700",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["straff", "proportionalitet"]
+    },
+    {
+      "id": "reasoning_07",
+      "category": "reasoning",
+      "query": "Hur påverkar EU-rätten svensk miljölagstiftning och tillståndsprocesser?",
+      "expected_sfs": "1998:808",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["miljö"]
+    },
+    {
+      "id": "reasoning_08",
+      "category": "reasoning",
+      "query": "Vilka begränsningar finns för kommunernas självstyrelse enligt grundlagen?",
+      "expected_sfs": "1974:152",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["kommun", "självstyrelse"]
+    },
+    {
+      "id": "reasoning_09",
+      "category": "reasoning",
+      "query": "Hur balanseras arbetsgivarens ledningsrätt mot arbetstagarens rättigheter i svensk arbetsrätt?",
+      "expected_sfs": "1982:80",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["arbetsgivare", "arbetstagare"]
+    },
+    {
+      "id": "reasoning_10",
+      "category": "reasoning",
+      "query": "Vilken rättslig grund finns för offentlighetsprincipen och vilka undantag medges?",
+      "expected_sfs": "1949:105",
+      "expected_chapter": null,
+      "expected_section": null,
+      "gold_answer_contains": ["offentlighet", "handling"]
+    }
+  ]
+}

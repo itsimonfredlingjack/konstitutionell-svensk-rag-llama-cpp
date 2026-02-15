@@ -1516,6 +1516,292 @@ class RetrievalOrchestrator:
         )
 
     # ═══════════════════════════════════════════════════════════════════════════
+    # SFS CONTEXT EXPANSION (parent-child retrieval)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    async def _expand_sfs_context(
+        self,
+        results: List[SearchResult],
+        max_siblings: int = 1,
+    ) -> List[SearchResult]:
+        """
+        Expand SFS results with sibling paragraf text and chapter context.
+
+        Only expands results where doc_type == "sfs" and sibling IDs exist.
+        Fetches prev/next paragraf chunks by ID from ChromaDB and appends
+        their text to the snippet for richer LLM context.
+
+        Args:
+            results: List of SearchResult objects
+            max_siblings: Max siblings to fetch on each side (default 1)
+
+        Returns:
+            Same list with expanded snippets for SFS results
+        """
+        if not results:
+            return results
+
+        # Collect sibling IDs to fetch
+        sibling_ids_to_fetch: set[str] = set()
+        sfs_result_indices: list[int] = []
+
+        for idx, r in enumerate(results):
+            if r.doc_type != "sfs":
+                continue
+            sfs_result_indices.append(idx)
+
+        if not sfs_result_indices:
+            return results
+
+        # We need the collection to fetch sibling chunks by ID
+        # Find the SFS collection
+        sfs_collection_name = "sfs_lagtext_jina_v3_1024"
+        resolved = _get_collection_with_fallback(self.client, sfs_collection_name, emit_log=False)
+        if resolved is None:
+            logger.debug("SFS collection not found for context expansion")
+            return results
+
+        _, sfs_collection = resolved
+
+        # For each SFS result, we need its metadata to get sibling IDs
+        # Since SearchResult doesn't carry full metadata, fetch by ID
+        sfs_ids = [results[idx].id for idx in sfs_result_indices]
+
+        try:
+            loop = asyncio.get_event_loop()
+            fetched = await loop.run_in_executor(
+                None,
+                lambda: sfs_collection.get(
+                    ids=sfs_ids,
+                    include=["metadatas", "documents"],
+                ),
+            )
+        except Exception as e:
+            logger.warning(f"SFS context expansion fetch failed: {e}")
+            return results
+
+        if not fetched or not fetched.get("ids"):
+            return results
+
+        # Build ID→metadata map
+        id_to_meta = {}
+        id_to_doc = {}
+        for i, doc_id in enumerate(fetched["ids"]):
+            if fetched.get("metadatas") and i < len(fetched["metadatas"]):
+                id_to_meta[doc_id] = fetched["metadatas"][i]
+            if fetched.get("documents") and i < len(fetched["documents"]):
+                id_to_doc[doc_id] = fetched["documents"][i]
+
+        # Collect sibling IDs
+        for doc_id in sfs_ids:
+            meta = id_to_meta.get(doc_id, {})
+            for key in ("prev_paragraf_id", "next_paragraf_id"):
+                sibling_id = meta.get(key, "")
+                if sibling_id:
+                    sibling_ids_to_fetch.add(sibling_id)
+
+        if not sibling_ids_to_fetch:
+            return results
+
+        # Fetch sibling chunks
+        try:
+            sibling_ids_list = list(sibling_ids_to_fetch)
+            sibling_fetched = await loop.run_in_executor(
+                None,
+                lambda: sfs_collection.get(
+                    ids=sibling_ids_list,
+                    include=["metadatas", "documents"],
+                ),
+            )
+        except Exception as e:
+            logger.warning(f"SFS sibling fetch failed: {e}")
+            return results
+
+        sibling_docs = {}
+        if sibling_fetched and sibling_fetched.get("ids"):
+            for i, sid in enumerate(sibling_fetched["ids"]):
+                if sibling_fetched.get("documents") and i < len(sibling_fetched["documents"]):
+                    sibling_docs[sid] = sibling_fetched["documents"][i]
+
+        # Expand snippets
+        expanded_count = 0
+        for idx in sfs_result_indices:
+            r = results[idx]
+            meta = id_to_meta.get(r.id, {})
+
+            context_parts = []
+
+            # Prepend chapter rubrik if available
+            kap_rubrik = meta.get("kapitel_rubrik", "")
+            kapitel = meta.get("kapitel", "")
+            if kap_rubrik and kapitel:
+                context_parts.append(f"[{kapitel} {kap_rubrik}]")
+
+            # Prepend prev sibling
+            prev_id = meta.get("prev_paragraf_id", "")
+            if prev_id and prev_id in sibling_docs:
+                prev_text = sibling_docs[prev_id]
+                # Truncate sibling to ~400 chars
+                if len(prev_text) > 400:
+                    prev_text = prev_text[:400] + "..."
+                context_parts.append(f"[Föregående §] {prev_text}")
+
+            # Original snippet
+            context_parts.append(r.snippet)
+
+            # Append next sibling
+            next_id = meta.get("next_paragraf_id", "")
+            if next_id and next_id in sibling_docs:
+                next_text = sibling_docs[next_id]
+                if len(next_text) > 400:
+                    next_text = next_text[:400] + "..."
+                context_parts.append(f"[Efterföljande §] {next_text}")
+
+            expanded_snippet = "\n\n".join(context_parts)
+            if expanded_snippet != r.snippet:
+                r.snippet = expanded_snippet
+                expanded_count += 1
+
+        if expanded_count:
+            logger.info(f"SFS context expansion: expanded {expanded_count} results with siblings")
+
+        return results
+
+    # Pre-compiled regex for parsing ChromaDB SFS chunk IDs into parent IDs.
+    # Matches: sfs_{year}_{number}_{chapter}kap_{paragraf}§_{hash}
+    _SFS_CHUNK_WITH_KAP_RE = re.compile(r"^sfs_(\d{4})_(\d+)_(.+?)_\d+[a-z]*§_")
+    # Matches: sfs_{year}_{number}_{paragraf}§_{hash}  (no kapitel)
+    _SFS_CHUNK_NO_KAP_RE = re.compile(r"^sfs_(\d{4})_(\d+)_\d+[a-z]*§_")
+
+    @staticmethod
+    def _chunk_id_to_parent_id(chunk_id: str) -> str | None:
+        """
+        Parse a ChromaDB SFS chunk ID into a parent store parent_id.
+
+        ChromaDB format:  sfs_1974_152_2kap_3§_5f0cb3fa
+        Parent store:     1974:152_2_kap
+
+        ChromaDB format:  sfs_1915_218_1§_a3b2c1d4
+        Parent store:     1915:218_root
+        """
+        # Try with-kapitel pattern first
+        m = RetrievalOrchestrator._SFS_CHUNK_WITH_KAP_RE.match(chunk_id)
+        if m:
+            year, number, kap_part = m.group(1), m.group(2), m.group(3)
+            # kap_part is e.g. "2kap" or "2akap" — normalize to "2_kap" or "2a_kap"
+            kap_normalized = kap_part.replace("kap", "_kap")
+            return f"{year}:{number}_{kap_normalized}"
+
+        # Try no-kapitel pattern
+        m = RetrievalOrchestrator._SFS_CHUNK_NO_KAP_RE.match(chunk_id)
+        if m:
+            year, number = m.group(1), m.group(2)
+            return f"{year}:{number}_root"
+
+        return None
+
+    async def _expand_parent_context(
+        self,
+        results: List[SearchResult],
+    ) -> List[SearchResult]:
+        """
+        Expand SFS results with kapitel-level parent context from SQLite store.
+
+        Complements _expand_sfs_context() (sibling-based). The parent store
+        provides full kapitel text, while _expand_sfs_context adds ±1 adjacent §§.
+
+        Parent context entries are appended with is_parent_context=True and
+        go to the LLM prompt but do NOT count as primary search results for citations.
+
+        Constructs parent_ids directly from ChromaDB chunk IDs to bypass the
+        child_parent_map table (which uses scraper-format IDs, not ChromaDB IDs).
+
+        Args:
+            results: List of SearchResult objects
+
+        Returns:
+            Original results + parent context entries appended
+        """
+        if not results:
+            return results
+
+        try:
+            from .parent_store_service import get_parent_store_service
+
+            parent_service = get_parent_store_service()
+        except Exception:
+            return results
+
+        if not parent_service.is_available():
+            return results
+
+        # Collect SFS chunk IDs from results and parse into parent IDs
+        parent_id_set: set[str] = set()
+        for r in results:
+            if r.doc_type != "sfs":
+                continue
+            parent_id = self._chunk_id_to_parent_id(r.id)
+            if parent_id:
+                parent_id_set.add(parent_id)
+
+        if not parent_id_set:
+            return results
+
+        parent_ids = list(parent_id_set)
+
+        try:
+            loop = asyncio.get_event_loop()
+            parents = await loop.run_in_executor(
+                None, lambda: parent_service.get_parents_by_ids(parent_ids)
+            )
+        except Exception as e:
+            logger.warning(f"Parent context expansion failed: {e}")
+            return results
+
+        if not parents:
+            return results
+
+        # Deduplicate: skip parents that overlap with existing result IDs
+        existing_ids = {r.id for r in results}
+        added = 0
+
+        for parent in parents:
+            parent_id = parent["parent_id"]
+            if parent_id in existing_ids:
+                continue
+
+            # Truncate parent full_text to reasonable size for LLM context
+            full_text = parent.get("full_text", "")
+            if len(full_text) > 3000:
+                full_text = full_text[:3000] + "..."
+
+            kapitel = parent.get("kapitel", "")
+            kapitel_rubrik = parent.get("kapitel_rubrik", "")
+            header = f"[Kapitelkontext: {kapitel} {kapitel_rubrik}]".strip()
+            snippet = f"{header}\n{full_text}"
+
+            results.append(
+                SearchResult(
+                    id=parent_id,
+                    title=f"{parent.get('kortnamn', '')} {kapitel}".strip(),
+                    snippet=snippet,
+                    score=0.0,  # Not a ranked result
+                    source=f"sfs_parent_{parent.get('sfs_nummer', '')}",
+                    doc_type="sfs_parent",
+                    retriever="parent_store",
+                )
+            )
+            added += 1
+
+        if added:
+            logger.info(
+                f"Parent context expansion: added {added} kapitel parents "
+                f"for {len(parent_ids)} parent IDs"
+            )
+
+        return results
+
+    # ═══════════════════════════════════════════════════════════════════════════
     # EPR: TWO-PASS RETRIEVAL WITH INTENT ROUTING (Phase 5)
     # ═══════════════════════════════════════════════════════════════════════════
 
@@ -1780,6 +2066,12 @@ class RetrievalOrchestrator:
         logger.info(
             f"EPR: After dedupe: {len(unique_results)} unique docs (from {len(search_results)} chunks)"
         )
+
+        # SFS Context Expansion: enrich SFS results with sibling paragraf text
+        unique_results = await self._expand_sfs_context(unique_results)
+
+        # Parent-child retrieval: append kapitel-level context for SFS results
+        unique_results = await self._expand_parent_context(unique_results)
 
         metrics.total_latency_ms = (time.perf_counter() - start_total) * 1000
         metrics.unique_docs_total = len(unique_results)

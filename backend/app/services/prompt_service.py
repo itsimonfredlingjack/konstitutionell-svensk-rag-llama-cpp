@@ -23,11 +23,54 @@ logger = get_logger(__name__)
 MAX_CONTEXT_TOKENS = 24_000
 
 
+def _format_sfs_annotations(source: SearchResult) -> str:
+    """
+    Format SFS-specific structural annotations for LLM context.
+
+    Adds stycke numbering hints, cross-reference hints, and amendment context
+    from ChromaDB metadata stored in the snippet (via context expansion) or
+    from metadata attributes on SearchResult.
+    """
+    annotations = []
+
+    # Access metadata if available (SearchResult may carry extra attrs)
+    meta = getattr(source, "_metadata", None) or {}
+
+    # Stycke count annotation
+    stycke_count = meta.get("stycke_count", 0)
+    if stycke_count and stycke_count > 1:
+        annotations.append(f"Paragrafen har {stycke_count} stycken.")
+
+    # Cross-reference hints
+    cross_refs_json = meta.get("cross_refs_json", "")
+    if cross_refs_json:
+        try:
+            refs = json.loads(cross_refs_json)
+            if refs:
+                ref_texts = []
+                for ref in refs[:5]:  # Limit to 5 refs
+                    raw = ref.get("raw_text", "")
+                    if raw:
+                        ref_texts.append(raw)
+                if ref_texts:
+                    annotations.append(f"Se även: {', '.join(ref_texts)}")
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    # Amendment context
+    amendment_ref = meta.get("amendment_ref", "")
+    if amendment_ref:
+        annotations.append(f"Senast ändrad: {amendment_ref}")
+
+    return " | ".join(annotations) if annotations else ""
+
+
 def build_llm_context(sources: List[SearchResult]) -> str:
     """
     Build LLM context from retrieved sources.
 
     Formats sources with metadata and relevance scores.
+    Includes SFS structural annotations (stycke count, cross-refs, amendments).
     Truncates when approximate token count exceeds MAX_CONTEXT_TOKENS.
     """
     if not sources:
@@ -41,8 +84,16 @@ def build_llm_context(sources: List[SearchResult]) -> str:
         score = source.score
         priority_marker = "⭐ PRIORITET (SFS)" if doc_type == "sfs" else f"Typ: {doc_type.upper()}"
 
+        # SFS structural annotations
+        sfs_annotations = ""
+        if doc_type == "sfs":
+            sfs_annotations = _format_sfs_annotations(source)
+            if sfs_annotations:
+                sfs_annotations = f"\n{sfs_annotations}"
+
         part = (
-            f"[Källa {i}: {source.title}] {priority_marker} | Relevans: {score:.2f}\n"
+            f"[Källa {i}: {source.title}] {priority_marker} | Relevans: {score:.2f}"
+            f"{sfs_annotations}\n"
             f"{source.snippet}"
         )
         part_tokens = len(part) // 4  # rough chars-to-tokens estimate

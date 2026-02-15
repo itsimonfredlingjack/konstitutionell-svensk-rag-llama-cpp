@@ -33,7 +33,7 @@ SFS_DATA_PATH = "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/scraped
 MANIFEST_PATH = (
     "/home/ai-server/AN-FOR-NO-ASSHOLES/09_CONSTITUTIONAL-AI/scraped_data/sfs/manifest.json"
 )
-COLLECTION_NAME = "sfs_lagtext"
+COLLECTION_NAME = "sfs_lagtext_jina_v3_1024"
 
 
 class SFSManifest:
@@ -217,22 +217,28 @@ class SFSUpdater:
         logger.info(f"✅ {sfs_nummer} updated: {chunks_indexed} chunks")
         return True
 
-    def update_all_changed(self):
+    def update_all_changed(self, force_reparse: bool = False):
         """Uppdatera alla ändrade SFS-dokument"""
         changes = self.check_changes()
 
-        to_update = [sfs for sfs, status in changes.items() if status in ["new", "changed"]]
+        if force_reparse:
+            # Force reindex all documents regardless of content hash
+            to_update = [
+                sfs for sfs, status in changes.items() if status in ["new", "changed", "unchanged"]
+            ]
+        else:
+            to_update = [sfs for sfs, status in changes.items() if status in ["new", "changed"]]
 
         if not to_update:
             logger.info("No changes detected")
             return
 
-        logger.info(f"Updating {len(to_update)} documents...")
+        logger.info(f"Updating {len(to_update)} documents (force_reparse={force_reparse})...")
 
         for sfs_nummer in to_update:
             self.update_sfs(sfs_nummer)
 
-        logger.info(f"✅ Update complete: {len(to_update)} documents")
+        logger.info(f"Update complete: {len(to_update)} documents")
 
 
 def main():
@@ -241,6 +247,11 @@ def main():
     parser.add_argument("--update", action="store_true", help="Uppdatera ändrade")
     parser.add_argument("--sfs", type=str, help="Uppdatera specifik SFS (t.ex. 1974:152)")
     parser.add_argument("--manifest", action="store_true", help="Visa manifest")
+    parser.add_argument(
+        "--force-reparse",
+        action="store_true",
+        help="Force reindex even if content hash unchanged (for metadata structure changes)",
+    )
 
     args = parser.parse_args()
 
@@ -300,7 +311,7 @@ def main():
 
     if args.update:
         # Uppdatera alla ändrade
-        updater.update_all_changed()
+        updater.update_all_changed(force_reparse=args.force_reparse)
         return
 
     if args.sfs:

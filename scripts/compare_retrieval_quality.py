@@ -36,6 +36,18 @@ BENCHMARK_QUESTIONS = [
     "Vad gäller för provanställning enligt LAS?",
 ]
 
+# SFS-specific benchmark questions for structure-aware chunking evaluation
+SFS_BENCHMARK_QUESTIONS = [
+    "Vad säger andra stycket i RF 1 kap. 1 §?",
+    "Vilka friheter räknas upp i RF 2 kap. 1 §?",
+    "Vad säger BrB 1 kap. 5 § om fängelse?",
+    "Vad handlar 2 kap. i Regeringsformen om?",
+    "Vilka mål ska den offentliga verksamheten ha enligt RF 1 kap. 2 §?",
+    "Vilka är rikets grundlagar enligt Regeringsformen?",
+    "När ändrades RF 2 kap. 1 § senast?",
+    "Vad säger OSL om sekretess i förhållande till den enskilde?",
+]
+
 DEFAULT_GATES = {
     "max_pipeline_ms_avg": 15000.0,
     "max_pipeline_ms_p95": 25000.0,
@@ -43,6 +55,8 @@ DEFAULT_GATES = {
     "min_dense_hits_avg": 1.0,
     "min_bm25_hits_avg": 1.0,
     "min_crag_yes_rate_top5": 0.20,
+    "min_sfs_stycke_precision": 0.70,
+    "min_sfs_xref_recall": 0.50,
 }
 
 
@@ -125,6 +139,52 @@ def _build_summary(results: list[dict[str, Any]]) -> dict[str, float]:
     }
 
 
+def _evaluate_sfs_result(question: str, top5_docs: list[dict[str, Any]]) -> dict[str, Any]:
+    """Evaluate SFS-specific quality for a single question.
+
+    Checks:
+    - stycke_precision: Did we retrieve an SFS result from the right paragraf?
+    - xref_present: Does any result carry cross-reference metadata?
+    """
+    has_sfs_hit = any(
+        d.get("doc_type") == "sfs" or (d.get("source") or "").startswith("sfs_") for d in top5_docs
+    )
+    # Stycke precision: question mentions a specific paragraf — check if it appears in results
+    stycke_hit = False
+    xref_present = False
+    for doc in top5_docs:
+        title = (doc.get("title") or "").lower()
+        doc_id = (doc.get("id") or "").lower()
+        # Check if the expected paragraf reference is in the result
+        # E.g., "RF 1 kap. 1 §" or "rf_1kap_1§" patterns
+        if has_sfs_hit and ("kap" in title or "§" in title or "kap" in doc_id):
+            stycke_hit = True
+        if doc.get("cross_refs_json") or doc.get("amendment_ref"):
+            xref_present = True
+
+    return {
+        "has_sfs_hit": has_sfs_hit,
+        "stycke_hit": stycke_hit,
+        "xref_present": xref_present,
+    }
+
+
+def _build_sfs_summary(sfs_results: list[dict[str, Any]]) -> dict[str, float]:
+    """Build summary metrics for SFS benchmark questions."""
+    if not sfs_results:
+        return {
+            "sfs_stycke_precision": 0.0,
+            "sfs_xref_recall": 0.0,
+            "sfs_hit_rate": 0.0,
+        }
+    n = float(len(sfs_results))
+    return {
+        "sfs_stycke_precision": sum(1.0 for r in sfs_results if r["sfs_eval"]["stycke_hit"]) / n,
+        "sfs_xref_recall": sum(1.0 for r in sfs_results if r["sfs_eval"]["xref_present"]) / n,
+        "sfs_hit_rate": sum(1.0 for r in sfs_results if r["sfs_eval"]["has_sfs_hit"]) / n,
+    }
+
+
 def _load_gate_overrides(path: str | None) -> dict[str, float]:
     if not path:
         return {}
@@ -182,6 +242,32 @@ def _evaluate_gates(
             ">=",
             gates["min_crag_yes_rate_top5"],
             summary["crag_yes_rate_top5"] >= gates["min_crag_yes_rate_top5"],
+        ),
+    ]
+    rows = [
+        [name, f"{value:.4f}", f"{op} {threshold:.4f}", "PASS" if ok else "FAIL"]
+        for name, value, op, threshold, ok in checks
+    ]
+    return all(item[-1] for item in checks), rows
+
+
+def _evaluate_sfs_gates(
+    sfs_summary: dict[str, float], gates: dict[str, float]
+) -> tuple[bool, list[list[str]]]:
+    checks = [
+        (
+            "sfs_stycke_precision",
+            sfs_summary.get("sfs_stycke_precision", 0.0),
+            ">=",
+            gates["min_sfs_stycke_precision"],
+            sfs_summary.get("sfs_stycke_precision", 0.0) >= gates["min_sfs_stycke_precision"],
+        ),
+        (
+            "sfs_xref_recall",
+            sfs_summary.get("sfs_xref_recall", 0.0),
+            ">=",
+            gates["min_sfs_xref_recall"],
+            sfs_summary.get("sfs_xref_recall", 0.0) >= gates["min_sfs_xref_recall"],
         ),
     ]
     rows = [
@@ -348,6 +434,13 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--min-dense-hits-avg", type=float, default=None)
     parser.add_argument("--min-bm25-hits-avg", type=float, default=None)
     parser.add_argument("--min-crag-yes-rate-top5", type=float, default=None)
+    parser.add_argument("--min-sfs-stycke-precision", type=float, default=None)
+    parser.add_argument("--min-sfs-xref-recall", type=float, default=None)
+    parser.add_argument(
+        "--skip-sfs",
+        action="store_true",
+        help="Skip SFS-specific benchmark questions.",
+    )
     parser.add_argument(
         "--output-json",
         default="logs/retrieval_quality_benchmark.json",
@@ -410,6 +503,20 @@ async def main() -> None:
                 DEFAULT_GATES["min_crag_yes_rate_top5"],
             )
         ),
+        "min_sfs_stycke_precision": float(
+            getattr(
+                config.settings,
+                "benchmark_min_sfs_stycke_precision",
+                DEFAULT_GATES["min_sfs_stycke_precision"],
+            )
+        ),
+        "min_sfs_xref_recall": float(
+            getattr(
+                config.settings,
+                "benchmark_min_sfs_xref_recall",
+                DEFAULT_GATES["min_sfs_xref_recall"],
+            )
+        ),
     }
 
     cli_overrides = {
@@ -419,6 +526,8 @@ async def main() -> None:
         "min_dense_hits_avg": args.min_dense_hits_avg,
         "min_bm25_hits_avg": args.min_bm25_hits_avg,
         "min_crag_yes_rate_top5": args.min_crag_yes_rate_top5,
+        "min_sfs_stycke_precision": args.min_sfs_stycke_precision,
+        "min_sfs_xref_recall": args.min_sfs_xref_recall,
     }
     for key, value in cli_overrides.items():
         if value is not None:
@@ -460,12 +569,46 @@ async def main() -> None:
                         **internal,
                     }
                 )
+        # ── SFS-specific benchmark ──────────────────────────────────────
+        sfs_results: list[dict[str, Any]] = []
+        if not args.skip_sfs:
+            total_sfs = len(SFS_BENCHMARK_QUESTIONS)
+            for idx, question in enumerate(SFS_BENCHMARK_QUESTIONS, start=1):
+                print(f"[SFS {idx}/{total_sfs}] {question}")
+                live = await _call_live_endpoint(
+                    client=client,
+                    endpoint=full_endpoint,
+                    question=question,
+                    mode=args.mode,
+                    timeout=args.timeout,
+                )
+                internal = await _collect_internal(
+                    orchestrator=orchestrator,
+                    reranker=reranker,
+                    grader=grader,
+                    expansion_service=expansion_service,
+                    question=question,
+                    mode=args.mode,
+                )
+                sfs_eval = _evaluate_sfs_result(question, internal.get("reranked_top5_docs", []))
+                sfs_results.append(
+                    {
+                        "question": question,
+                        "live": live,
+                        "sfs_eval": sfs_eval,
+                        **internal,
+                    }
+                )
     finally:
         await orchestrator.close()
 
+    report = {
+        "benchmark_results": results,
+        "sfs_benchmark_results": sfs_results,
+    }
     output_path = Path(args.output_json)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+    output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nSaved JSON report: {output_path}")
 
     summary_rows = []
@@ -506,9 +649,44 @@ async def main() -> None:
             gate_rows,
             ["Metric", "Value", "Threshold", "Result"],
         )
-        print(f"\nOverall DoD: {'PASS' if gates_ok else 'FAIL'}")
 
-        if args.enforce_gates and not gates_ok:
+        # ── SFS-specific summary and gates ────────────────────────────
+        sfs_gates_ok = True
+        if sfs_results:
+            sfs_avg = _build_sfs_summary(sfs_results)
+            print("\nSFS Benchmark:")
+            sfs_rows = []
+            for item in sfs_results:
+                ev = item["sfs_eval"]
+                sfs_rows.append(
+                    [
+                        _truncate(item["question"], 50),
+                        "Y" if ev["has_sfs_hit"] else "N",
+                        "Y" if ev["stycke_hit"] else "N",
+                        "Y" if ev["xref_present"] else "N",
+                    ]
+                )
+            _print_table(
+                sfs_rows,
+                ["Question", "SFS Hit", "Stycke", "XRef"],
+            )
+            print(
+                f"\n  sfs_stycke_precision={sfs_avg['sfs_stycke_precision']:.2%}, "
+                f"sfs_xref_recall={sfs_avg['sfs_xref_recall']:.2%}, "
+                f"sfs_hit_rate={sfs_avg['sfs_hit_rate']:.2%}"
+            )
+
+            sfs_gates_ok, sfs_gate_rows = _evaluate_sfs_gates(sfs_avg, gates)
+            print("\nSFS DoD gates:")
+            _print_table(
+                sfs_gate_rows,
+                ["Metric", "Value", "Threshold", "Result"],
+            )
+
+        all_ok = gates_ok and sfs_gates_ok
+        print(f"\nOverall DoD: {'PASS' if all_ok else 'FAIL'}")
+
+        if args.enforce_gates and not all_ok:
             raise SystemExit(2)
 
 
